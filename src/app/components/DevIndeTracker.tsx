@@ -127,7 +127,7 @@ const DevIndeTracker: React.FC = () => {
           darkMode={darkMode}
         />
         
-        <main className={`flex-1 overflow-y-auto pb-16 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
+        <main className={`flex-1 overflow-y-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
           {renderSectionContent()}
           
           {/* Bouton flottant pour les paramètres */}
