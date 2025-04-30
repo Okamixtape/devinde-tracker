@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { CircleDollarSign, TrendingUp, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
-import type { BusinessPlanData } from "./types";
+import type { BusinessPlanData, SectionKey } from "./types";
+import { UI_CLASSES } from "../styles/ui-classes";
 
 // Types pour les projets
 type Project = {
@@ -23,12 +24,14 @@ type Expense = {
 // Props du composant
 type Props = {
   data: BusinessPlanData["financials"];
+  updateData?: (section: SectionKey, field: string, value: number | string | string[]) => void;
 };
 
 // Couleurs pour les graphiques
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#4CAF50"];
 
-const FinancialDashboard: React.FC<Props> = ({ data }) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const FinancialDashboard: React.FC<Props> = ({ data, ...props }) => {
   // État pour les projets (simulés pour l'exemple)
   const [projects] = useState<Project[]>([
     { id: "p1", name: "Site vitrine Restaurant", amount: 1500, date: "2025-06", status: "planned" },
@@ -215,53 +218,69 @@ const FinancialDashboard: React.FC<Props> = ({ data }) => {
   };
 
   return (
-    <div className="space-y-6 p-6">
-      <h2 className="text-2xl font-bold mb-6">Tableau de bord financier</h2>
+    <div className="space-y-6">
+      <h2 className={UI_CLASSES.HEADING_2}>Tableau de bord financier</h2>
       
-      {/* Cartes de métriques principales */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-2">
-            <div className="text-gray-500 text-sm">CA prévisionnel (année 1)</div>
-            <CircleDollarSign className="text-blue-500" size={20} />
+      {/* Statistiques clés */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className={UI_CLASSES.CARD}>
+          <h3 className={UI_CLASSES.TEXT_SMALL}>CA prévisionnel (année 1)</h3>
+          <div className="flex items-center justify-between">
+            <div className="mt-2">
+              <p className={`text-xl font-bold ${UI_CLASSES.TEXT}`}>{annualTotals.revenue.toLocaleString()}€</p>
+              <p className="text-sm text-green-500">Objectif: {(annualTotals.revenue * 1.1).toLocaleString()}€</p>
+            </div>
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <CircleDollarSign size={24} className="text-blue-600 dark:text-blue-400" />
+            </div>
           </div>
-          <div className="text-2xl font-bold">{annualTotals.revenue.toLocaleString()}€</div>
-          <div className="text-sm text-green-500 mt-1">Objectif: {(annualTotals.revenue * 1.1).toLocaleString()}€</div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-2">
-            <div className="text-gray-500 text-sm">Dépenses (année 1)</div>
-            <ArrowDownCircle className="text-red-500" size={20} />
+        <div className={UI_CLASSES.CARD}>
+          <h3 className={UI_CLASSES.TEXT_SMALL}>Dépenses (année 1)</h3>
+          <div className="flex items-center justify-between">
+            <div className="mt-2">
+              <p className={`text-xl font-bold ${UI_CLASSES.TEXT}`}>{annualTotals.expenses.toLocaleString()}€</p>
+              <p className="text-sm">Dont {data.initialInvestment.toLocaleString()}€ d'investissement</p>
+            </div>
+            <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
+              <ArrowDownCircle size={24} className="text-red-600 dark:text-red-400" />
+            </div>
           </div>
-          <div className="text-2xl font-bold">{annualTotals.expenses.toLocaleString()}€</div>
-          <div className="text-sm text-gray-500 mt-1">Dont {data.initialInvestment.toLocaleString()}€ d&apos;investissement</div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-2">
-            <div className="text-gray-500 text-sm">Bénéfice prévisionnel</div>
-            <TrendingUp className="text-green-500" size={20} />
+        <div className={UI_CLASSES.CARD}>
+          <h3 className={UI_CLASSES.TEXT_SMALL}>Bénéfice prévisionnel</h3>
+          <div className="flex items-center justify-between">
+            <div className="mt-2">
+              <p className={`text-xl font-bold ${UI_CLASSES.TEXT}`}>{annualTotals.profit.toLocaleString()}€</p>
+              <p className="text-sm">Marge: {(annualTotals.revenue > 0 ? (annualTotals.profit / annualTotals.revenue * 100).toFixed(1) : 0)}%</p>
+            </div>
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+              <TrendingUp size={24} className="text-green-600 dark:text-green-400" />
+            </div>
           </div>
-          <div className="text-2xl font-bold">{annualTotals.profit.toLocaleString()}€</div>
-          <div className="text-sm text-gray-500 mt-1">Marge: {(annualTotals.revenue > 0 ? (annualTotals.profit / annualTotals.revenue * 100).toFixed(1) : 0)}%</div>
         </div>
         
-        <div className="bg-white p-4 rounded-lg shadow">
-          <div className="flex justify-between items-center mb-2">
-            <div className="text-gray-500 text-sm">Projets planifiés</div>
-            <ArrowUpCircle className="text-blue-500" size={20} />
+        <div className={UI_CLASSES.CARD}>
+          <h3 className={UI_CLASSES.TEXT_SMALL}>Projets planifiés</h3>
+          <div className="flex items-center justify-between">
+            <div className="mt-2">
+              <p className={`text-xl font-bold ${UI_CLASSES.TEXT}`}>{totalPlannedRevenue.toLocaleString()}€</p>
+              <p className="text-sm">{plannedProjects.length} projets à venir</p>
+            </div>
+            <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+              <ArrowUpCircle size={24} className="text-purple-600 dark:text-purple-400" />
+            </div>
           </div>
-          <div className="text-2xl font-bold">{totalPlannedRevenue.toLocaleString()}€</div>
-          <div className="text-sm text-gray-500 mt-1">{plannedProjects.length} projets à venir</div>
         </div>
       </div>
       
       {/* Graphiques et tableaux */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Graphique des objectifs trimestriels */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Objectifs trimestriels</h3>
+        <div className={UI_CLASSES.CARD}>
+          <h3 className={UI_CLASSES.HEADING_3}>Objectifs trimestriels</h3>
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={getQuarterlyData()}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -274,8 +293,8 @@ const FinancialDashboard: React.FC<Props> = ({ data }) => {
         </div>
         
         {/* Graphique de répartition des revenus */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Répartition des revenus</h3>
+        <div className={UI_CLASSES.CARD}>
+          <h3 className={UI_CLASSES.HEADING_3}>Répartition des revenus</h3>
           <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
@@ -293,14 +312,41 @@ const FinancialDashboard: React.FC<Props> = ({ data }) => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value: number) => `${value.toLocaleString()}€`} />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'white',
+                  border: '1px solid #ccc',
+                  borderRadius: '5px',
+                  padding: '10px',
+                  color: '#333',
+                  boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)'
+                }}
+                itemStyle={{ color: '#333' }}
+                labelStyle={{ color: '#333', fontWeight: 'bold', marginBottom: '5px' }}
+                formatter={(value: number) => [`${value.toLocaleString()}€`, 'Montant']}
+              />
             </PieChart>
           </ResponsiveContainer>
+          
+          {/* Légende du graphique avec de meilleurs contrastes */}
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {getRevenueDistributionData().map((entry, index) => (
+              <div key={`legend-${index}`} className="flex items-center">
+                <div 
+                  className="w-4 h-4 rounded-sm mr-2" 
+                  style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                ></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300 select-text">
+                  {entry.name}: {entry.value.toLocaleString()}€
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
         
         {/* Graphique des dépenses */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Répartition des dépenses</h3>
+        <div className={UI_CLASSES.CARD}>
+          <h3 className={UI_CLASSES.HEADING_3}>Répartition des dépenses</h3>
           {expenses.length > 0 || data.initialInvestment > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -330,8 +376,8 @@ const FinancialDashboard: React.FC<Props> = ({ data }) => {
         </div>
         
         {/* Graphique de prévision de trésorerie */}
-        <div className="bg-white p-4 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Prévision de trésorerie (12 mois)</h3>
+        <div className={UI_CLASSES.CARD}>
+          <h3 className={UI_CLASSES.HEADING_3}>Prévision de trésorerie (12 mois)</h3>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={getCashFlowForecast()} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -348,33 +394,33 @@ const FinancialDashboard: React.FC<Props> = ({ data }) => {
       </div>
       
       {/* Projets planifiés */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-4">Projets planifiés</h3>
+      <div className={UI_CLASSES.CARD}>
+        <h3 className={UI_CLASSES.HEADING_3}>Projets planifiés</h3>
         {projects.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
+            <table className={UI_CLASSES.TABLE}>
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Projet</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Montant</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Date prévue</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Statut</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Projet</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Montant</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Date prévue</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Statut</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
                 {projects.map((project) => (
-                  <tr key={project.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">{project.name}</td>
-                    <td className="px-4 py-3 text-sm">{project.amount.toLocaleString()}€</td>
-                    <td className="px-4 py-3 text-sm">
+                  <tr key={project.id} className={`${UI_CLASSES.TABLE_ROW} hover:bg-gray-50 dark:hover:bg-gray-700`}>
+                    <td className={UI_CLASSES.TABLE_CELL}>{project.name}</td>
+                    <td className={UI_CLASSES.TABLE_CELL_HIGHLIGHT}>{project.amount.toLocaleString()}€</td>
+                    <td className={UI_CLASSES.TABLE_CELL}>
                       {new Date(project.date + "-01").toLocaleString('fr-FR', { month: 'long', year: 'numeric' })}
                     </td>
-                    <td className="px-4 py-3 text-sm">
+                    <td className={UI_CLASSES.TABLE_CELL}>
                       <span 
-                        className={`px-2 py-1 rounded-full text-xs ${
-                          project.status === 'completed' ? 'bg-green-100 text-green-800' :
-                          project.status === 'ongoing' ? 'bg-blue-100 text-blue-800' :
-                          'bg-yellow-100 text-yellow-800'
+                        className={`${UI_CLASSES.BADGE} ${
+                          project.status === 'completed' ? UI_CLASSES.BADGE_SUCCESS :
+                          project.status === 'ongoing' ? UI_CLASSES.BADGE_INFO :
+                          UI_CLASSES.BADGE_WARNING
                         }`}
                       >
                         {project.status === 'completed' ? 'Terminé' :
@@ -387,19 +433,19 @@ const FinancialDashboard: React.FC<Props> = ({ data }) => {
             </table>
           </div>
         ) : (
-          <div className="text-center py-8 text-gray-500">
+          <div className={`text-center py-8 ${UI_CLASSES.TEXT_SMALL}`}>
             Aucun projet planifié. Cette section se remplira automatiquement lorsque vous ajouterez des projets.
           </div>
         )}
       </div>
       
       {/* Simulation ARCE */}
-      <div className="bg-white p-4 rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-4">Simulation ARCE</h3>
+      <div className={UI_CLASSES.CARD}>
+        <h3 className={UI_CLASSES.HEADING_3}>Simulation ARCE</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 border rounded-lg bg-blue-50">
-            <h4 className="font-medium mb-2">Montant estimé ARCE</h4>
-            <p className="text-sm text-gray-600 mb-3">
+          <div className="p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/30">
+            <h4 className="font-medium mb-2 text-blue-800 dark:text-blue-300 select-text">Montant estimé ARCE</h4>
+            <p className="text-sm text-blue-600 dark:text-blue-400 mb-3 select-text">
               Basé sur 45% des droits ARE restants (1100€/mois jusqu&apos;au 22/06/2025)
             </p>
             
@@ -417,21 +463,21 @@ const FinancialDashboard: React.FC<Props> = ({ data }) => {
               return (
                 <div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm">Jours restants:</span>
-                    <span className="font-medium">{diffDays} jours</span>
+                    <span className="text-sm text-blue-700 dark:text-blue-400 select-text">Jours restants:</span>
+                    <span className="font-medium text-blue-900 dark:text-blue-200 select-text">{diffDays} jours</span>
                   </div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm">Équivalent en mois:</span>
-                    <span className="font-medium">{monthsRemaining.toFixed(1)} mois</span>
+                    <span className="text-sm text-blue-700 dark:text-blue-400 select-text">Équivalent en mois:</span>
+                    <span className="font-medium text-blue-900 dark:text-blue-200 select-text">{monthsRemaining.toFixed(1)} mois</span>
                   </div>
                   <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm">Droits ARE restants:</span>
-                    <span className="font-medium">{(1100 * monthsRemaining).toLocaleString()}€</span>
+                    <span className="text-sm text-blue-700 dark:text-blue-400 select-text">Droits ARE restants:</span>
+                    <span className="font-medium text-blue-900 dark:text-blue-200 select-text">{(1100 * monthsRemaining).toLocaleString()}€</span>
                   </div>
-                  <div className="mt-3 pt-3 border-t">
+                  <div className="mt-3 pt-3 border-t border-blue-200 dark:border-blue-700">
                     <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">Montant ARCE estimé (45%):</span>
-                      <span className="text-xl font-bold text-blue-700">{arceAmount.toLocaleString()}€</span>
+                      <span className="text-sm font-medium text-blue-700 dark:text-blue-400 select-text">Montant ARCE estimé (45%):</span>
+                      <span className="text-xl font-bold text-blue-700 dark:text-blue-300 select-text">{arceAmount.toLocaleString()}€</span>
                     </div>
                   </div>
                 </div>
@@ -439,32 +485,25 @@ const FinancialDashboard: React.FC<Props> = ({ data }) => {
             })()}
           </div>
           
-          <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-2">Utilisation recommandée</h4>
-            <ul className="space-y-2 text-sm">
-              <li className="flex items-start">
-                <div className="p-1 bg-green-100 rounded-full mt-0.5 mr-2">
-                  <TrendingUp className="text-green-600" size={12} />
-                </div>
-                <span>Équipement informatique: {(data.initialInvestment * 0.5).toLocaleString()}€</span>
-              </li>
-              <li className="flex items-start">
-                <div className="p-1 bg-blue-100 rounded-full mt-0.5 mr-2">
-                  <TrendingUp className="text-blue-600" size={12} />
-                </div>
-                <span>Formation complémentaire: {(data.initialInvestment * 0.3).toLocaleString()}€</span>
-              </li>
-              <li className="flex items-start">
-                <div className="p-1 bg-purple-100 rounded-full mt-0.5 mr-2">
-                  <TrendingUp className="text-purple-600" size={12} />
-                </div>
-                <span>Marketing & acquisition clients: {(data.initialInvestment * 0.2).toLocaleString()}€</span>
-              </li>
-            </ul>
-            <div className="mt-3 pt-3 border-t">
-              <p className="text-sm text-gray-600">
-                N&apos;oubliez pas que l&apos;ARCE est versée en deux fois : 50% à l&apos;approbation, 50% six mois plus tard.
-              </p>
+          <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800">
+            <h4 className="font-medium mb-2 text-gray-800 dark:text-gray-200 select-text">Utilisation recommandée</h4>
+            <div className="space-y-2">
+              <div className="flex items-center p-2 bg-gradient-to-r from-transparent to-green-50 dark:to-green-900/20 border-l-4 border-green-500">
+                <ArrowUpCircle size={18} className="text-green-500 mr-2" />
+                <span className="text-sm text-gray-700 dark:text-gray-300 select-text">Équipement informatique: 1500€</span>
+              </div>
+              <div className="flex items-center p-2 bg-gradient-to-r from-transparent to-blue-50 dark:to-blue-900/20 border-l-4 border-blue-500">
+                <TrendingUp size={18} className="text-blue-500 mr-2" />
+                <span className="text-sm text-gray-700 dark:text-gray-300 select-text">Formation complémentaire: 900€</span>
+              </div>
+              <div className="flex items-center p-2 bg-gradient-to-r from-transparent to-purple-50 dark:to-purple-900/20 border-l-4 border-purple-500">
+                <CircleDollarSign size={18} className="text-purple-500 mr-2" />
+                <span className="text-sm text-gray-700 dark:text-gray-300 select-text">Marketing & acquisition clients: 600€</span>
+              </div>
+            </div>
+            
+            <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-sm text-yellow-800 dark:text-yellow-300 select-text">
+              N&apos;oubliez pas que l&apos;ARCE est versée en deux fois : 50% à l&apos;approbation, 50% six mois plus tard.
             </div>
           </div>
         </div>

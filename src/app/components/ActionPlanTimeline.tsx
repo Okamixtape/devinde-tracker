@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Plus, Edit, Trash2, Save, X, Calendar, Clock, Tag, CheckCircle } from "lucide-react";
 import type { BusinessPlanData } from "./types";
+import { UI_CLASSES } from "../styles/ui-classes";
 
 // Types pour les jalons
 type Milestone = {
@@ -201,27 +202,27 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
         </div>
         
         <div className="flex items-center space-x-2">
-          <div className="flex items-center bg-white border rounded-md p-1">
+          <div className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-1">
             <button 
-              className={`px-3 py-1 rounded ${filterStatus === "all" ? "bg-blue-500 text-white" : "hover:bg-gray-100"}`}
+              className={`px-3 py-1 rounded ${filterStatus === "all" ? "bg-blue-500 dark:bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
               onClick={() => setFilterStatus("all")}
             >
               Tous
             </button>
             <button 
-              className={`px-3 py-1 rounded ${filterStatus === "completed" ? "bg-blue-500 text-white" : "hover:bg-gray-100"}`}
+              className={`px-3 py-1 rounded ${filterStatus === "completed" ? "bg-blue-500 dark:bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
               onClick={() => setFilterStatus("completed")}
             >
               Terminés
             </button>
             <button 
-              className={`px-3 py-1 rounded ${filterStatus === "in-progress" ? "bg-blue-500 text-white" : "hover:bg-gray-100"}`}
+              className={`px-3 py-1 rounded ${filterStatus === "in-progress" ? "bg-blue-500 dark:bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
               onClick={() => setFilterStatus("in-progress")}
             >
               En cours
             </button>
             <button 
-              className={`px-3 py-1 rounded ${filterStatus === "planned" ? "bg-blue-500 text-white" : "hover:bg-gray-100"}`}
+              className={`px-3 py-1 rounded ${filterStatus === "planned" ? "bg-blue-500 dark:bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
               onClick={() => setFilterStatus("planned")}
             >
               Planifiés
@@ -229,7 +230,7 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
           </div>
           
           <button
-            className="bg-blue-500 text-white px-3 py-2 rounded-md flex items-center"
+            className={UI_CLASSES.BUTTON_PRIMARY + " flex items-center"}
             onClick={() => {
               setEditingIndex(null);
               setShowForm(!showForm);
@@ -242,18 +243,18 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       </div>
       
       {/* Progression globale */}
-      <div className="bg-white p-4 rounded-lg shadow mb-6">
+      <div className={UI_CLASSES.CARD + " mb-6"}>
         <div className="flex justify-between items-center mb-2">
-          <h3 className="font-medium">Progression globale</h3>
-          <span className="text-sm font-medium">{progressPercentage}%</span>
+          <h3 className={UI_CLASSES.HEADING_3 + " !mb-0"}>Progression globale</h3>
+          <span className={`text-sm font-medium ${UI_CLASSES.TEXT_HIGHLIGHT}`}>{progressPercentage}%</span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
           <div 
-            className="bg-blue-600 h-2.5 rounded-full" 
+            className="bg-blue-600 dark:bg-blue-700 h-2.5 rounded-full" 
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
-        <div className="flex justify-between mt-2 text-xs text-gray-500">
+        <div className="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
           <span>{completedCount} sur {milestones.length} jalons terminés</span>
           <span>Objectif: 100%</span>
         </div>
@@ -261,7 +262,7 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       
       {/* Formulaire d'ajout/édition */}
       {showForm && (
-        <div className="bg-white p-4 rounded-lg shadow mb-6">
+        <div className={UI_CLASSES.CARD}>
           <h3 className="font-medium mb-4">{editingIndex !== null ? "Modifier le jalon" : "Ajouter un jalon"}</h3>
           <form onSubmit={saveMilestone}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -326,7 +327,7 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
             <div className="flex justify-end space-x-2">
               <button 
                 type="button" 
-                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm"
                 onClick={() => {
                   setShowForm(false);
                   setEditingIndex(null);
@@ -336,7 +337,7 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
               </button>
               <button 
                 type="submit" 
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm flex items-center"
+                className="px-3 py-1 bg-blue-500 dark:bg-blue-600 text-white rounded text-sm flex items-center"
               >
                 <Save size={16} className="mr-1" />
                 Enregistrer
@@ -350,7 +351,7 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       {filteredMilestones.length > 0 ? (
         <div className="relative">
           {/* Ligne verticale */}
-          <div className="absolute left-7 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+          <div className="absolute left-7 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
           
           {/* Jalons */}
           <div className="space-y-8">
@@ -360,17 +361,17 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                 <div className={`absolute left-7 w-3 h-3 rounded-full mt-1.5 -ml-1.5 ${getStatusColor(milestone.status)}`}></div>
                 
                 {/* Contenu du jalon */}
-                <div className="ml-12 bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500 w-full">
+                <div className="ml-12 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-blue-500 dark:border-blue-600 w-full">
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="font-medium">{milestone.title}</h3>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        <div className="flex items-center text-xs text-gray-500">
+                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                           <Calendar size={14} className="mr-1" />
                           {formatDate(milestone.date)}
                         </div>
                         
-                        <div className="flex items-center text-xs text-gray-500">
+                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                           <Clock size={14} className="mr-1" />
                           {milestone.status === "completed" ? "Terminé" : 
                            milestone.status === "in-progress" ? "En cours" : "Planifié"}
@@ -385,19 +386,19 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                       </div>
                       
                       {milestone.description && (
-                        <p className="mt-2 text-sm text-gray-600">{milestone.description}</p>
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-500">{milestone.description}</p>
                       )}
                     </div>
                     
                     <div className="flex space-x-1">
                       <button 
-                        className="p-1 text-blue-500 hover:bg-blue-50 rounded"
+                        className="p-1 text-blue-500 dark:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded"
                         onClick={() => editMilestone(index)}
                       >
                         <Edit size={16} />
                       </button>
                       <button 
-                        className="p-1 text-red-500 hover:bg-red-50 rounded"
+                        className="p-1 text-red-500 dark:text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 rounded"
                         onClick={() => deleteMilestone(index)}
                       >
                         <Trash2 size={16} />
@@ -410,17 +411,17 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
           </div>
         </div>
       ) : (
-        <div className="bg-white p-8 rounded-lg shadow text-center">
-          <Calendar className="mx-auto text-gray-400 mb-3" size={48} />
+        <div className={UI_CLASSES.CARD + " p-8"}>
+          <Calendar className="mx-auto text-gray-400 dark:text-gray-500 mb-3" size={48} />
           <h3 className="text-lg font-medium mb-2">Aucun jalon trouvé</h3>
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             {filterStatus !== "all" 
               ? `Aucun jalon avec le statut "${filterStatus === "completed" ? "Terminé" : filterStatus === "in-progress" ? "En cours" : "Planifié"}".` 
               : "Ajoutez votre premier jalon pour commencer à construire votre plan d'action."}
           </p>
           {filterStatus !== "all" && (
             <button 
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md"
+              className={UI_CLASSES.BUTTON_PRIMARY + " mt-4"}
               onClick={() => setFilterStatus("all")}
             >
               Voir tous les jalons
@@ -430,14 +431,14 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       )}
       
       {/* Conseils */}
-      <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-lg">
+      <div className={UI_CLASSES.CARD + " bg-yellow-50 dark:bg-gray-800 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-lg"}>
         <div className="flex">
           <div className="flex-shrink-0">
-            <CheckCircle className="h-5 w-5 text-yellow-400" />
+            <CheckCircle className="h-5 w-5 text-yellow-400 dark:text-yellow-500" />
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800">Conseil pour votre plan d&apos;action</h3>
-            <div className="mt-2 text-sm text-yellow-700">
+            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-500">Conseil pour votre plan d&apos;action</h3>
+            <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-600">
               <p>Un bon plan d&apos;action pour un développeur indépendant devrait inclure :</p>
               <ul className="list-disc pl-5 mt-1 space-y-1">
                 <li>Des jalons administratifs (création d&apos;entreprise, demande ARCE)</li>

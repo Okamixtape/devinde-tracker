@@ -1,48 +1,77 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import React, { useMemo } from "react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { CircleDollarSign, Users, TrendingUp, Calendar, CheckCircle, AlertCircle } from "lucide-react";
-import type { BusinessPlanData } from "./types";
+import type { 
+  BusinessPlanData, 
+  PitchSection, 
+  ServicesSection, 
+  BusinessModelSection, 
+  MarketAnalysisSection, 
+  FinancialsSection, 
+  ActionPlanSection 
+} from "./types";
+import { UI_CLASSES } from "../styles/ui-classes";
 
-// Couleurs pour les graphiques
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
+/**
+ * Composant pour afficher une carte de statistique
+ */
+interface StatCardProps {
+  title: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+}
 
-// Composant pour les cartes de statistiques
-const StatCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode; color: string }) => (
-  <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex items-center space-x-4">
+const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
+  <div className={UI_CLASSES.CARD + " flex items-center space-x-4"}>
     <div className={`p-3 rounded-full ${color}`}>{icon}</div>
     <div>
-      <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-      <p className="text-xl font-semibold dark:text-white">{value}</p>
+      <p className={UI_CLASSES.TEXT_SMALL}>{title}</p>
+      <p className={`text-xl font-semibold ${UI_CLASSES.TEXT}`}>{value}</p>
     </div>
   </div>
 );
 
-// Composant pour les sections incomplètes
-const IncompleteSection = ({ section, completion }: { section: string; completion: number }) => (
+/**
+ * Composant pour afficher une barre de progression d'une section
+ */
+interface IncompleteSectionProps {
+  section: string;
+  completion: number;
+}
+
+const IncompleteSection: React.FC<IncompleteSectionProps> = ({ section, completion }) => (
   <div className="flex items-center justify-between mb-2">
-    <span className="text-sm dark:text-gray-300">{section}</span>
+    <span className={`text-sm ${UI_CLASSES.TEXT}`}>{section}</span>
     <div className="flex items-center">
       <div className="w-32 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
         <div 
-          className={`h-2 rounded-full ${completion < 30 ? 'bg-red-500' : completion < 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+          className={`h-2 rounded-full ${
+            completion < 30 ? 'bg-red-500' : 
+            completion < 70 ? 'bg-yellow-500' : 
+            'bg-green-500'
+          }`}
           style={{ width: `${completion}%` }}
         ></div>
       </div>
-      <span className="text-xs text-gray-500 dark:text-gray-400">{completion}%</span>
+      <span className={`text-xs ${UI_CLASSES.TEXT_SMALL}`}>{completion}%</span>
     </div>
   </div>
 );
 
-// Composant principal Dashboard
-const Dashboard = ({ businessPlanData }: { businessPlanData: BusinessPlanData }) => {
-  // Fonction générique pour calculer le taux de complétion d'une section
-  const calculateSectionCompletion = useCallback((section: Record<string, unknown>): number => {
-    let totalFields = 0;
-    let completedFields = 0;
+/**
+ * Fonction utilitaire pour calculer le taux de complétion d'une section
+ * Accepte n'importe quelle section du business plan
+ */
+function calculateSectionCompletion<T extends object>(section: T): number {
+  let totalFields = 0;
+  let completedFields = 0;
 
-    for (const key in section) {
+  // Parcourir toutes les propriétés de l'objet
+  for (const key in section) {
+    if (Object.prototype.hasOwnProperty.call(section, key)) {
       totalFields++;
-      const value = section[key];
+      const value = section[key as keyof T];
       
       if (Array.isArray(value)) {
         if (value.length > 0) completedFields++;
@@ -52,192 +81,245 @@ const Dashboard = ({ businessPlanData }: { businessPlanData: BusinessPlanData })
         if (value.trim().length > 0) completedFields++;
       }
     }
+  }
 
-    return Math.round((completedFields / totalFields) * 100);
-  }, []);
+  return Math.round((completedFields / totalFields) * 100);
+}
 
-  // Calcul du taux de complétion de chaque section
-  const calculateCompletion = useCallback(() => {
-    return {
-      pitch: calculateSectionCompletion(businessPlanData.pitch),
-      services: calculateSectionCompletion(businessPlanData.services),
-      businessModel: calculateSectionCompletion(businessPlanData.businessModel),
-      marketAnalysis: calculateSectionCompletion(businessPlanData.marketAnalysis),
-      financials: calculateSectionCompletion(businessPlanData.financials),
-      actionPlan: calculateSectionCompletion(businessPlanData.actionPlan),
-    };
-  }, [businessPlanData, calculateSectionCompletion]);
+/**
+ * Fonction utilitaire pour formater les données des graphiques
+ */
+const formatQuarterlyData = (goals: number[]) => {
+  return goals.map((value, index) => ({
+    name: `T${index + 1}`,
+    revenu: value
+  }));
+};
 
-  // Données de complétion calculées
-  const [completion, setCompletion] = useState(calculateCompletion());
-  
-  useEffect(() => {
-    setCompletion(calculateCompletion());
-  }, [calculateCompletion]);
+/**
+ * Composant principal du tableau de bord
+ */
+interface DashboardProps {
+  businessPlanData: BusinessPlanData;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ businessPlanData }) => {
+  // Calcul des taux de complétion de toutes les sections
+  const completionRates = useMemo(() => ({
+    pitch: calculateSectionCompletion<PitchSection>(businessPlanData.pitch),
+    services: calculateSectionCompletion<ServicesSection>(businessPlanData.services),
+    businessModel: calculateSectionCompletion<BusinessModelSection>(businessPlanData.businessModel),
+    marketAnalysis: calculateSectionCompletion<MarketAnalysisSection>(businessPlanData.marketAnalysis),
+    financials: calculateSectionCompletion<FinancialsSection>(businessPlanData.financials),
+    actionPlan: calculateSectionCompletion<ActionPlanSection>(businessPlanData.actionPlan)
+  }), [businessPlanData]);
 
   // Calcul du taux de complétion global
-  const globalCompletion = Math.round(
-    Object.values(completion).reduce((sum, val) => sum + val, 0) / Object.values(completion).length
-  );
+  const globalCompletion = useMemo(() => {
+    const sections = Object.values(completionRates);
+    return Math.round(sections.reduce((acc, value) => acc + value, 0) / sections.length);
+  }, [completionRates]);
 
-  // Liste des sections incomplètes (moins de 100%)
-  const incompleteSections = Object.entries(completion)
-    .filter(([, value]) => value < 100)
-    .sort((a, b) => a[1] - b[1])
-    .map(([key, value]) => ({ 
-      section: key === 'businessModel' ? 'Modèle économique' :
-               key === 'marketAnalysis' ? 'Analyse de marché' :
-               key === 'actionPlan' ? 'Plan d\'action' : 
-               key.charAt(0).toUpperCase() + key.slice(1), 
-      completion: value 
-    }));
+  // Préparation des données pour le graphique
+  const quarterlyData = useMemo(() => 
+    formatQuarterlyData(businessPlanData.financials.quarterlyGoals),
+  [businessPlanData.financials.quarterlyGoals]);
 
-  // Préparation des données pour le graphique financier
-  const financeData = [
-    { name: 'T1', revenu: businessPlanData.financials.quarterlyGoals[0] || 0 },
-    { name: 'T2', revenu: businessPlanData.financials.quarterlyGoals[1] || 0 },
-    { name: 'T3', revenu: businessPlanData.financials.quarterlyGoals[2] || 0 },
-    { name: 'T4', revenu: businessPlanData.financials.quarterlyGoals[3] || 0 },
-  ];
+  // Calcul des statistiques principales
+  const stats = useMemo(() => {
+    const totalClients = businessPlanData.marketAnalysis.targetClients.length;
+    const totalRevenue = businessPlanData.financials.quarterlyGoals.reduce((sum, goal) => sum + goal, 0);
+    const milestonesCount = businessPlanData.actionPlan.milestones.length;
+    
+    return {
+      totalRevenue,
+      totalClients,
+      initialInvestment: businessPlanData.financials.initialInvestment,
+      milestonesCount
+    };
+  }, [
+    businessPlanData.marketAnalysis.targetClients.length,
+    businessPlanData.financials.quarterlyGoals,
+    businessPlanData.actionPlan.milestones.length,
+    businessPlanData.financials.initialInvestment
+  ]);
+  
+  // Sections incomplètes (moins de 70% de complétion)
+  const incompleteSections = useMemo(() => {
+    return Object.entries(completionRates)
+      .filter(([, rate]) => rate < 70)
+      .sort(([, rateA], [, rateB]) => rateA - rateB);
+  }, [completionRates]);
 
-  // Préparation des données pour le graphique de complétion
-  const completionData = Object.entries(completion)
-    .filter(([, value]) => value > 0) // Ne garder que les valeurs supérieures à 0%
-    .map(([key, value]) => ({
-      name: key === 'businessModel' ? 'Modèle éco.' :
-            key === 'marketAnalysis' ? 'Marché' :
-            key === 'actionPlan' ? 'Action' : 
-            key.charAt(0).toUpperCase() + key.slice(1),
-      value
-    }));
+  const formatValue = (value: number) => {
+    return value.toLocaleString('fr-FR');
+  };
 
   return (
-    <div className="p-6 space-y-6 dark:bg-gray-900 min-h-full h-full">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold dark:text-white">Tableau de bord</h1>
-        <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm font-medium">
+    <div className="p-6 max-w-7xl mx-auto">
+      <header className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
+        <h1 className={UI_CLASSES.HEADING_1}>Tableau de bord</h1>
+        <div className="bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-md font-semibold">
           Avancement global: {globalCompletion}%
         </div>
+      </header>
+      
+      {/* Cartes de statistiques principales */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        <StatCard 
+          title="CA Année 1 (prévisionnel)"
+          value={`${formatValue(stats.totalRevenue)}€`}
+          icon={<CircleDollarSign className="text-white" size={24} />}
+          color="bg-blue-500 dark:bg-blue-600"
+        />
+        <StatCard 
+          title="Investissement initial"
+          value={`${formatValue(stats.initialInvestment)}€`}
+          icon={<TrendingUp className="text-white" size={24} />}
+          color="bg-green-500 dark:bg-green-600"
+        />
+        <StatCard 
+          title="Clients cibles identifiés"
+          value={stats.totalClients}
+          icon={<Users className="text-white" size={24} />}
+          color="bg-purple-500 dark:bg-purple-600"
+        />
+        <StatCard 
+          title="Jalons définis"
+          value={stats.milestonesCount}
+          icon={<Calendar className="text-white" size={24} />}
+          color="bg-orange-500 dark:bg-orange-600"
+        />
       </div>
-
-      {/* Statistiques rapides */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard 
-          title="CA Année 1 (prévisionnel)" 
-          value={`${businessPlanData.financials.quarterlyGoals.reduce((a, b) => a + b, 0)}€`} 
-          icon={<CircleDollarSign className="text-white" size={20} />}
-          color="bg-blue-500"
-        />
-        <StatCard 
-          title="Investissement initial" 
-          value={`${businessPlanData.financials.initialInvestment}€`} 
-          icon={<TrendingUp className="text-white" size={20} />}
-          color="bg-green-500"
-        />
-        <StatCard 
-          title="Clients cibles identifiés" 
-          value={businessPlanData.marketAnalysis.targetClients.length} 
-          icon={<Users className="text-white" size={20} />}
-          color="bg-purple-500"
-        />
-        <StatCard 
-          title="Jalons définis" 
-          value={businessPlanData.actionPlan.milestones.length} 
-          icon={<Calendar className="text-white" size={20} />}
-          color="bg-orange-500"
-        />
-      </div>
-
-      {/* Graphiques et tableaux */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Graphique financier */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 dark:text-white">Prévisions financières</h2>
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={financeData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip contentStyle={{ backgroundColor: '#fff', borderColor: '#ddd' }} />
-              <Legend />
-              <Bar dataKey="revenu" fill="#3B82F6" />
-            </BarChart>
-          </ResponsiveContainer>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        {/* Statistiques clés */}
+        <div className={UI_CLASSES.CARD}>
+          <h2 className={UI_CLASSES.HEADING_3}>Statistiques clés</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
+              <h3 className="text-blue-800 dark:text-blue-300 font-medium mb-1">Revenu total prévisionnel</h3>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatValue(stats.totalRevenue)}€</p>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
+              <h3 className="text-green-800 dark:text-green-300 font-medium mb-1">Investissement initial</h3>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatValue(stats.initialInvestment)}€</p>
+            </div>
+            <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
+              <h3 className="text-purple-800 dark:text-purple-300 font-medium mb-1">Client cibles</h3>
+              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalClients}</p>
+            </div>
+            <div className="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg">
+              <h3 className="text-orange-800 dark:text-orange-300 font-medium mb-1">Concurrents identifiés</h3>
+              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{businessPlanData.marketAnalysis.competitors.length}</p>
+            </div>
+          </div>
         </div>
-
-        {/* Graphique de complétion */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 dark:text-white">Complétion du business plan</h2>
-          {completionData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={completionData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}%`}
-                >
-                  {completionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ backgroundColor: '#fff', borderColor: '#ddd' }} />
-              </PieChart>
+      
+        {/* Prévisions financières */}
+        <div className={UI_CLASSES.CARD}>
+          <h2 className={UI_CLASSES.HEADING_3}>Prévisions financières</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={quarterlyData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <XAxis 
+                  dataKey="name" 
+                  axisLine={{ stroke: '#666', strokeWidth: 1 }} 
+                  tick={{ fill: '#666', fontSize: 12 }}
+                />
+                <YAxis 
+                  axisLine={{ stroke: '#666', strokeWidth: 1 }}
+                  tick={{ fill: '#666', fontSize: 12 }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    color: '#333',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px'
+                  }}
+                  itemStyle={{ color: '#333' }}
+                  labelStyle={{ fontWeight: 'bold', color: '#333' }}
+                />
+                <Bar 
+                  dataKey="revenu" 
+                  name="Prévision de revenus" 
+                  fill="#3B82F6" 
+                  radius={[4, 4, 0, 0]}
+                  barSize={30} 
+                />
+              </BarChart>
             </ResponsiveContainer>
-          ) : (
-            <div className="flex items-center justify-center h-64 text-gray-500 dark:text-gray-400">
-              Aucune section complétée pour le moment
-            </div>
-          )}
+          </div>
         </div>
-
-        {/* Sections à compléter */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 dark:text-white">Sections à compléter</h2>
+      </div>
+      
+      {/* Sections à compléter */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className={UI_CLASSES.CARD}>
+          <h2 className={UI_CLASSES.HEADING_3}>
+            Sections à compléter
+            {incompleteSections.length === 0 && (
+              <span className="ml-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs px-2 py-1 rounded-full">
+                Tout est complété !
+              </span>
+            )}
+          </h2>
+          
           {incompleteSections.length > 0 ? (
-            <div className="space-y-3">
-              {incompleteSections.map((section, index) => (
-                <IncompleteSection key={index} section={section.section} completion={section.completion} />
+            <div className="mt-4 space-y-2">
+              {incompleteSections.map(([section, rate]) => (
+                <IncompleteSection 
+                  key={section} 
+                  section={
+                    section === "pitch" ? "Pitch" :
+                    section === "services" ? "Services" :
+                    section === "businessModel" ? "Modèle économique" :
+                    section === "marketAnalysis" ? "Analyse de marché" :
+                    section === "financials" ? "Finances" :
+                    section === "actionPlan" ? "Plan d'action" :
+                    section
+                  } 
+                  completion={rate} 
+                />
               ))}
+              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start">
+                <AlertCircle className="text-yellow-500 mr-2 flex-shrink-0 mt-1" size={18} />
+                <p className={`text-sm ${UI_CLASSES.TEXT}`}>
+                  Complétez ces sections pour améliorer votre business plan et obtenir une vision plus précise de votre activité.
+                </p>
+              </div>
             </div>
           ) : (
-            <div className="text-center py-4">
-              <CheckCircle className="mx-auto text-green-500 mb-2" size={40} />
-              <p className="text-gray-700 dark:text-gray-300">Toutes les sections sont complétées à 100% !</p>
+            <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg flex items-start">
+              <CheckCircle className="text-green-500 mr-2 flex-shrink-0 mt-1" size={18} />
+              <p className={`text-sm ${UI_CLASSES.TEXT}`}>
+                Félicitations ! Toutes les sections de votre business plan sont bien documentées. 
+                Vous pouvez maintenant explorer les différentes sections en détail.
+              </p>
             </div>
           )}
         </div>
-
-        {/* Prochaines étapes */}
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4 dark:text-white">Prochaines étapes</h2>
-          {businessPlanData.actionPlan.milestones.length > 0 ? (
-            <div className="space-y-3">
-              {businessPlanData.actionPlan.milestones.slice(0, 3).map((milestone, index) => (
-                <div key={index} className="flex items-start p-2 border-l-2 border-blue-500">
-                  <div className="ml-2">
-                    <p className="font-medium dark:text-white">{milestone}</p>
-                  </div>
-                </div>
-              ))}
-              {businessPlanData.actionPlan.milestones.length > 3 && (
-                <p className="text-sm text-right text-blue-500 dark:text-blue-400">
-                  +{businessPlanData.actionPlan.milestones.length - 3} autres jalons...
-                </p>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-4 text-yellow-600">
-              <div className="p-1 rounded-full bg-yellow-100">
-                <AlertCircle className="text-yellow-600" size={16} />
-              </div>
-              <span className="ml-2 dark:text-yellow-400">Aucun jalon défini dans votre plan d&apos;action</span>
-            </div>
-          )}
+        
+        <div className={UI_CLASSES.CARD}>
+          <h2 className={UI_CLASSES.HEADING_3}>Progression par section</h2>
+          <div className="mt-4 space-y-3">
+            {Object.entries(completionRates).map(([section, rate]) => (
+              <IncompleteSection 
+                key={section} 
+                section={
+                  section === "pitch" ? "Pitch" :
+                  section === "services" ? "Services" :
+                  section === "businessModel" ? "Modèle économique" :
+                  section === "marketAnalysis" ? "Analyse de marché" :
+                  section === "financials" ? "Finances" :
+                  section === "actionPlan" ? "Plan d'action" :
+                  section
+                } 
+                completion={rate} 
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

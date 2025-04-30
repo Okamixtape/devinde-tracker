@@ -1,25 +1,42 @@
 "use client";
-import React, { useState } from "react";
-import { Settings, Download, Upload, Home } from "lucide-react";
 
-// Composants améliorés
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { Home } from "lucide-react";
+
+// Composants
 import Dashboard from "./Dashboard";
 import PricingSection from "./PricingSection";
 import FinancialDashboard from "./FinancialDashboard";
 import ActionPlanTimeline from "./ActionPlanTimeline";
-
-// Composants existants (à utiliser pour des fonctionnalités non encore améliorées)
 import PitchSection from "./PitchSection";
 import ServicesSection from "./ServicesSection";
 import MarketAnalysisSection from "./MarketAnalysisSection";
+import Layout from "./Layout";
+import { ExtendedSectionKey, NavSection } from "./Sidebar";
 
-import Sidebar from "./Sidebar";
-import Header from "./Header";
-
+// Types et hooks
 import type { SectionKey } from "./types";
 import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
+import { useTheme } from "../context/ThemeContext";
+import { webFreelanceData } from "../data/demo-data";
 
-// Composant principal
+/**
+ * Mapping des clés de section aux libellés affichés
+ */
+const SECTION_LABELS: Record<string, string> = {
+  dashboard: "Tableau de bord",
+  businessModel: "Modèle économique",
+  marketAnalysis: "Analyse de marché",
+  actionPlan: "Plan d'action",
+  financials: "Finances",
+  pitch: "Pitch",
+  services: "Services"
+};
+
+/**
+ * Composant principal de l'application DevIndé Tracker
+ * Gère l'affichage des différentes sections et la navigation
+ */
 const DevIndeTracker: React.FC = () => {
   const {
     businessPlanData,
@@ -28,17 +45,72 @@ const DevIndeTracker: React.FC = () => {
     removeListItem,
     importData,
     exportData,
+    loadDemoData
   } = useBusinessPlanData();
 
-  // État pour la section active et le thème
-  const [activeSection, setActiveSection] = useState<SectionKey | "dashboard">("dashboard");
-  const [darkMode, setDarkMode] = useState<boolean>(false);
+  // État pour la section active
+  const [activeSection, setActiveSection] = useState<ExtendedSectionKey>("dashboard");
+  const { toggleTheme } = useTheme();
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
-  // Rendu des sections
-  const renderSectionContent = () => {
+  // Charger les données de démo lors du premier rendu
+  useEffect(() => {
+    if (isFirstLoad) {
+      loadDemoData(webFreelanceData);
+      setIsFirstLoad(false);
+    }
+  }, [isFirstLoad, loadDemoData]);
+
+  // Gestion des ajouts d'éléments dans les listes avec validation
+  const handleAddListItem = useCallback((section: SectionKey, field: string) => {
+    const input = document.getElementById(`new-${section}-${field}`) as HTMLInputElement;
+    if (input && input.value.trim()) {
+      addListItem(section, field);
+    }
+  }, [addListItem]);
+
+  // Construction des sections pour la barre latérale
+  const sidebarSections = useMemo<NavSection[]>(() => {
+    const dashboardSection = { 
+      key: "dashboard", 
+      label: SECTION_LABELS.dashboard, 
+      icon: <Home size={18} /> 
+    };
+    
+    const businessPlanSections = Object.keys(businessPlanData).map(key => ({
+      key,
+      label: SECTION_LABELS[key] || key.charAt(0).toUpperCase() + key.slice(1)
+    }));
+    
+    return [dashboardSection, ...businessPlanSections];
+  }, [businessPlanData]);
+
+  // Gestionnaire d'import avec feedback
+  const handleImport = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const result = await importData(event);
+      if (result.success) {
+        // On pourrait ajouter un toast ou une notification ici
+        console.log("Import réussi !");
+      } else {
+        console.error("Erreur d'import:", result.error);
+        // Affichage d'un message d'erreur à l'utilisateur
+        alert(`Erreur lors de l'import: ${result.error}`);
+      }
+    } catch (error) {
+      console.error("Erreur inattendue lors de l'import:", error);
+      alert("Une erreur inattendue est survenue lors de l'import");
+    }
+  }, [importData]);
+
+  /**
+   * Rendu des sections en fonction de la section active
+   */
+  const renderSectionContent = useCallback(() => {
     switch (activeSection) {
       case "dashboard":
         return <Dashboard businessPlanData={businessPlanData} />;
+      
       case "pitch":
         return (
           <PitchSection
@@ -48,19 +120,16 @@ const DevIndeTracker: React.FC = () => {
             removeListItem={removeListItem}
           />
         );
+      
       case "services":
         return (
           <ServicesSection
             data={businessPlanData.services}
-            addListItem={(section, field) => {
-              const input = document.getElementById(`new-${section}-${field}`) as HTMLInputElement;
-              if (input && input.value.trim()) {
-                addListItem(section, field);
-              }
-            }}
+            addListItem={handleAddListItem}
             removeListItem={removeListItem}
           />
         );
+      
       case "businessModel":
         return (
           <PricingSection
@@ -68,6 +137,7 @@ const DevIndeTracker: React.FC = () => {
             updateData={updateData}
           />
         );
+      
       case "marketAnalysis":
         return (
           <MarketAnalysisSection
@@ -76,6 +146,7 @@ const DevIndeTracker: React.FC = () => {
             removeListItem={removeListItem}
           />
         );
+      
       case "financials":
         return (
           <FinancialDashboard
@@ -83,6 +154,7 @@ const DevIndeTracker: React.FC = () => {
             updateData={updateData}
           />
         );
+      
       case "actionPlan":
         return (
           <ActionPlanTimeline
@@ -90,72 +162,30 @@ const DevIndeTracker: React.FC = () => {
             updateData={updateData}
           />
         );
+      
       default:
         return <Dashboard businessPlanData={businessPlanData} />;
     }
-  };
-
-  // Sections pour la barre latérale (avec le tableau de bord ajouté)
-  const sections = [
-    { key: "dashboard", label: "Tableau de bord", icon: <Home size={18} className="mr-2" /> },
-    ...Object.keys(businessPlanData).map(key => ({
-      key,
-      label: key === "businessModel" 
-        ? "Modèle économique" 
-        : key === "marketAnalysis" 
-          ? "Analyse de marché" 
-          : key === "actionPlan" 
-            ? "Plan d'action" 
-            : key === "financials" 
-              ? "Finances" 
-              : key.charAt(0).toUpperCase() + key.slice(1),
-      // Note: Les icônes sont définies dans le composant Sidebar
-    }))
-  ];
+  }, [
+    activeSection, 
+    businessPlanData, 
+    updateData, 
+    addListItem, 
+    handleAddListItem, 
+    removeListItem
+  ]);
 
   return (
-    <div className={`min-h-screen ${darkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-black'}`}>
-      <Header darkMode={darkMode} />
-      
-      <div className="flex flex-col md:flex-row min-h-screen">
-        <Sidebar
-          activeSection={activeSection}
-          setActiveSection={setActiveSection}
-          onExport={exportData}
-          onImport={importData}
-          sections={sections}
-          darkMode={darkMode}
-        />
-        
-        <main className={`flex-1 overflow-y-auto ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-          {renderSectionContent()}
-          
-          {/* Bouton flottant pour les paramètres */}
-          <div className="fixed bottom-6 right-6 flex space-x-2">
-            <button 
-              className={`p-3 rounded-full shadow-lg ${darkMode ? 'bg-blue-600' : 'bg-blue-500'} text-white`}
-              onClick={() => setDarkMode(!darkMode)}
-              title="Changer le thème"
-            >
-              <Settings size={20} />
-            </button>
-            
-            <button 
-              className={`p-3 rounded-full shadow-lg ${darkMode ? 'bg-green-600' : 'bg-green-500'} text-white`}
-              onClick={exportData}
-              title="Exporter les données"
-            >
-              <Download size={20} />
-            </button>
-            
-            <label className={`p-3 rounded-full shadow-lg ${darkMode ? 'bg-orange-600' : 'bg-orange-500'} text-white cursor-pointer`} title="Importer des données">
-              <Upload size={20} />
-              <input type="file" accept="application/json" className="hidden" onChange={importData} />
-            </label>
-          </div>
-        </main>
-      </div>
-    </div>
+    <Layout
+      activeSection={activeSection}
+      setActiveSection={setActiveSection}
+      onExport={exportData}
+      onImport={handleImport}
+      onToggleTheme={toggleTheme}
+      sections={sidebarSections}
+    >
+      {renderSectionContent()}
+    </Layout>
   );
 };
 

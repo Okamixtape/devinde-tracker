@@ -1,9 +1,15 @@
-import { useState, useEffect, ChangeEvent } from "react";
-import type { BusinessPlanData, SectionKey } from "../components/types";
+import { useState, useEffect, ChangeEvent, useCallback } from "react";
+import type { BusinessPlanData } from "../components/types";
 
 // Type pour les valeurs de champs génériques
 type FieldValue = string | number | string[] | number[];
 
+// Clé pour le stockage local
+const LOCAL_STORAGE_KEY = "devinde-tracker-data";
+
+/**
+ * Structure initiale des données du business plan
+ */
 const getInitialData = (): BusinessPlanData => {
   return {
     pitch: {
@@ -38,25 +44,40 @@ const getInitialData = (): BusinessPlanData => {
   };
 };
 
+/**
+ * Hook personnalisé pour gérer les données du business plan
+ * Fournit des méthodes pour charger, mettre à jour, ajouter, supprimer et sauvegarder les données
+ */
 export const useBusinessPlanData = () => {
   // État pour les données du plan d'affaires
   const [businessPlanData, setBusinessPlanData] = useState<BusinessPlanData>(getInitialData());
   
+  // Sauvegarder les données dans localStorage
+  const saveToLocalStorage = useCallback((data: BusinessPlanData) => {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+  }, []);
+  
   // Charger les données depuis localStorage au démarrage
   useEffect(() => {
-    const savedData = localStorage.getItem("devinde-tracker-data");
-    if (savedData) {
+    const loadFromLocalStorage = () => {
+      const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (!savedData) return;
+      
       try {
         const parsedData = JSON.parse(savedData) as BusinessPlanData;
         setBusinessPlanData(parsedData);
       } catch (error) {
         console.error("Erreur lors du chargement des données:", error);
       }
-    }
+    };
+    
+    loadFromLocalStorage();
   }, []);
   
-  // Fonction pour mettre à jour les données
-  const updateData = (section: keyof BusinessPlanData, field: string, value: FieldValue) => {
+  /**
+   * Met à jour un champ spécifique dans une section du business plan
+   */
+  const updateData = useCallback((section: keyof BusinessPlanData, field: string, value: FieldValue) => {
     setBusinessPlanData(prev => {
       const newData = {
         ...prev,
@@ -66,50 +87,50 @@ export const useBusinessPlanData = () => {
         },
       };
       
-      // Sauvegarder dans localStorage
-      localStorage.setItem("devinde-tracker-data", JSON.stringify(newData));
+      saveToLocalStorage(newData);
+      return newData;
+    });
+  }, [saveToLocalStorage]);
+  
+  /**
+   * Ajoute un élément à une liste dans le business plan
+   */
+  const addListItem = useCallback((section: keyof BusinessPlanData, field: string) => {
+    const input = document.getElementById(`new-${section}-${field}`) as HTMLInputElement;
+    
+    if (!input || !input.value.trim()) return;
+    
+    const value = input.value.trim();
+    
+    setBusinessPlanData(prev => {
+      // Type guard pour vérifier si le champ est un tableau
+      const currentField = prev[section][field as keyof typeof prev[typeof section]];
+      if (!Array.isArray(currentField)) {
+        console.error(`Le champ ${field} n'est pas un tableau.`);
+        return prev;
+      }
+      
+      const newData = {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [field]: [...currentField, value],
+        },
+      };
+      
+      saveToLocalStorage(newData);
+      
+      // Réinitialiser le champ de saisie
+      input.value = "";
       
       return newData;
     });
-  };
+  }, [saveToLocalStorage]);
   
-  // Fonction pour ajouter un élément à une liste
-  // Adaptée pour correspondre à la signature attendue dans les composants
-  const addListItem = (section: keyof BusinessPlanData, field: string) => {
-    const input = document.getElementById(`new-${section}-${field}`) as HTMLInputElement;
-    
-    if (input && input.value.trim()) {
-      const value = input.value.trim();
-      
-      setBusinessPlanData(prev => {
-        // Type guard pour vérifier si le champ est un tableau
-        const currentField = prev[section][field as keyof typeof prev[typeof section]];
-        if (!Array.isArray(currentField)) {
-          console.error(`Le champ ${field} n'est pas un tableau.`);
-          return prev;
-        }
-        
-        const newData = {
-          ...prev,
-          [section]: {
-            ...prev[section],
-            [field]: [...currentField, value],
-          },
-        };
-        
-        // Sauvegarder dans localStorage
-        localStorage.setItem("devinde-tracker-data", JSON.stringify(newData));
-        
-        // Réinitialiser le champ de saisie
-        input.value = "";
-        
-        return newData;
-      });
-    }
-  };
-  
-  // Fonction pour supprimer un élément d'une liste
-  const removeListItem = (section: keyof BusinessPlanData, field: string, index: number) => {
+  /**
+   * Supprime un élément d'une liste dans le business plan
+   */
+  const removeListItem = useCallback((section: keyof BusinessPlanData, field: string, index: number) => {
     setBusinessPlanData(prev => {
       // Type guard pour vérifier si le champ est un tableau
       const currentField = prev[section][field as keyof typeof prev[typeof section]];
@@ -129,15 +150,52 @@ export const useBusinessPlanData = () => {
         },
       };
       
-      // Sauvegarder dans localStorage
-      localStorage.setItem("devinde-tracker-data", JSON.stringify(newData));
-      
+      saveToLocalStorage(newData);
       return newData;
     });
-  };
+  }, [saveToLocalStorage]);
   
-  // Fonction pour exporter les données
-  const exportData = () => {
+  /**
+   * Importe des données de business plan à partir d'un fichier JSON
+   * @returns Un objet indiquant le succès ou l'échec de l'importation
+   */
+  const importData = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return { success: false, error: "Aucun fichier sélectionné" };
+    }
+    
+    const reader = new FileReader();
+    
+    return new Promise<{ success: boolean; error?: string }>((resolve) => {
+      reader.onload = (e) => {
+        try {
+          const jsonData = e.target?.result as string;
+          const parsedData = JSON.parse(jsonData) as BusinessPlanData;
+          setBusinessPlanData(parsedData);
+          saveToLocalStorage(parsedData);
+          resolve({ success: true });
+        } catch (error) {
+          console.error("Erreur lors de l'importation des données:", error);
+          resolve({ 
+            success: false, 
+            error: error instanceof Error ? error.message : "Erreur inconnue lors de l'importation" 
+          });
+        }
+      };
+      
+      reader.onerror = () => {
+        resolve({ success: false, error: "Erreur de lecture du fichier" });
+      };
+      
+      reader.readAsText(file);
+    });
+  }, [saveToLocalStorage]);
+  
+  /**
+   * Exporte les données du business plan sous forme de fichier JSON
+   */
+  const exportData = useCallback(() => {
     const dataStr = JSON.stringify(businessPlanData, null, 2);
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
     
@@ -147,26 +205,15 @@ export const useBusinessPlanData = () => {
     linkElement.setAttribute("href", dataUri);
     linkElement.setAttribute("download", exportFileName);
     linkElement.click();
-  };
+  }, [businessPlanData]);
   
-  // Fonction pour importer des données
-  const importData = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const jsonData = e.target?.result as string;
-        const parsedData = JSON.parse(jsonData) as BusinessPlanData;
-        setBusinessPlanData(parsedData);
-        localStorage.setItem("devinde-tracker-data", jsonData);
-      } catch (error) {
-        console.error("Erreur lors de l'importation des données:", error);
-      }
-    };
-    reader.readAsText(file);
-  };
+  /**
+   * Charge des données de démonstration
+   */
+  const loadDemoData = useCallback((demoData: BusinessPlanData) => {
+    setBusinessPlanData(demoData);
+    saveToLocalStorage(demoData);
+  }, [saveToLocalStorage]);
   
   return {
     businessPlanData,
@@ -174,7 +221,8 @@ export const useBusinessPlanData = () => {
     addListItem,
     removeListItem,
     exportData,
-    importData
+    importData,
+    loadDemoData
   };
 };
 

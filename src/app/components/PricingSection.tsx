@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Save, Trash2, Plus, Edit, X } from "lucide-react";
 import type { BusinessPlanData } from "./types";
+import { UI_CLASSES } from "../styles/ui-classes";
 
 // Types pour les éléments de tarification
 type PricingItem = {
@@ -247,14 +248,14 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
 
   return (
     <div className="space-y-8 p-6">
-      <h2 className="text-2xl font-bold mb-6">Politique de tarification</h2>
+      <h2 className={UI_CLASSES.HEADING_2}>Politique de tarification</h2>
       
       {/* Section Tarifs horaires */}
-      <div className="bg-white p-5 rounded-lg shadow">
+      <div className={UI_CLASSES.CARD}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Tarifs horaires</h3>
+          <h3 className={UI_CLASSES.HEADING_3}>Tarifs horaires</h3>
           <button 
-            className="bg-blue-500 text-white px-3 py-1 rounded-md flex items-center text-sm" 
+            className={UI_CLASSES.BUTTON_PRIMARY} 
             onClick={() => {
               setEditingHourly(null);
               setShowHourlyForm(!showHourlyForm);
@@ -266,25 +267,27 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
         </div>
         
         {showHourlyForm && (
-          <form onSubmit={saveHourlyRate} className="mb-4 p-4 bg-gray-50 rounded-md">
+          <form onSubmit={saveHourlyRate} className={`mt-4 p-4 border rounded-lg ${UI_CLASSES.CARD}`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Service</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="hourlyName">Service</label>
                 <input 
                   type="text" 
+                  id="hourlyName"
                   name="hourlyName" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: Développement Front-end" 
                   defaultValue={editingHourly?.name || ""}
                   required 
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Taux horaire (€/h)</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="hourlyRate">Taux horaire (€/h)</label>
                 <input 
                   type="number" 
+                  id="hourlyRate"
                   name="hourlyRate" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: 40" 
                   defaultValue={editingHourly?.hourlyRate || ""}
                   required 
@@ -294,7 +297,7 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
             <div className="flex justify-end space-x-2">
               <button 
                 type="button" 
-                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                className={UI_CLASSES.BUTTON_SECONDARY}
                 onClick={() => {
                   setShowHourlyForm(false);
                   setEditingHourly(null);
@@ -304,7 +307,7 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
               </button>
               <button 
                 type="submit" 
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm flex items-center"
+                className={`${UI_CLASSES.BUTTON_PRIMARY} flex items-center`}
               >
                 <Save size={16} className="mr-1" />
                 Enregistrer
@@ -315,30 +318,30 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
         
         {hourlyRates.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
+            <table className={UI_CLASSES.TABLE}>
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Service</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Taux horaire</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Équivalent jour</th>
-                  <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Actions</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Service</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Taux horaire</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Équivalent jour</th>
+                  <th className={`${UI_CLASSES.TABLE_HEADER} text-right`}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
                 {hourlyRates.map((rate, index) => (
-                  <tr key={rate.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">{rate.name}</td>
-                    <td className="px-4 py-3 text-sm">{rate.hourlyRate}€/h</td>
-                    <td className="px-4 py-3 text-sm">{rate.dailyRate}€/jour</td>
-                    <td className="px-4 py-3 text-sm text-right">
+                  <tr key={rate.id} className={`${UI_CLASSES.TABLE_ROW} hover:bg-gray-50 dark:hover:bg-gray-700`}>
+                    <td className={UI_CLASSES.TABLE_CELL}>{rate.name}</td>
+                    <td className={UI_CLASSES.TABLE_CELL}>{rate.hourlyRate}€/h</td>
+                    <td className={UI_CLASSES.TABLE_CELL}>{rate.dailyRate}€/jour</td>
+                    <td className={`${UI_CLASSES.TABLE_CELL} text-right`}>
                       <button 
-                        className="text-blue-500 hover:text-blue-700 mr-2"
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mr-2"
                         onClick={() => editHourlyRate(rate)}
                       >
                         <Edit size={16} />
                       </button>
                       <button 
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         onClick={() => deleteHourlyRate(index)}
                       >
                         <Trash2 size={16} />
@@ -357,11 +360,11 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
       </div>
       
       {/* Section Forfaits par projet */}
-      <div className="bg-white p-5 rounded-lg shadow">
+      <div className={UI_CLASSES.CARD}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Forfaits par projet</h3>
+          <h3 className={UI_CLASSES.HEADING_3}>Forfaits par projet</h3>
           <button 
-            className="bg-blue-500 text-white px-3 py-1 rounded-md flex items-center text-sm" 
+            className={UI_CLASSES.BUTTON_PRIMARY} 
             onClick={() => {
               setEditingPackage(null);
               setShowPackageForm(!showPackageForm);
@@ -373,47 +376,51 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
         </div>
         
         {showPackageForm && (
-          <form onSubmit={savePackage} className="mb-4 p-4 bg-gray-50 rounded-md">
+          <form onSubmit={savePackage} className={`mt-4 p-4 border rounded-lg ${UI_CLASSES.CARD}`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Type de projet</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="packageName">Type de projet</label>
                 <input 
                   type="text" 
+                  id="packageName"
                   name="packageName" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: Site vitrine" 
                   defaultValue={editingPackage?.name || ""}
                   required 
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Prix minimum (€)</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="minPrice">Prix minimum (€)</label>
                 <input 
                   type="number" 
+                  id="minPrice"
                   name="minPrice" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: 1200" 
                   defaultValue={editingPackage?.minPrice || ""}
                   required 
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Prix maximum (€)</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="maxPrice">Prix maximum (€)</label>
                 <input 
                   type="number" 
+                  id="maxPrice"
                   name="maxPrice" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: 2500" 
                   defaultValue={editingPackage?.maxPrice || ""}
                   required 
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Délai estimé</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="timeframe">Délai estimé</label>
                 <input 
                   type="text" 
+                  id="timeframe"
                   name="timeframe" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: 2-3 semaines" 
                   defaultValue={editingPackage?.timeframe || ""}
                 />
@@ -422,7 +429,7 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
             <div className="flex justify-end space-x-2">
               <button 
                 type="button" 
-                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                className={UI_CLASSES.BUTTON_SECONDARY}
                 onClick={() => {
                   setShowPackageForm(false);
                   setEditingPackage(null);
@@ -432,7 +439,7 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
               </button>
               <button 
                 type="submit" 
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm flex items-center"
+                className={`${UI_CLASSES.BUTTON_PRIMARY} flex items-center`}
               >
                 <Save size={16} className="mr-1" />
                 Enregistrer
@@ -443,30 +450,30 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
         
         {packages.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
+            <table className={UI_CLASSES.TABLE}>
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Type de projet</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Fourchette de prix</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Délai estimé</th>
-                  <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Actions</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Type de projet</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Fourchette de prix</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Délai estimé</th>
+                  <th className={`${UI_CLASSES.TABLE_HEADER} text-right`}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
                 {packages.map((pkg, index) => (
-                  <tr key={pkg.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">{pkg.name}</td>
-                    <td className="px-4 py-3 text-sm">{pkg.minPrice} - {pkg.maxPrice}€</td>
-                    <td className="px-4 py-3 text-sm">{pkg.timeframe || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-right">
+                  <tr key={pkg.id} className={`${UI_CLASSES.TABLE_ROW} hover:bg-gray-50 dark:hover:bg-gray-700`}>
+                    <td className={UI_CLASSES.TABLE_CELL}>{pkg.name}</td>
+                    <td className={UI_CLASSES.TABLE_CELL}>{pkg.minPrice} - {pkg.maxPrice}€</td>
+                    <td className={UI_CLASSES.TABLE_CELL}>{pkg.timeframe || "-"}</td>
+                    <td className={`${UI_CLASSES.TABLE_CELL} text-right`}>
                       <button 
-                        className="text-blue-500 hover:text-blue-700 mr-2"
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mr-2"
                         onClick={() => editPackage(pkg)}
                       >
                         <Edit size={16} />
                       </button>
                       <button 
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         onClick={() => deletePackage(index)}
                       >
                         <Trash2 size={16} />
@@ -485,11 +492,11 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
       </div>
       
       {/* Section Abonnements */}
-      <div className="bg-white p-5 rounded-lg shadow">
+      <div className={UI_CLASSES.CARD}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Abonnements mensuels</h3>
+          <h3 className={UI_CLASSES.HEADING_3}>Abonnements mensuels</h3>
           <button 
-            className="bg-blue-500 text-white px-3 py-1 rounded-md flex items-center text-sm" 
+            className={UI_CLASSES.BUTTON_PRIMARY} 
             onClick={() => {
               setEditingSubscription(null);
               setShowSubscriptionForm(!showSubscriptionForm);
@@ -501,36 +508,39 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
         </div>
         
         {showSubscriptionForm && (
-          <form onSubmit={saveSubscription} className="mb-4 p-4 bg-gray-50 rounded-md">
+          <form onSubmit={saveSubscription} className={`mt-4 p-4 border rounded-lg ${UI_CLASSES.CARD}`}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Nom de la formule</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="subscriptionName">Nom de la formule</label>
                 <input 
                   type="text" 
+                  id="subscriptionName"
                   name="subscriptionName" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: Support basique" 
                   defaultValue={editingSubscription?.name || ""}
                   required 
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Prix mensuel (€)</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="subscriptionPrice">Prix mensuel (€)</label>
                 <input 
                   type="number" 
+                  id="subscriptionPrice"
                   name="subscriptionPrice" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: 400" 
                   defaultValue={editingSubscription?.price || ""}
                   required 
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Services inclus</label>
+                <label className={UI_CLASSES.LABEL} htmlFor="included">Services inclus</label>
                 <input 
                   type="text" 
+                  id="included"
                   name="included" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT} 
                   placeholder="Ex: Maintenance, corrections de bugs (jusqu'à 10h)" 
                   defaultValue={editingSubscription?.included.join(', ') || ""}
                 />
@@ -539,7 +549,7 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
             <div className="flex justify-end space-x-2">
               <button 
                 type="button" 
-                className="px-3 py-1 border border-gray-300 rounded text-sm"
+                className={UI_CLASSES.BUTTON_SECONDARY}
                 onClick={() => {
                   setShowSubscriptionForm(false);
                   setEditingSubscription(null);
@@ -549,7 +559,7 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
               </button>
               <button 
                 type="submit" 
-                className="px-3 py-1 bg-blue-500 text-white rounded text-sm flex items-center"
+                className={`${UI_CLASSES.BUTTON_PRIMARY} flex items-center`}
               >
                 <Save size={16} className="mr-1" />
                 Enregistrer
@@ -560,30 +570,30 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
         
         {subscriptions.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-gray-50">
+            <table className={UI_CLASSES.TABLE}>
+              <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Formule</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Prix mensuel</th>
-                  <th className="px-4 py-2 text-left text-sm font-medium text-gray-500">Services inclus</th>
-                  <th className="px-4 py-2 text-right text-sm font-medium text-gray-500">Actions</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Formule</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Prix mensuel</th>
+                  <th className={UI_CLASSES.TABLE_HEADER}>Services inclus</th>
+                  <th className={`${UI_CLASSES.TABLE_HEADER} text-right`}>Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-600 bg-white dark:bg-gray-800">
                 {subscriptions.map((sub, index) => (
-                  <tr key={sub.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm">{sub.name}</td>
-                    <td className="px-4 py-3 text-sm">{sub.price}€/mois</td>
-                    <td className="px-4 py-3 text-sm">{sub.included.length > 0 ? sub.included.join(', ') : '-'}</td>
-                    <td className="px-4 py-3 text-sm text-right">
+                  <tr key={sub.id} className={`${UI_CLASSES.TABLE_ROW} hover:bg-gray-50 dark:hover:bg-gray-700`}>
+                    <td className={UI_CLASSES.TABLE_CELL}>{sub.name}</td>
+                    <td className={UI_CLASSES.TABLE_CELL}>{sub.price}€/mois</td>
+                    <td className={UI_CLASSES.TABLE_CELL}>{sub.included.length > 0 ? sub.included.join(', ') : '-'}</td>
+                    <td className={`${UI_CLASSES.TABLE_CELL} text-right`}>
                       <button 
-                        className="text-blue-500 hover:text-blue-700 mr-2"
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 mr-2"
                         onClick={() => editSubscription(sub)}
                       >
                         <Edit size={16} />
                       </button>
                       <button 
-                        className="text-red-500 hover:text-red-700"
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         onClick={() => deleteSubscription(index)}
                       >
                         <Trash2 size={16} />
@@ -602,15 +612,15 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
       </div>
       
       {/* Calculateur de revenus */}
-      <div className="bg-white p-5 rounded-lg shadow">
-        <h3 className="text-lg font-semibold mb-4">Simulateur de revenus</h3>
-        <p className="text-sm text-gray-600 mb-3">
+      <div className={UI_CLASSES.CARD}>
+        <h3 className={UI_CLASSES.HEADING_3}>Simulateur de revenus</h3>
+        <p className={UI_CLASSES.TEXT}>
           Basé sur votre tarification actuelle, vous pouvez simuler différents scénarios de revenus.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-2">Revenus mensuels (temps partiel)</h4>
-            <p className="text-sm text-gray-600 mb-2">20h/semaine au taux horaire moyen</p>
+            <h4 className={UI_CLASSES.HEADING_4}>Revenus mensuels (temps partiel)</h4>
+            <p className={UI_CLASSES.TEXT}>20h/semaine au taux horaire moyen</p>
             <div className="text-2xl font-bold text-blue-600">
               {hourlyRates.length > 0
                 ? Math.round(
@@ -620,8 +630,8 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
             </div>
           </div>
           <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-2">Revenus mensuels (temps plein)</h4>
-            <p className="text-sm text-gray-600 mb-2">35h/semaine au taux horaire moyen</p>
+            <h4 className={UI_CLASSES.HEADING_4}>Revenus mensuels (temps plein)</h4>
+            <p className={UI_CLASSES.TEXT}>35h/semaine au taux horaire moyen</p>
             <div className="text-2xl font-bold text-blue-600">
               {hourlyRates.length > 0
                 ? Math.round(
@@ -631,8 +641,8 @@ const PricingSection: React.FC<Props> = ({ data, updateData }) => {
             </div>
           </div>
           <div className="p-4 border rounded-lg">
-            <h4 className="font-medium mb-2">Revenus mensuels (projets)</h4>
-            <p className="text-sm text-gray-600 mb-2">1 projet moyen par mois</p>
+            <h4 className={UI_CLASSES.HEADING_4}>Revenus mensuels (projets)</h4>
+            <p className={UI_CLASSES.TEXT}>1 projet moyen par mois</p>
             <div className="text-2xl font-bold text-blue-600">
               {packages.length > 0
                 ? Math.round(

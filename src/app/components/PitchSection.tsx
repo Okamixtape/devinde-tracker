@@ -1,6 +1,6 @@
 import React from "react";
-import { Save } from "lucide-react";
 import type { BusinessPlanData } from "./types";
+import ListManager from "./common/ListManager";
 
 type Props = {
   data: BusinessPlanData["pitch"];
@@ -9,69 +9,65 @@ type Props = {
   removeListItem: (section: keyof BusinessPlanData, field: string, index: number) => void;
 };
 
-const PitchSection: React.FC<Props> = ({ data, updateData, addListItem, removeListItem }) => (
-  <div className="space-y-4 p-4">
-    <h2 className="text-xl font-bold mb-4">Pitch de présentation</h2>
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-1">Titre</label>
-      <input
-        type="text"
-        className="w-full p-2 border rounded"
-        value={data.title}
-        onChange={e => updateData("pitch", "title", e.target.value)}
-      />
-    </div>
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-1">Résumé</label>
-      <textarea
-        className="w-full p-2 border rounded"
-        rows={4}
-        value={data.summary}
-        onChange={e => updateData("pitch", "summary", e.target.value)}
-        placeholder="Développeur front-end expérimenté proposant des solutions web modernes et performantes avec React/Next.js..."
-      />
-    </div>
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-1">Vision</label>
-      <textarea
-        className="w-full p-2 border rounded"
-        rows={2}
-        value={data.vision}
-        onChange={e => updateData("pitch", "vision", e.target.value)}
-        placeholder="Créer des interfaces utilisateurs intuitives et esthétiques..."
-      />
-    </div>
-    <div className="mb-4">
-      <label className="block text-sm font-medium mb-1">Valeurs</label>
-      <div className="flex gap-2 mb-2">
+/**
+ * Section Pitch qui comprend titre, résumé, vision et valeurs
+ * Utilise le composant ListManager pour la gestion des valeurs
+ */
+const PitchSection: React.FC<Props> = ({ data, updateData, addListItem, removeListItem }) => {
+  return (
+    <div className="space-y-6 p-4">
+      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Pitch de présentation</h2>
+      
+      <div className="mb-6">
+        <label className="block text-md font-medium mb-2 text-gray-800 dark:text-gray-200">Titre</label>
         <input
-          id="new-pitch-values"
           type="text"
-          className="flex-grow p-2 border rounded"
-          placeholder="Ajouter une valeur"
+          className="w-full p-3 border border-gray-300 rounded-md
+                    dark:border-gray-600 dark:bg-gray-700 dark:text-white
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          value={data.title}
+          onChange={e => updateData("pitch", "title", e.target.value)}
+          placeholder="Votre titre accrocheur"
         />
-        <button
-          className="bg-blue-500 text-white p-2 rounded"
-          onClick={() => addListItem("pitch", "values")}
-        >
-          <Save size={18} />
-        </button>
       </div>
-      <ul className="list-disc pl-5">
-        {data.values.map((value, index) => (
-          <li key={index} className="group flex items-center">
-            <span>{value}</span>
-            <button
-              className="ml-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={() => removeListItem("pitch", "values", index)}
-            >
-              ×
-            </button>
-          </li>
-        ))}
-      </ul>
+      
+      <div className="mb-6">
+        <label className="block text-md font-medium mb-2 text-gray-800 dark:text-gray-200">Résumé</label>
+        <textarea
+          className="w-full p-3 border border-gray-300 rounded-md
+                    dark:border-gray-600 dark:bg-gray-700 dark:text-white
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          rows={4}
+          value={data.summary}
+          onChange={e => updateData("pitch", "summary", e.target.value)}
+          placeholder="Développeur front-end expérimenté proposant des solutions web modernes et performantes avec React/Next.js..."
+        />
+      </div>
+      
+      <div className="mb-6">
+        <label className="block text-md font-medium mb-2 text-gray-800 dark:text-gray-200">Vision</label>
+        <textarea
+          className="w-full p-3 border border-gray-300 rounded-md
+                    dark:border-gray-600 dark:bg-gray-700 dark:text-white
+                    focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          rows={3}
+          value={data.vision}
+          onChange={e => updateData("pitch", "vision", e.target.value)}
+          placeholder="Créer des interfaces utilisateurs intuitives et esthétiques..."
+        />
+      </div>
+      
+      <ListManager 
+        section="pitch"
+        field="values"
+        items={data.values}
+        label="Valeurs"
+        placeholder="Ex: Qualité, Innovation, Excellence..."
+        addListItem={addListItem}
+        removeListItem={removeListItem}
+      />
     </div>
-  </div>
-);
+  );
+};
 
 export default PitchSection;
