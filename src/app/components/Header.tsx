@@ -22,7 +22,6 @@ const Header: React.FC<HeaderProps> = ({ darkMode = false, toggleSidebar }) => (
           <Code size={24} className="text-white" />
           <div>
             <h1 className="text-xl font-bold text-white">DevIndé Tracker</h1>
-            <p className="text-xs text-blue-200">Dashboard Business Plan - Développeur Web Indépendant</p>
           </div>
         </div>
       </div>

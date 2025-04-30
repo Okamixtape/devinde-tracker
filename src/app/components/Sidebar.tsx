@@ -56,12 +56,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside className={`w-full md:w-64 ${darkMode ? 'bg-gray-800' : 'bg-slate-900'} text-white flex flex-col p-4 md:min-h-screen`}>
-      <div className="mb-8">
-        <h2 className="text-xl font-bold mb-2">DevIndé Tracker</h2>
-        <p className="text-sm text-gray-400">Gérez votre activité indépendante</p>
-      </div>
       
-      <nav className="flex-1">
+      <nav>
         <ul className="space-y-1">
           {navSections.map(({ key, label }) => (
             <li key={key}>

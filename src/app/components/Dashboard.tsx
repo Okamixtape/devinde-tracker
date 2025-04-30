@@ -112,7 +112,7 @@ const Dashboard = ({ businessPlanData }: { businessPlanData: BusinessPlanData })
     }));
 
   return (
-    <div className="p-6 space-y-6 dark:bg-gray-900">
+    <div className="p-6 space-y-6 dark:bg-gray-900 min-h-full h-full">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold dark:text-white">Tableau de bord</h1>
         <div className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm font-medium">
