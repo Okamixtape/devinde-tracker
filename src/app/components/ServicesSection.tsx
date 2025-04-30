@@ -15,7 +15,10 @@ const ServicesSection: React.FC<Props> = ({ data, addListItem, removeListItem })
       <label className="block text-sm font-medium mb-1">Offres de service</label>
       <div className="flex gap-2 mb-2">
         <input id="new-services-offerings" type="text" className="flex-grow p-2 border rounded" placeholder="Ex: Développement de sites web" />
-        <button className="bg-blue-500 text-white p-2 rounded" onClick={() => addListItem("services", "offerings", document.getElementById("new-services-offerings")?.value)}> <Save size={18} /> </button>
+        <button className="bg-blue-500 text-white p-2 rounded" onClick={() => {
+          const input = document.getElementById("new-services-offerings") as HTMLInputElement;
+          if (input && input.value) addListItem("services", "offerings", input.value);
+        }}> <Save size={18} /> </button>
       </div>
       <ul className="list-disc pl-5">
         {data.offerings.map((item, index) => (
@@ -30,7 +33,10 @@ const ServicesSection: React.FC<Props> = ({ data, addListItem, removeListItem })
       <label className="block text-sm font-medium mb-1">Technologies maîtrisées</label>
       <div className="flex gap-2 mb-2">
         <input id="new-services-technologies" type="text" className="flex-grow p-2 border rounded" placeholder="Ex: React, Next.js" />
-        <button className="bg-blue-500 text-white p-2 rounded" onClick={() => addListItem("services", "technologies", document.getElementById("new-services-technologies")?.value)}> <Save size={18} /> </button>
+        <button className="bg-blue-500 text-white p-2 rounded" onClick={() => {
+          const input = document.getElementById("new-services-technologies") as HTMLInputElement;
+          if (input && input.value) addListItem("services", "technologies", input.value);
+        }}> <Save size={18} /> </button>
       </div>
       <ul className="list-disc pl-5">
         {data.technologies.map((item, index) => (
@@ -45,7 +51,10 @@ const ServicesSection: React.FC<Props> = ({ data, addListItem, removeListItem })
       <label className="block text-sm font-medium mb-1">Processus de travail</label>
       <div className="flex gap-2 mb-2">
         <input id="new-services-process" type="text" className="flex-grow p-2 border rounded" placeholder="Ex: Analyse des besoins" />
-        <button className="bg-blue-500 text-white p-2 rounded" onClick={() => addListItem("services", "process", document.getElementById("new-services-process")?.value)}> <Save size={18} /> </button>
+        <button className="bg-blue-500 text-white p-2 rounded" onClick={() => {
+          const input = document.getElementById("new-services-process") as HTMLInputElement;
+          if (input && input.value) addListItem("services", "process", input.value);
+        }}> <Save size={18} /> </button>
       </div>
       <ul className="list-disc pl-5">
         {data.process.map((item, index) => (

@@ -1,153 +1,181 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, ChangeEvent } from "react";
+import type { BusinessPlanData, SectionKey } from "../components/types";
 
-type SectionKey = keyof BusinessPlanData;
-type FieldKey = string;
+// Type pour les valeurs de champs génériques
+type FieldValue = string | number | string[] | number[];
 
-type BusinessPlanData = {
-  pitch: {
-    title: string;
-    summary: string;
-    vision: string;
-    values: string[];
-  };
-  services: {
-    offerings: string[];
-    technologies: string[];
-    process: string[];
-  };
-  businessModel: {
-    hourlyRates: string[];
-    packages: string[];
-    subscriptions: string[];
-  };
-  marketAnalysis: {
-    competitors: string[];
-    targetClients: string[];
-    trends: string[];
-  };
-  financials: {
-    initialInvestment: number;
-    quarterlyGoals: number[];
-    expenses: string[];
-  };
-  actionPlan: {
-    milestones: string[];
+const getInitialData = (): BusinessPlanData => {
+  return {
+    pitch: {
+      title: "",
+      summary: "",
+      vision: "",
+      values: []
+    },
+    services: {
+      offerings: [],
+      technologies: [],
+      process: []
+    },
+    businessModel: {
+      hourlyRates: [],
+      packages: [],
+      subscriptions: []
+    },
+    marketAnalysis: {
+      competitors: [],
+      targetClients: [],
+      trends: []
+    },
+    financials: {
+      initialInvestment: 0,
+      quarterlyGoals: [0, 0, 0, 0],
+      expenses: []
+    },
+    actionPlan: {
+      milestones: []
+    }
   };
 };
 
-const initialData: BusinessPlanData = {
-  pitch: {
-    title: "Développeur Front-end Indépendant",
-    summary: "",
-    vision: "",
-    values: [],
-  },
-  services: {
-    offerings: [],
-    technologies: [],
-    process: [],
-  },
-  businessModel: {
-    hourlyRates: [],
-    packages: [],
-    subscriptions: [],
-  },
-  marketAnalysis: {
-    competitors: [],
-    targetClients: [],
-    trends: [],
-  },
-  financials: {
-    initialInvestment: 0,
-    quarterlyGoals: [0, 0, 0, 0],
-    expenses: [],
-  },
-  actionPlan: {
-    milestones: [],
-  },
-};
-
-export function useBusinessPlanData() {
-  const [businessPlanData, setBusinessPlanData] = useState<BusinessPlanData>(initialData);
-
+export const useBusinessPlanData = () => {
+  // État pour les données du plan d'affaires
+  const [businessPlanData, setBusinessPlanData] = useState<BusinessPlanData>(getInitialData());
+  
+  // Charger les données depuis localStorage au démarrage
   useEffect(() => {
     const savedData = localStorage.getItem("devinde-tracker-data");
     if (savedData) {
-      setBusinessPlanData(JSON.parse(savedData));
+      try {
+        const parsedData = JSON.parse(savedData) as BusinessPlanData;
+        setBusinessPlanData(parsedData);
+      } catch (error) {
+        console.error("Erreur lors du chargement des données:", error);
+      }
     }
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem("devinde-tracker-data", JSON.stringify(businessPlanData));
-  }, [businessPlanData]);
-
-  const updateData = (section: SectionKey, field: FieldKey, value: any) => {
-    setBusinessPlanData((prev) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: value,
-      },
-    }));
-  };
-
-  const addListItem = (section: SectionKey, field: FieldKey) => {
-    const input = document.getElementById(`new-${section}-${field}`) as HTMLInputElement;
-    if (!input) return;
-    const newItem = input.value;
-    if (newItem.trim()) {
-      setBusinessPlanData((prev) => ({
+  
+  // Fonction pour mettre à jour les données
+  const updateData = (section: keyof BusinessPlanData, field: string, value: FieldValue) => {
+    setBusinessPlanData(prev => {
+      const newData = {
         ...prev,
         [section]: {
           ...prev[section],
-          [field]: [...((prev[section][field] as any[]) || []), newItem],
+          [field]: value,
         },
-      }));
-      input.value = "";
+      };
+      
+      // Sauvegarder dans localStorage
+      localStorage.setItem("devinde-tracker-data", JSON.stringify(newData));
+      
+      return newData;
+    });
+  };
+  
+  // Fonction pour ajouter un élément à une liste
+  // Adaptée pour correspondre à la signature attendue dans les composants
+  const addListItem = (section: keyof BusinessPlanData, field: string) => {
+    const input = document.getElementById(`new-${section}-${field}`) as HTMLInputElement;
+    
+    if (input && input.value.trim()) {
+      const value = input.value.trim();
+      
+      setBusinessPlanData(prev => {
+        // Type guard pour vérifier si le champ est un tableau
+        const currentField = prev[section][field as keyof typeof prev[typeof section]];
+        if (!Array.isArray(currentField)) {
+          console.error(`Le champ ${field} n'est pas un tableau.`);
+          return prev;
+        }
+        
+        const newData = {
+          ...prev,
+          [section]: {
+            ...prev[section],
+            [field]: [...currentField, value],
+          },
+        };
+        
+        // Sauvegarder dans localStorage
+        localStorage.setItem("devinde-tracker-data", JSON.stringify(newData));
+        
+        // Réinitialiser le champ de saisie
+        input.value = "";
+        
+        return newData;
+      });
     }
   };
-
-  const removeListItem = (section: SectionKey, field: FieldKey, index: number) => {
-    setBusinessPlanData((prev) => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
-        [field]: ((prev[section][field] as any[]) || []).filter((_, i) => i !== index),
-      },
-    }));
+  
+  // Fonction pour supprimer un élément d'une liste
+  const removeListItem = (section: keyof BusinessPlanData, field: string, index: number) => {
+    setBusinessPlanData(prev => {
+      // Type guard pour vérifier si le champ est un tableau
+      const currentField = prev[section][field as keyof typeof prev[typeof section]];
+      if (!Array.isArray(currentField)) {
+        console.error(`Le champ ${field} n'est pas un tableau.`);
+        return prev;
+      }
+      
+      const newArray = [...currentField];
+      newArray.splice(index, 1);
+      
+      const newData = {
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [field]: newArray,
+        },
+      };
+      
+      // Sauvegarder dans localStorage
+      localStorage.setItem("devinde-tracker-data", JSON.stringify(newData));
+      
+      return newData;
+    });
   };
-
+  
+  // Fonction pour exporter les données
   const exportData = () => {
     const dataStr = JSON.stringify(businessPlanData, null, 2);
     const dataUri = `data:application/json;charset=utf-8,${encodeURIComponent(dataStr)}`;
-    const exportFileDefaultName = "devinde-tracker-data.json";
+    
+    const exportFileName = `business-plan-${new Date().toISOString().slice(0, 10)}.json`;
+    
     const linkElement = document.createElement("a");
     linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
+    linkElement.setAttribute("download", exportFileName);
     linkElement.click();
   };
-
-  const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
+  
+  // Fonction pour importer des données
+  const importData = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = JSON.parse(e.target?.result as string);
-        setBusinessPlanData(data);
+        const jsonData = e.target?.result as string;
+        const parsedData = JSON.parse(jsonData) as BusinessPlanData;
+        setBusinessPlanData(parsedData);
+        localStorage.setItem("devinde-tracker-data", jsonData);
       } catch (error) {
-        alert("Le fichier importé n'est pas valide.");
+        console.error("Erreur lors de l'importation des données:", error);
       }
     };
     reader.readAsText(file);
   };
-
+  
   return {
     businessPlanData,
     updateData,
     addListItem,
     removeListItem,
     exportData,
-    importData,
+    importData
   };
-}
+};
+
+export default useBusinessPlanData;

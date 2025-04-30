@@ -4,7 +4,7 @@ import type { BusinessPlanData } from "./types";
 
 type Props = {
   data: BusinessPlanData["pitch"];
-  updateData: (section: keyof BusinessPlanData, field: string, value: any) => void;
+  updateData: (section: keyof BusinessPlanData, field: string, value: string | string[]) => void;
   addListItem: (section: keyof BusinessPlanData, field: string) => void;
   removeListItem: (section: keyof BusinessPlanData, field: string, index: number) => void;
 };
