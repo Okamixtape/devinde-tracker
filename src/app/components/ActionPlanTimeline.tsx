@@ -1,5 +1,16 @@
 import React, { useState } from "react";
-import { Plus, Edit, Trash2, Save, X, Calendar, Clock, Tag, CheckCircle } from "lucide-react";
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Save, 
+  X, 
+  Clock, 
+  Tag, 
+  AlertCircle,
+  Filter,
+  ChevronDown
+} from "lucide-react";
 import type { BusinessPlanData } from "./types";
 import { UI_CLASSES } from "../styles/ui-classes";
 
@@ -7,11 +18,15 @@ import { UI_CLASSES } from "../styles/ui-classes";
 type Milestone = {
   id: string;
   title: string;
-  description?: string;
-  date: string; // Format YYYY-MM-DD
+  date: string; // format YYYY-MM-DD
   status: "completed" | "in-progress" | "planned";
-  category?: string;
+  category: "business" | "technical" | "marketing" | "admin" | "financial";
+  description?: string;
 };
+
+// Types pour les filtres
+type FilterStatus = "all" | "completed" | "in-progress" | "planned";
+type FilterCategory = "all" | "business" | "technical" | "marketing" | "admin" | "financial";
 
 // Props du composant
 type Props = {
@@ -19,62 +34,66 @@ type Props = {
   updateData: (section: keyof BusinessPlanData, field: string, value: string[]) => void;
 };
 
-const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
+export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
   // État local pour le formulaire
   const [showForm, setShowForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   
   // Filtres
-  const [filterStatus, setFilterStatus] = useState<"all" | "completed" | "in-progress" | "planned">("all");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [filterCategory, setFilterCategory] = useState<FilterCategory>("all");
   
   // Conversion des chaînes en objets structurés pour les jalons
   const parseMilestones = (): Milestone[] => {
     return data.milestones.map((item, index) => {
-      // Tentative d'extraction d'une date (exemple : "Mai 2025 - Dépôt demande ARCE")
-      const dateMatch = item.match(/(Janvier|Février|Mars|Avril|Mai|Juin|Juillet|Août|Septembre|Octobre|Novembre|Décembre)\s+(\d{4})/i);
-      
-      // Détermination du mois
-      let month = 1;
-      if (dateMatch && dateMatch[1]) {
-        const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
-        month = monthNames.findIndex(m => m === dateMatch[1].toLowerCase()) + 1;
+      try {
+        // Tentative de parsing JSON d'abord (pour les jalons déjà structurés)
+        const parsed = JSON.parse(item);
+        return {
+          ...parsed,
+          id: parsed.id || `milestone-${index}`,
+          status: parsed.status || "planned",
+          category: parsed.category || "business"
+        } as Milestone;
+      } catch {
+        // Parsing manuel pour les anciens formats
+        // Tentative d'extraction d'une date (exemple : "Mai 2025 - Dépôt demande ARCE")
+        const dateMatch = item.match(/(Janvier|Février|Mars|Avril|Mai|Juin|Juillet|Août|Septembre|Octobre|Novembre|Décembre)\s+(\d{4})/i);
+        
+        // Détermination du mois
+        let month = 1;
+        if (dateMatch && dateMatch[1]) {
+          const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+          month = monthNames.findIndex(m => m === dateMatch[1].toLowerCase()) + 1;
+        }
+        
+        // Année
+        const year = dateMatch && dateMatch[2] ? parseInt(dateMatch[2]) : 2025;
+        
+        // Extraction du titre (tout ce qui vient après le tiret)
+        const titleMatch = item.match(/\s+-\s+(.*)/);
+        const title = titleMatch && titleMatch[1] ? titleMatch[1] : item;
+        
+        // Création d'une date au format YYYY-MM-DD
+        const date = `${year}-${month.toString().padStart(2, '0')}-01`;
+        
+        return {
+          id: `milestone-${index}`,
+          title,
+          date,
+          status: "planned",
+          category: "business" as "business" | "technical" | "marketing" | "admin" | "financial",
+          description: ""
+        };
       }
-      
-      // Année
-      const year = dateMatch && dateMatch[2] ? parseInt(dateMatch[2]) : 2025;
-      
-      // Extraction du titre (tout ce qui vient après le tiret)
-      const titleMatch = item.match(/\s+-\s+(.*)/);
-      const title = titleMatch && titleMatch[1] ? titleMatch[1] : item;
-      
-      // Création d'une date au format YYYY-MM-DD
-      const date = `${year}-${month.toString().padStart(2, '0')}-01`;
-      
-      // Statut par défaut (tout est planifié pour l'instant)
-      const status = "planned";
-      
-      return {
-        id: `milestone-${index}`,
-        title,
-        date,
-        status,
-        category: "business", // Catégorie par défaut
-      };
     });
   };
-  
+
   // Conversion des jalons en chaînes pour le stockage
   const milestonesToStrings = (milestones: Milestone[]): string[] => {
-    return milestones.map(milestone => {
-      // Conversion de la date en format lisible
-      const date = new Date(milestone.date);
-      const month = date.toLocaleString('fr-FR', { month: 'long' });
-      const year = date.getFullYear();
-      
-      return `${month.charAt(0).toUpperCase() + month.slice(1)} ${year} - ${milestone.title}`;
-    });
+    return milestones.map(milestone => JSON.stringify(milestone));
   };
-  
+
   // Gestion de la sauvegarde d'un jalon
   const saveMilestone = (event: React.FormEvent) => {
     event.preventDefault();
@@ -82,8 +101,8 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
     const titleInput = form.elements.namedItem('title') as HTMLInputElement;
     const dateInput = form.elements.namedItem('date') as HTMLInputElement;
     const statusInput = form.elements.namedItem('status') as HTMLSelectElement;
-    const descriptionInput = form.elements.namedItem('description') as HTMLTextAreaElement;
     const categoryInput = form.elements.namedItem('category') as HTMLSelectElement;
+    const descriptionInput = form.elements.namedItem('description') as HTMLTextAreaElement;
     
     if (titleInput.value && dateInput.value) {
       // Création du nouvel objet jalon
@@ -92,8 +111,8 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
         title: titleInput.value,
         date: dateInput.value,
         status: statusInput.value as "completed" | "in-progress" | "planned",
+        category: categoryInput.value as "business" | "technical" | "marketing" | "admin" | "financial",
         description: descriptionInput.value || undefined,
-        category: categoryInput.value || "business",
       };
       
       // Récupération des jalons existants
@@ -122,111 +141,202 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       form.reset();
     }
   };
-  
+
   // Suppression d'un jalon
   const deleteMilestone = (index: number) => {
     const milestones = parseMilestones();
     milestones.splice(index, 1);
     updateData("actionPlan", "milestones", milestonesToStrings(milestones));
   };
-  
+
   // Édition d'un jalon
   const editMilestone = (index: number) => {
     setEditingIndex(index);
     setShowForm(true);
   };
-  
+
+  // Filtrage des jalons par statut et catégorie
+  const filterMilestones = (milestones: Milestone[]): Milestone[] => {
+    return milestones.filter(milestone => {
+      const statusMatches = filterStatus === "all" || milestone.status === filterStatus;
+      const categoryMatches = filterCategory === "all" || milestone.category === filterCategory;
+      return statusMatches && categoryMatches;
+    });
+  };
+
   // Obtention d'une couleur pour chaque catégorie
   const getCategoryColor = (category: string): string => {
     switch (category) {
       case "business":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
       case "technical":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300";
       case "marketing":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
       case "admin":
-        return "bg-orange-100 text-orange-800";
+        return "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300";
       case "financial":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
     }
   };
-  
+
   // Obtention de la couleur de statut
-  const getStatusColor = (status: string): string => {
+  const getStatusColor = (status: "completed" | "in-progress" | "planned"): string => {
     switch (status) {
       case "completed":
-        return "bg-green-500";
+        return "bg-green-500 dark:bg-green-600";
       case "in-progress":
-        return "bg-blue-500";
+        return "bg-blue-500 dark:bg-blue-600";
       case "planned":
-        return "bg-gray-300";
+        return "bg-yellow-500 dark:bg-yellow-600";
       default:
-        return "bg-gray-300";
+        return "bg-gray-500 dark:bg-gray-600";
     }
   };
-  
-  // Formatage des dates
-  const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-  };
-  
+
   // Parsing des jalons
   const milestones = parseMilestones();
-  
+
   // Tri des jalons par date
   const sortedMilestones = [...milestones].sort((a, b) => 
     new Date(a.date).getTime() - new Date(b.date).getTime()
   );
-  
+
   // Filtrage des jalons
-  const filteredMilestones = filterStatus === "all" 
-    ? sortedMilestones 
-    : sortedMilestones.filter(m => m.status === filterStatus);
-  
+  const filteredMilestones = filterMilestones(sortedMilestones);
+
   // Calcul de la progression globale
   const completedCount = milestones.filter(m => m.status === "completed").length;
   const progressPercentage = milestones.length > 0 
     ? Math.round((completedCount / milestones.length) * 100) 
     : 0;
 
+  // Catégories uniques présentes dans les jalons
+  const uniqueCategories = Array.from(
+    new Set(milestones.map(m => m.category))
+  ) as FilterCategory[];
+
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+    <div className="space-y-6">
+      {/* En-tête et filtres */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div>
-          <h2 className="text-2xl font-bold">Plan d&apos;action</h2>
-          <p className="text-gray-500">Suivi des jalons importants de votre activité</p>
+          <h2 className={UI_CLASSES.HEADING_2}>Plan d&apos;action</h2>
+          <p className={UI_CLASSES.TEXT_SMALL}>Planifiez et suivez les jalons importants de votre activité</p>
         </div>
         
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md p-1">
-            <button 
-              className={`px-3 py-1 rounded ${filterStatus === "all" ? "bg-blue-500 dark:bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
-              onClick={() => setFilterStatus("all")}
-            >
-              Tous
-            </button>
-            <button 
-              className={`px-3 py-1 rounded ${filterStatus === "completed" ? "bg-blue-500 dark:bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
-              onClick={() => setFilterStatus("completed")}
-            >
-              Terminés
-            </button>
-            <button 
-              className={`px-3 py-1 rounded ${filterStatus === "in-progress" ? "bg-blue-500 dark:bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
-              onClick={() => setFilterStatus("in-progress")}
-            >
-              En cours
-            </button>
-            <button 
-              className={`px-3 py-1 rounded ${filterStatus === "planned" ? "bg-blue-500 dark:bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"}`}
-              onClick={() => setFilterStatus("planned")}
-            >
-              Planifiés
-            </button>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          {/* Filtres */}
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <button 
+                className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 text-sm space-x-1"
+                onClick={() => {
+                  const dropdown = document.getElementById('status-dropdown');
+                  if (dropdown) {
+                    dropdown.classList.toggle('hidden');
+                  }
+                }}
+              >
+                <Filter size={16} />
+                <span>Statut: {filterStatus === "all" ? "Tous" : 
+                                filterStatus === "completed" ? "Terminés" : 
+                                filterStatus === "in-progress" ? "En cours" : "Planifiés"}</span>
+                <ChevronDown size={14} />
+              </button>
+              
+              <div id="status-dropdown" className="absolute z-10 mt-1 hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg w-48">
+                <div className="py-1">
+                  <button 
+                    className={`px-4 py-2 text-sm w-full text-left ${filterStatus === "all" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                    onClick={() => {
+                      setFilterStatus("all");
+                      document.getElementById('status-dropdown')?.classList.add('hidden');
+                    }}
+                  >
+                    Tous
+                  </button>
+                  <button 
+                    className={`px-4 py-2 text-sm w-full text-left ${filterStatus === "completed" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                    onClick={() => {
+                      setFilterStatus("completed");
+                      document.getElementById('status-dropdown')?.classList.add('hidden');
+                    }}
+                  >
+                    Terminés
+                  </button>
+                  <button 
+                    className={`px-4 py-2 text-sm w-full text-left ${filterStatus === "in-progress" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                    onClick={() => {
+                      setFilterStatus("in-progress");
+                      document.getElementById('status-dropdown')?.classList.add('hidden');
+                    }}
+                  >
+                    En cours
+                  </button>
+                  <button 
+                    className={`px-4 py-2 text-sm w-full text-left ${filterStatus === "planned" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                    onClick={() => {
+                      setFilterStatus("planned");
+                      document.getElementById('status-dropdown')?.classList.add('hidden');
+                    }}
+                  >
+                    Planifiés
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="relative">
+              <button 
+                className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 text-sm space-x-1"
+                onClick={() => {
+                  const dropdown = document.getElementById('category-dropdown');
+                  if (dropdown) {
+                    dropdown.classList.toggle('hidden');
+                  }
+                }}
+              >
+                <Tag size={16} />
+                <span>Catégorie: {filterCategory === "all" ? "Toutes" : 
+                                  filterCategory === "business" ? "Business" : 
+                                  filterCategory === "technical" ? "Technique" : 
+                                  filterCategory === "marketing" ? "Marketing" : 
+                                  filterCategory === "admin" ? "Administratif" : "Financier"}</span>
+                <ChevronDown size={14} />
+              </button>
+              
+              <div id="category-dropdown" className="absolute z-10 mt-1 hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg w-48">
+                <div className="py-1">
+                  <button 
+                    className={`px-4 py-2 text-sm w-full text-left ${filterCategory === "all" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                    onClick={() => {
+                      setFilterCategory("all");
+                      document.getElementById('category-dropdown')?.classList.add('hidden');
+                    }}
+                  >
+                    Toutes
+                  </button>
+                  {uniqueCategories.map((category) => (
+                    <button 
+                      key={category}
+                      className={`px-4 py-2 text-sm w-full text-left ${filterCategory === category ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
+                      onClick={() => {
+                        setFilterCategory(category);
+                        document.getElementById('category-dropdown')?.classList.add('hidden');
+                      }}
+                    >
+                      {category === "business" ? "Business" : 
+                       category === "technical" ? "Technique" : 
+                       category === "marketing" ? "Marketing" : 
+                       category === "admin" ? "Administratif" : "Financier"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
           
           <button
@@ -243,14 +353,22 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       </div>
       
       {/* Progression globale */}
-      <div className={UI_CLASSES.CARD + " mb-6"}>
+      <div className={UI_CLASSES.CARD}>
         <div className="flex justify-between items-center mb-2">
           <h3 className={UI_CLASSES.HEADING_3 + " !mb-0"}>Progression globale</h3>
-          <span className={`text-sm font-medium ${UI_CLASSES.TEXT_HIGHLIGHT}`}>{progressPercentage}%</span>
+          <span className={`text-sm font-medium ${progressPercentage >= 70 ? "text-green-600 dark:text-green-400" : 
+                                                 progressPercentage >= 30 ? "text-blue-600 dark:text-blue-400" : 
+                                                 "text-yellow-600 dark:text-yellow-400"}`}>
+            {progressPercentage}%
+          </span>
         </div>
         <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
           <div 
-            className="bg-blue-600 dark:bg-blue-700 h-2.5 rounded-full" 
+            className={`h-2.5 rounded-full transition-all duration-500 ${
+              progressPercentage >= 70 ? "bg-green-500 dark:bg-green-600" : 
+              progressPercentage >= 30 ? "bg-blue-500 dark:bg-blue-600" : 
+              "bg-yellow-500 dark:bg-yellow-600"
+            }`}
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
@@ -262,36 +380,39 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       
       {/* Formulaire d'ajout/édition */}
       {showForm && (
-        <div className={UI_CLASSES.CARD}>
-          <h3 className="font-medium mb-4">{editingIndex !== null ? "Modifier le jalon" : "Ajouter un jalon"}</h3>
-          <form onSubmit={saveMilestone}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className={UI_CLASSES.CARD + " border border-blue-200 dark:border-blue-800 shadow-md animate-fadeIn"}>
+          <h3 className={UI_CLASSES.HEADING_3}>{editingIndex !== null ? "Modifier le jalon" : "Ajouter un jalon"}</h3>
+          <form onSubmit={saveMilestone} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Titre</label>
+                <label htmlFor="title" className={UI_CLASSES.LABEL}>Titre</label>
                 <input 
                   type="text" 
+                  id="title"
                   name="title" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT}
                   placeholder="Ex: Dépôt demande ARCE" 
                   defaultValue={editingIndex !== null ? milestones[editingIndex].title : ""}
                   required 
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Date</label>
+                <label htmlFor="date" className={UI_CLASSES.LABEL}>Date</label>
                 <input 
                   type="date" 
+                  id="date"
                   name="date" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT}
                   defaultValue={editingIndex !== null ? milestones[editingIndex].date : ""}
                   required 
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Statut</label>
+                <label htmlFor="status" className={UI_CLASSES.LABEL}>Statut</label>
                 <select 
+                  id="status"
                   name="status" 
-                  className="w-full p-2 border rounded"
+                  className={UI_CLASSES.INPUT}
                   defaultValue={editingIndex !== null ? milestones[editingIndex].status : "planned"}
                 >
                   <option value="planned">Planifié</option>
@@ -300,10 +421,11 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Catégorie</label>
+                <label htmlFor="category" className={UI_CLASSES.LABEL}>Catégorie</label>
                 <select 
+                  id="category"
                   name="category" 
-                  className="w-full p-2 border rounded"
+                  className={UI_CLASSES.INPUT}
                   defaultValue={editingIndex !== null ? milestones[editingIndex].category : "business"}
                 >
                   <option value="business">Business</option>
@@ -314,20 +436,21 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium mb-1">Description (optionnelle)</label>
+                <label htmlFor="description" className={UI_CLASSES.LABEL}>Description (optionnelle)</label>
                 <textarea 
+                  id="description"
                   name="description" 
-                  className="w-full p-2 border rounded" 
+                  className={UI_CLASSES.INPUT}
                   rows={3}
                   placeholder="Détails supplémentaires sur ce jalon..."
                   defaultValue={editingIndex !== null ? milestones[editingIndex].description || "" : ""}
                 />
               </div>
             </div>
-            <div className="flex justify-end space-x-2">
+            <div className="flex justify-end space-x-3 pt-2">
               <button 
                 type="button" 
-                className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded text-sm"
+                className={UI_CLASSES.BUTTON_SECONDARY}
                 onClick={() => {
                   setShowForm(false);
                   setEditingIndex(null);
@@ -337,40 +460,72 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
               </button>
               <button 
                 type="submit" 
-                className="px-3 py-1 bg-blue-500 dark:bg-blue-600 text-white rounded text-sm flex items-center"
+                className={UI_CLASSES.BUTTON_PRIMARY + " flex items-center"}
               >
-                <Save size={16} className="mr-1" />
-                Enregistrer
+                <Save size={16} className="mr-2" />
+                {editingIndex !== null ? "Mettre à jour" : "Ajouter"}
               </button>
             </div>
           </form>
         </div>
       )}
       
+      {/* Message quand aucun jalon n'est défini */}
+      {milestones.length === 0 && (
+        <div className={UI_CLASSES.CARD + " py-8 text-center"}>
+          <AlertCircle className="mx-auto mb-4 text-yellow-500 dark:text-yellow-400" size={48} />
+          <h3 className="text-lg font-medium mb-2">Aucun jalon défini</h3>
+          <p className={UI_CLASSES.TEXT + " mb-6"}>
+            Commencez par ajouter des jalons importants pour suivre le développement de votre activité
+          </p>
+          <button
+            className={UI_CLASSES.BUTTON_PRIMARY + " flex items-center mx-auto"}
+            onClick={() => {
+              setEditingIndex(null);
+              setShowForm(true);
+            }}
+          >
+            <Plus size={16} className="mr-1" />
+            Ajouter mon premier jalon
+          </button>
+        </div>
+      )}
+      
       {/* Timeline */}
-      {filteredMilestones.length > 0 ? (
-        <div className="relative">
+      {filteredMilestones.length > 0 && (
+        <div className="relative pb-10">
           {/* Ligne verticale */}
-          <div className="absolute left-7 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+          <div className="absolute left-8 sm:left-12 top-8 bottom-0 w-0.5 bg-blue-200 dark:bg-blue-900/50"></div>
           
           {/* Jalons */}
           <div className="space-y-8">
             {filteredMilestones.map((milestone, index) => (
-              <div key={milestone.id} className="relative flex items-start">
+              <div 
+                key={milestone.id} 
+                className="relative flex items-start group"
+              >
                 {/* Indicateur de statut */}
-                <div className={`absolute left-7 w-3 h-3 rounded-full mt-1.5 -ml-1.5 ${getStatusColor(milestone.status)}`}></div>
+                <div className={`absolute left-8 sm:left-12 w-4 h-4 rounded-full mt-1.5 -ml-2 shadow-sm transition-all duration-300 group-hover:scale-125 ${getStatusColor(milestone.status)}`}></div>
+                
+                {/* Date à gauche */}
+                <div className="w-16 sm:w-24 text-right pr-6 flex-shrink-0">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {new Date(milestone.date).toLocaleDateString('fr-FR', { month: 'short' })}
+                  </span>
+                  <div className="font-bold text-gray-900 dark:text-gray-100">
+                    {new Date(milestone.date).toLocaleDateString('fr-FR', { day: 'numeric' })}
+                  </div>
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    {new Date(milestone.date).getFullYear()}
+                  </span>
+                </div>
                 
                 {/* Contenu du jalon */}
-                <div className="ml-12 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border-l-4 border-blue-500 dark:border-blue-600 w-full">
-                  <div className="flex justify-between items-start">
+                <div className="ml-6 bg-white dark:bg-gray-800 p-4 rounded-lg shadow border-l-4 border-blue-500 dark:border-blue-700 w-full transition-all duration-200 hover:shadow-md">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
                     <div>
-                      <h3 className="font-medium">{milestone.title}</h3>
+                      <h3 className="font-medium text-gray-900 dark:text-white">{milestone.title}</h3>
                       <div className="flex flex-wrap gap-2 mt-2">
-                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
-                          <Calendar size={14} className="mr-1" />
-                          {formatDate(milestone.date)}
-                        </div>
-                        
                         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                           <Clock size={14} className="mr-1" />
                           {milestone.status === "completed" ? "Terminé" : 
@@ -380,26 +535,37 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                         {milestone.category && (
                           <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getCategoryColor(milestone.category)}`}>
                             <Tag size={12} className="mr-1" />
-                            {milestone.category.charAt(0).toUpperCase() + milestone.category.slice(1)}
+                            {milestone.category === "business" ? "Business" : 
+                             milestone.category === "technical" ? "Technique" : 
+                             milestone.category === "marketing" ? "Marketing" : 
+                             milestone.category === "admin" ? "Administratif" : "Financier"}
                           </div>
                         )}
                       </div>
                       
                       {milestone.description && (
-                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-500">{milestone.description}</p>
+                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{milestone.description}</p>
                       )}
                     </div>
                     
-                    <div className="flex space-x-1">
+                    <div className="flex sm:flex-col space-x-2 sm:space-x-0 sm:space-y-2">
                       <button 
-                        className="p-1 text-blue-500 dark:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-700 rounded"
+                        className="p-1.5 text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded transition-colors"
                         onClick={() => editMilestone(index)}
+                        aria-label="Modifier"
+                        title="Modifier"
                       >
                         <Edit size={16} />
                       </button>
                       <button 
-                        className="p-1 text-red-500 dark:text-red-600 hover:bg-red-50 dark:hover:bg-gray-700 rounded"
-                        onClick={() => deleteMilestone(index)}
+                        className="p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-700 rounded transition-colors"
+                        onClick={() => {
+                          if (window.confirm("Êtes-vous sûr de vouloir supprimer ce jalon ?")) {
+                            deleteMilestone(index);
+                          }
+                        }}
+                        aria-label="Supprimer"
+                        title="Supprimer"
                       >
                         <Trash2 size={16} />
                       </button>
@@ -410,46 +576,7 @@ const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
             ))}
           </div>
         </div>
-      ) : (
-        <div className={UI_CLASSES.CARD + " p-8"}>
-          <Calendar className="mx-auto text-gray-400 dark:text-gray-500 mb-3" size={48} />
-          <h3 className="text-lg font-medium mb-2">Aucun jalon trouvé</h3>
-          <p className="text-gray-500 dark:text-gray-400">
-            {filterStatus !== "all" 
-              ? `Aucun jalon avec le statut "${filterStatus === "completed" ? "Terminé" : filterStatus === "in-progress" ? "En cours" : "Planifié"}".` 
-              : "Ajoutez votre premier jalon pour commencer à construire votre plan d'action."}
-          </p>
-          {filterStatus !== "all" && (
-            <button 
-              className={UI_CLASSES.BUTTON_PRIMARY + " mt-4"}
-              onClick={() => setFilterStatus("all")}
-            >
-              Voir tous les jalons
-            </button>
-          )}
-        </div>
       )}
-      
-      {/* Conseils */}
-      <div className={UI_CLASSES.CARD + " bg-yellow-50 dark:bg-gray-800 border-l-4 border-yellow-400 dark:border-yellow-500 p-4 rounded-lg"}>
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <CheckCircle className="h-5 w-5 text-yellow-400 dark:text-yellow-500" />
-          </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-500">Conseil pour votre plan d&apos;action</h3>
-            <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-600">
-              <p>Un bon plan d&apos;action pour un développeur indépendant devrait inclure :</p>
-              <ul className="list-disc pl-5 mt-1 space-y-1">
-                <li>Des jalons administratifs (création d&apos;entreprise, demande ARCE)</li>
-                <li>Des objectifs de marketing et acquisition client</li>
-                <li>Des jalons techniques (portfolio, projets personnels)</li>
-                <li>Des dates de révision de votre business plan et tarification</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

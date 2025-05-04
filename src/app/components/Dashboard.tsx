@@ -1,263 +1,412 @@
-import React, { useMemo } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import { CircleDollarSign, Users, TrendingUp, Calendar, CheckCircle, AlertCircle } from "lucide-react";
-import type { 
-  BusinessPlanData, 
-  PitchSection, 
-  ServicesSection, 
-  BusinessModelSection, 
-  MarketAnalysisSection, 
-  FinancialsSection, 
-  ActionPlanSection 
-} from "./types";
+import React from "react";
+import { 
+  BarChart, Bar, 
+  PieChart, Pie, Cell,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend, 
+  ResponsiveContainer 
+} from "recharts";
+import { 
+  CircleDollarSign, 
+  Users, 
+  TrendingUp, 
+  Calendar, 
+  CheckCircle, 
+  AlertCircle, 
+  ArrowRight, 
+  FileCog,
+  Briefcase,
+  LineChart,
+  Target
+} from "lucide-react";
 import { UI_CLASSES } from "../styles/ui-classes";
+import useBusinessPlanData from "../hooks/useBusinessPlanData";
+import type { BusinessPlanData, SectionKey } from "./types";
 
-/**
- * Composant pour afficher une carte de statistique
- */
-interface StatCardProps {
+// Types d'une section du business plan avec ses métadonnées
+interface BusinessPlanSection {
+  key: SectionKey;
   title: string;
-  value: string | number;
   icon: React.ReactNode;
   color: string;
-}
-
-const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color }) => (
-  <div className={UI_CLASSES.CARD + " flex items-center space-x-4"}>
-    <div className={`p-3 rounded-full ${color}`}>{icon}</div>
-    <div>
-      <p className={UI_CLASSES.TEXT_SMALL}>{title}</p>
-      <p className={`text-xl font-semibold ${UI_CLASSES.TEXT}`}>{value}</p>
-    </div>
-  </div>
-);
-
-/**
- * Composant pour afficher une barre de progression d'une section
- */
-interface IncompleteSectionProps {
-  section: string;
   completion: number;
+  route: string;
 }
 
-const IncompleteSection: React.FC<IncompleteSectionProps> = ({ section, completion }) => (
-  <div className="flex items-center justify-between mb-2">
-    <span className={`text-sm ${UI_CLASSES.TEXT}`}>{section}</span>
-    <div className="flex items-center">
-      <div className="w-32 bg-gray-200 dark:bg-gray-600 rounded-full h-2 mr-2">
-        <div 
-          className={`h-2 rounded-full ${
-            completion < 30 ? 'bg-red-500' : 
-            completion < 70 ? 'bg-yellow-500' : 
-            'bg-green-500'
-          }`}
-          style={{ width: `${completion}%` }}
-        ></div>
+// Type pour les statistiques clés
+interface KeyStat {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  icon: React.ReactNode;
+  bgColor: string;
+  change?: number;
+}
+
+// Type pour le composant de carte interactive
+interface ActionCardProps {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  color: string;
+  onClick: () => void;
+}
+
+// Composant pour les cartes interactives
+const ActionCard: React.FC<ActionCardProps> = ({ 
+  title, 
+  description, 
+  icon, 
+  color, 
+  onClick 
+}) => (
+  <button
+    onClick={onClick}
+    className={`${UI_CLASSES.CARD} flex items-start space-x-4 transition-all duration-200 hover:shadow-md hover:translate-y-[-2px] focus:outline-none focus:ring-2 focus:ring-blue-500 w-full text-left`}
+  >
+    <div className={`p-3 rounded-lg ${color} flex-shrink-0 mt-1`}>
+      {icon}
+    </div>
+    <div>
+      <h3 className={`font-medium mb-1 ${UI_CLASSES.TEXT}`}>{title}</h3>
+      <p className={`${UI_CLASSES.TEXT_SMALL}`}>{description}</p>
+      <div className="mt-2 flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium">
+        <span>Explorer</span>
+        <ArrowRight size={16} className="ml-1" />
       </div>
-      <span className={`text-xs ${UI_CLASSES.TEXT_SMALL}`}>{completion}%</span>
+    </div>
+  </button>
+);
+
+// Composant pour afficher une carte de statistique
+const StatCard: React.FC<KeyStat> = ({ 
+  title, 
+  value, 
+  subtitle, 
+  icon, 
+  bgColor, 
+  change 
+}) => (
+  <div className={`${UI_CLASSES.CARD} overflow-hidden`}>
+    <div className="flex justify-between items-start">
+      <div>
+        <p className={`${UI_CLASSES.TEXT_SMALL} mb-1`}>{title}</p>
+        <p className={`text-2xl font-bold ${UI_CLASSES.TEXT}`}>
+          {value}
+        </p>
+        <p className={`${UI_CLASSES.TEXT_SMALL} mt-1`}>{subtitle}</p>
+        
+        {change !== undefined && (
+          <div className={`mt-2 text-sm flex items-center ${
+            change >= 0 
+              ? 'text-green-600 dark:text-green-400' 
+              : 'text-red-600 dark:text-red-400'
+          }`}>
+            {change >= 0 
+              ? <TrendingUp size={16} className="mr-1" /> 
+              : <TrendingUp size={16} className="mr-1 transform rotate-180" />
+            }
+            <span>{Math.abs(change)}% {change >= 0 ? 'augmentation' : 'diminution'}</span>
+          </div>
+        )}
+      </div>
+      <div className={`${bgColor} p-3 rounded-lg`}>
+        {icon}
+      </div>
     </div>
   </div>
 );
 
-/**
- * Fonction utilitaire pour calculer le taux de complétion d'une section
- * Accepte n'importe quelle section du business plan
- */
-function calculateSectionCompletion<T extends object>(section: T): number {
-  let totalFields = 0;
-  let completedFields = 0;
+// Composant pour afficher le progrès d'une section
+const ProgressBar: React.FC<{ 
+  label: string; 
+  value: number; 
+  color: string;
+  onClick?: () => void;
+}> = ({ label, value, color, onClick }) => (
+  <div 
+    className={`mb-4 ${onClick ? 'cursor-pointer' : ''} transition-opacity duration-200 hover:opacity-90`}
+    onClick={onClick}
+  >
+    <div className="flex justify-between items-center mb-1">
+      <span className={`${UI_CLASSES.TEXT_SMALL} font-medium`}>{label}</span>
+      <span className={`${UI_CLASSES.TEXT_SMALL}`}>{value}%</span>
+    </div>
+    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+      <div 
+        className={`h-2.5 rounded-full ${color}`} 
+        style={{ width: `${value}%` }}
+      ></div>
+    </div>
+  </div>
+);
 
-  // Parcourir toutes les propriétés de l'objet
-  for (const key in section) {
-    if (Object.prototype.hasOwnProperty.call(section, key)) {
-      totalFields++;
-      const value = section[key as keyof T];
-      
-      if (Array.isArray(value)) {
-        if (value.length > 0) completedFields++;
-      } else if (typeof value === 'number') {
-        if (value > 0) completedFields++;
-      } else if (typeof value === 'string') {
-        if (value.trim().length > 0) completedFields++;
-      }
-    }
-  }
-
-  return Math.round((completedFields / totalFields) * 100);
-}
-
-/**
- * Fonction utilitaire pour formater les données des graphiques
- */
-const formatQuarterlyData = (goals: number[]) => {
-  return goals.map((value, index) => ({
-    name: `T${index + 1}`,
-    revenu: value
-  }));
+// Fonction utilitaire pour déterminer la couleur de la barre de progression
+const getProgressBarColor = (value: number): string => {
+  if (value < 30) return 'bg-red-500';
+  if (value < 70) return 'bg-yellow-500';
+  return 'bg-green-500';
 };
 
-/**
- * Composant principal du tableau de bord
- */
+// Composant principal
 interface DashboardProps {
   businessPlanData: BusinessPlanData;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ businessPlanData }) => {
   // Calcul des taux de complétion de toutes les sections
-  const completionRates = useMemo(() => ({
-    pitch: calculateSectionCompletion<PitchSection>(businessPlanData.pitch),
-    services: calculateSectionCompletion<ServicesSection>(businessPlanData.services),
-    businessModel: calculateSectionCompletion<BusinessModelSection>(businessPlanData.businessModel),
-    marketAnalysis: calculateSectionCompletion<MarketAnalysisSection>(businessPlanData.marketAnalysis),
-    financials: calculateSectionCompletion<FinancialsSection>(businessPlanData.financials),
-    actionPlan: calculateSectionCompletion<ActionPlanSection>(businessPlanData.actionPlan)
-  }), [businessPlanData]);
+  const calculateSectionCompletion = <T extends object>(section: T): number => {
+    let totalFields = 0;
+    let completedFields = 0;
+
+    for (const key in section) {
+      if (Object.prototype.hasOwnProperty.call(section, key)) {
+        totalFields++;
+        const value = section[key as keyof T];
+        
+        if (Array.isArray(value)) {
+          if (value.length > 0) completedFields++;
+        } else if (typeof value === 'number') {
+          if (value > 0) completedFields++;
+        } else if (typeof value === 'string') {
+          if (value.trim().length > 0) completedFields++;
+        }
+      }
+    }
+
+    return Math.round((completedFields / totalFields) * 100);
+  };
+
+  // Calcul des taux de complétion par section
+  const sectionsProgress: BusinessPlanSection[] = [
+    {
+      key: "pitch",
+      title: "Pitch",
+      icon: <FileCog size={18} className="text-blue-500 dark:text-blue-400" />,
+      color: "bg-blue-500/10 dark:bg-blue-500/20",
+      completion: calculateSectionCompletion(businessPlanData.pitch),
+      route: "/pitch"
+    },
+    {
+      key: "services",
+      title: "Services",
+      icon: <Briefcase size={18} className="text-purple-500 dark:text-purple-400" />,
+      color: "bg-purple-500/10 dark:bg-purple-500/20",
+      completion: calculateSectionCompletion(businessPlanData.services),
+      route: "/services"
+    },
+    {
+      key: "businessModel",
+      title: "Modèle économique",
+      icon: <CircleDollarSign size={18} className="text-green-500 dark:text-green-400" />,
+      color: "bg-green-500/10 dark:bg-green-500/20",
+      completion: calculateSectionCompletion(businessPlanData.businessModel),
+      route: "/business-model"
+    },
+    {
+      key: "marketAnalysis",
+      title: "Analyse de marché",
+      icon: <LineChart size={18} className="text-orange-500 dark:text-orange-400" />,
+      color: "bg-orange-500/10 dark:bg-orange-500/20",
+      completion: calculateSectionCompletion(businessPlanData.marketAnalysis),
+      route: "/market-analysis"
+    },
+    {
+      key: "financials",
+      title: "Finances",
+      icon: <CircleDollarSign size={18} className="text-indigo-500 dark:text-indigo-400" />,
+      color: "bg-indigo-500/10 dark:bg-indigo-500/20",
+      completion: calculateSectionCompletion(businessPlanData.financials),
+      route: "/financials"
+    },
+    {
+      key: "actionPlan",
+      title: "Plan d'action",
+      icon: <Target size={18} className="text-rose-500 dark:text-rose-400" />,
+      color: "bg-rose-500/10 dark:bg-rose-500/20",
+      completion: calculateSectionCompletion(businessPlanData.actionPlan),
+      route: "/action-plan"
+    }
+  ];
 
   // Calcul du taux de complétion global
-  const globalCompletion = useMemo(() => {
-    const sections = Object.values(completionRates);
-    return Math.round(sections.reduce((acc, value) => acc + value, 0) / sections.length);
-  }, [completionRates]);
+  const globalCompletion = Math.round(
+    sectionsProgress.reduce((acc, section) => acc + section.completion, 0) / sectionsProgress.length
+  );
 
-  // Préparation des données pour le graphique
-  const quarterlyData = useMemo(() => 
-    formatQuarterlyData(businessPlanData.financials.quarterlyGoals),
-  [businessPlanData.financials.quarterlyGoals]);
+  // Sections incomplètes
+  const incompleteSections = sectionsProgress
+    .filter(section => section.completion < 70)
+    .sort((a, b) => a.completion - b.completion);
 
-  // Calcul des statistiques principales
-  const stats = useMemo(() => {
-    const totalClients = businessPlanData.marketAnalysis.targetClients.length;
-    const totalRevenue = businessPlanData.financials.quarterlyGoals.reduce((sum, goal) => sum + goal, 0);
-    const milestonesCount = businessPlanData.actionPlan.milestones.length;
-    
-    return {
-      totalRevenue,
-      totalClients,
-      initialInvestment: businessPlanData.financials.initialInvestment,
-      milestonesCount
-    };
-  }, [
-    businessPlanData.marketAnalysis.targetClients.length,
-    businessPlanData.financials.quarterlyGoals,
-    businessPlanData.actionPlan.milestones.length,
-    businessPlanData.financials.initialInvestment
-  ]);
-  
-  // Sections incomplètes (moins de 70% de complétion)
-  const incompleteSections = useMemo(() => {
-    return Object.entries(completionRates)
-      .filter(([, rate]) => rate < 70)
-      .sort(([, rateA], [, rateB]) => rateA - rateB);
-  }, [completionRates]);
+  // Préparation des données pour les graphiques
+  const quarterlyData = businessPlanData.financials.quarterlyGoals.map((value: number, index: number) => ({
+    name: `T${index + 1}`,
+    revenu: value
+  }));
 
-  const formatValue = (value: number) => {
-    return value.toLocaleString('fr-FR');
+  // Données pour le graphique circulaire (répartition des revenus)
+  const revenueDistributionData = [
+    { name: 'Taux horaires', value: businessPlanData.businessModel.hourlyRates.length * 2000 },
+    { name: 'Packages', value: businessPlanData.businessModel.packages.length * 3500 },
+    { name: 'Abonnements', value: businessPlanData.businessModel.subscriptions.length * 1000 }
+  ];
+
+  // Couleurs pour les graphiques
+  const COLORS = ["#3B82F6", "#8B5CF6", "#10B981", "#F59E0B", "#EF4444", "#EC4899"];
+
+  // Calcul des statistiques clés
+  const totalRevenue = businessPlanData.financials.quarterlyGoals.reduce((sum: number, goal: number) => sum + goal, 0);
+  const clientsCount = businessPlanData.marketAnalysis.targetClients.length;
+  const initialInvestment = businessPlanData.financials.initialInvestment;
+  const milestonesCount = businessPlanData.actionPlan.milestones.length;
+
+  // Préparation des statistiques clés
+  const keyStats: KeyStat[] = [
+    {
+      title: "Chiffre d'affaires",
+      value: `${totalRevenue.toLocaleString('fr-FR')}€`,
+      subtitle: "Prévisionnel année 1",
+      icon: <CircleDollarSign size={24} className="text-white" />,
+      bgColor: "bg-blue-100 dark:bg-blue-900/30",
+      change: 5
+    },
+    {
+      title: "Investissement",
+      value: `${initialInvestment.toLocaleString('fr-FR')}€`,
+      subtitle: "Capital initial",
+      icon: <TrendingUp size={24} className="text-white" />,
+      bgColor: "bg-green-100 dark:bg-green-900/30",
+    },
+    {
+      title: "Clients cibles",
+      value: clientsCount,
+      subtitle: "Segments identifiés",
+      icon: <Users size={24} className="text-white" />,
+      bgColor: "bg-purple-100 dark:bg-purple-900/30",
+      change: 8
+    },
+    {
+      title: "Jalons",
+      value: milestonesCount,
+      subtitle: "Objectifs définis",
+      icon: <Calendar size={24} className="text-white" />,
+      bgColor: "bg-orange-100 dark:bg-orange-900/30",
+    }
+  ];
+
+  // Fonction simulée pour naviguer vers une section (dans un vrai projet, utiliserait un router)
+  const navigateToSection = (sectionKey: SectionKey) => {
+    console.log(`Navigation vers ${sectionKey}`);
+    // Dans un vrai projet: router.push(`/${sectionKey}`);
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      <header className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
-        <h1 className={UI_CLASSES.HEADING_1}>Tableau de bord</h1>
-        <div className="bg-blue-600 dark:bg-blue-700 text-white py-2 px-4 rounded-md font-semibold">
-          Avancement global: {globalCompletion}%
-        </div>
-      </header>
-      
-      {/* Cartes de statistiques principales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-        <StatCard 
-          title="CA Année 1 (prévisionnel)"
-          value={`${formatValue(stats.totalRevenue)}€`}
-          icon={<CircleDollarSign className="text-white" size={24} />}
-          color="bg-blue-500 dark:bg-blue-600"
-        />
-        <StatCard 
-          title="Investissement initial"
-          value={`${formatValue(stats.initialInvestment)}€`}
-          icon={<TrendingUp className="text-white" size={24} />}
-          color="bg-green-500 dark:bg-green-600"
-        />
-        <StatCard 
-          title="Clients cibles identifiés"
-          value={stats.totalClients}
-          icon={<Users className="text-white" size={24} />}
-          color="bg-purple-500 dark:bg-purple-600"
-        />
-        <StatCard 
-          title="Jalons définis"
-          value={stats.milestonesCount}
-          icon={<Calendar className="text-white" size={24} />}
-          color="bg-orange-500 dark:bg-orange-600"
-        />
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Statistiques clés */}
-        <div className={UI_CLASSES.CARD}>
-          <h2 className={UI_CLASSES.HEADING_3}>Statistiques clés</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-            <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
-              <h3 className="text-blue-800 dark:text-blue-300 font-medium mb-1">Revenu total prévisionnel</h3>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{formatValue(stats.totalRevenue)}€</p>
-            </div>
-            <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
-              <h3 className="text-green-800 dark:text-green-300 font-medium mb-1">Investissement initial</h3>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{formatValue(stats.initialInvestment)}€</p>
-            </div>
-            <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
-              <h3 className="text-purple-800 dark:text-purple-300 font-medium mb-1">Client cibles</h3>
-              <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{stats.totalClients}</p>
-            </div>
-            <div className="bg-orange-50 dark:bg-orange-900/30 p-4 rounded-lg">
-              <h3 className="text-orange-800 dark:text-orange-300 font-medium mb-1">Concurrents identifiés</h3>
-              <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">{businessPlanData.marketAnalysis.competitors.length}</p>
-            </div>
+    <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
+      {/* En-tête avec avancement global */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <h1 className={UI_CLASSES.HEADING_1 + " mb-2 sm:mb-0"}>Tableau de bord</h1>
+        <div className="bg-blue-500 text-white py-2 px-4 rounded-md font-medium flex items-center space-x-2">
+          <span>Avancement global</span>
+          <div className="w-24 bg-blue-600 rounded-full h-2">
+            <div 
+              className="h-2 rounded-full bg-white" 
+              style={{ width: `${globalCompletion}%` }}
+            ></div>
           </div>
+          <span className="font-bold">{globalCompletion}%</span>
         </div>
-      
-        {/* Prévisions financières */}
+      </div>
+
+      {/* Statistiques clés */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {keyStats.map((stat, index) => (
+          <StatCard key={index} {...stat} />
+        ))}
+      </div>
+
+      {/* Graphiques */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Objectifs trimestriels (graphique à barres) */}
         <div className={UI_CLASSES.CARD}>
-          <h2 className={UI_CLASSES.HEADING_3}>Prévisions financières</h2>
+          <h2 className={UI_CLASSES.HEADING_3 + " mb-4"}>Objectifs trimestriels</h2>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={quarterlyData} margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+              <BarChart data={quarterlyData} barSize={40}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis 
                   dataKey="name" 
-                  axisLine={{ stroke: '#666', strokeWidth: 1 }} 
-                  tick={{ fill: '#666', fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
                 />
                 <YAxis 
-                  axisLine={{ stroke: '#666', strokeWidth: 1 }}
-                  tick={{ fill: '#666', fontSize: 12 }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(value: number) => `${value}€`}
                 />
                 <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'white', 
-                    color: '#333',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px'
-                  }}
-                  itemStyle={{ color: '#333' }}
-                  labelStyle={{ fontWeight: 'bold', color: '#333' }}
+                  formatter={(value: number) => [`${value.toLocaleString('fr-FR')}€`, 'Revenu']}
+                  cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }}
                 />
                 <Bar 
                   dataKey="revenu" 
-                  name="Prévision de revenus" 
                   fill="#3B82F6" 
                   radius={[4, 4, 0, 0]}
-                  barSize={30} 
                 />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
-      </div>
-      
-      {/* Sections à compléter */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {/* Répartition des revenus (graphique circulaire) */}
         <div className={UI_CLASSES.CARD}>
-          <h2 className={UI_CLASSES.HEADING_3}>
+          <h2 className={UI_CLASSES.HEADING_3 + " mb-4"}>Répartition des revenus</h2>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={revenueDistributionData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  fill="#8884d8"
+                  paddingAngle={2}
+                  dataKey="value"
+                >
+                  {revenueDistributionData.map((entry, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  formatter={(value: number) => [`${value.toLocaleString('fr-FR')}€`, 'Montant']}
+                />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Progression par section du business plan */}
+        <div className={UI_CLASSES.CARD}>
+          <h2 className={UI_CLASSES.HEADING_3 + " mb-4"}>Progression par section</h2>
+          <div className="space-y-1">
+            {sectionsProgress.map((section) => (
+              <ProgressBar
+                key={section.key}
+                label={section.title}
+                value={section.completion}
+                color={getProgressBarColor(section.completion)}
+                onClick={() => navigateToSection(section.key)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Cartes interactives pour sections incomplètes */}
+        <div className={UI_CLASSES.CARD}>
+          <h2 className={UI_CLASSES.HEADING_3 + " mb-4"}>
             Sections à compléter
             {incompleteSections.length === 0 && (
               <span className="ml-2 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs px-2 py-1 rounded-full">
@@ -265,65 +414,98 @@ const Dashboard: React.FC<DashboardProps> = ({ businessPlanData }) => {
               </span>
             )}
           </h2>
-          
+
           {incompleteSections.length > 0 ? (
-            <div className="mt-4 space-y-2">
-              {incompleteSections.map(([section, rate]) => (
-                <IncompleteSection 
-                  key={section} 
-                  section={
-                    section === "pitch" ? "Pitch" :
-                    section === "services" ? "Services" :
-                    section === "businessModel" ? "Modèle économique" :
-                    section === "marketAnalysis" ? "Analyse de marché" :
-                    section === "financials" ? "Finances" :
-                    section === "actionPlan" ? "Plan d'action" :
-                    section
-                  } 
-                  completion={rate} 
-                />
+            <div className="space-y-4">
+              {incompleteSections.map((section) => (
+                <div 
+                  key={section.key}
+                  className="p-3 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                  onClick={() => navigateToSection(section.key)}
+                >
+                  <div className="flex items-center">
+                    <div className={`p-2 rounded-md ${section.color} mr-3`}>{section.icon}</div>
+                    <div className="flex-grow">
+                      <h3 className={`${UI_CLASSES.TEXT} font-medium`}>{section.title}</h3>
+                      <div className="flex items-center justify-between mt-1">
+                        <div className="w-full max-w-[200px] bg-gray-200 dark:bg-gray-700 rounded-full h-2 mr-3">
+                          <div 
+                            className={`h-2 rounded-full ${getProgressBarColor(section.completion)}`} 
+                            style={{ width: `${section.completion}%` }}
+                          ></div>
+                        </div>
+                        <span className={`${UI_CLASSES.TEXT_SMALL}`}>{section.completion}%</span>
+                      </div>
+                    </div>
+                    <ArrowRight size={16} className="text-gray-400 ml-2" />
+                  </div>
+                </div>
               ))}
-              <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start">
-                <AlertCircle className="text-yellow-500 mr-2 flex-shrink-0 mt-1" size={18} />
-                <p className={`text-sm ${UI_CLASSES.TEXT}`}>
-                  Complétez ces sections pour améliorer votre business plan et obtenir une vision plus précise de votre activité.
-                </p>
-              </div>
+
+              {incompleteSections.length > 0 && (
+                <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg flex items-start">
+                  <AlertCircle className="text-yellow-500 mr-2 flex-shrink-0 mt-1" size={18} />
+                  <p className={`text-sm ${UI_CLASSES.TEXT}`}>
+                    Complétez ces sections pour améliorer votre business plan et obtenir une meilleure vision de votre activité.
+                  </p>
+                </div>
+              )}
             </div>
           ) : (
-            <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg flex items-start">
+            <div className="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg flex items-start">
               <CheckCircle className="text-green-500 mr-2 flex-shrink-0 mt-1" size={18} />
               <p className={`text-sm ${UI_CLASSES.TEXT}`}>
-                Félicitations ! Toutes les sections de votre business plan sont bien documentées. 
-                Vous pouvez maintenant explorer les différentes sections en détail.
+                Félicitations ! Toutes les sections de votre business plan sont bien documentées.
               </p>
             </div>
           )}
         </div>
-        
-        <div className={UI_CLASSES.CARD}>
-          <h2 className={UI_CLASSES.HEADING_3}>Progression par section</h2>
-          <div className="mt-4 space-y-3">
-            {Object.entries(completionRates).map(([section, rate]) => (
-              <IncompleteSection 
-                key={section} 
-                section={
-                  section === "pitch" ? "Pitch" :
-                  section === "services" ? "Services" :
-                  section === "businessModel" ? "Modèle économique" :
-                  section === "marketAnalysis" ? "Analyse de marché" :
-                  section === "financials" ? "Finances" :
-                  section === "actionPlan" ? "Plan d'action" :
-                  section
-                } 
-                completion={rate} 
-              />
-            ))}
-          </div>
-        </div>
+      </div>
+      
+      {/* Accès rapides */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ActionCard
+          title="Analyser votre marché"
+          description="Identifiez vos concurrents et segments de clients cibles."
+          icon={<LineChart size={20} className="text-white" />}
+          color="bg-indigo-500"
+          onClick={() => navigateToSection("marketAnalysis")}
+        />
+        <ActionCard
+          title="Définir vos objectifs financiers"
+          description="Établissez vos prévisions financières et suivez votre progression."
+          icon={<CircleDollarSign size={20} className="text-white" />}
+          color="bg-blue-500"
+          onClick={() => navigateToSection("financials")}
+        />
+        <ActionCard
+          title="Planifier vos jalons"
+          description="Créez votre plan d'action avec des étapes claires et mesurables."
+          icon={<Target size={20} className="text-white" />}
+          color="bg-rose-500"
+          onClick={() => navigateToSection("actionPlan")}
+        />
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+// Wrapper qui utilise le hook et passe les données au composant
+const DashboardContainer: React.FC = () => {
+  const businessPlanHook = useBusinessPlanData();
+  
+  // Vérifie si le hook est prêt
+  if (!businessPlanHook || !businessPlanHook.businessPlanData) {
+    return (
+      <div className="flex justify-center items-center h-[60vh]">
+        <div className="animate-pulse text-gray-500 dark:text-gray-400">
+          Chargement des données...
+        </div>
+      </div>
+    );
+  }
+  
+  return <Dashboard businessPlanData={businessPlanHook.businessPlanData} />;
+};
+
+export default DashboardContainer;
