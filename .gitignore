@@ -61,3 +61,13 @@ node_modules/
 # Task files
 tasks.json
 tasks/ 
+
+# Autres fichiers d'éditeur et d'outils
+.cursor/
+.roo/
+.roomodes
+.windsurfrules
+scripts/task-complexity-report.json
+scripts/example_prd.txt
+scripts/prd.txt
+.taskmasterconfig
