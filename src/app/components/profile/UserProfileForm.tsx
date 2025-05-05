@@ -7,7 +7,9 @@ import Card from '../common/Card';
 import Input from '../common/Input';
 import Select from '../common/Select';
 import { AuthServiceImpl, UserData, UserPreferences } from '@/app/services/core/auth-service';
-import { toast } from 'react-hot-toast';
+import { useToast } from '../error/ToastManager';
+import { useAsyncHandler } from '@/app/hooks/useAsyncHandler';
+import { useI18n } from '@/app/hooks/useI18n';
 
 type ProfileTab = 'info' | 'password' | 'preferences';
 
@@ -15,9 +17,9 @@ const UserProfileForm: React.FC = () => {
   const { user } = useAuth();
   const authService = new AuthServiceImpl();
   const [activeTab, setActiveTab] = useState<ProfileTab>('info');
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const { showError } = useToast();
+  const { t } = useI18n();
 
   // Form states
   const [profileData, setProfileData] = useState<Partial<UserData>>({
@@ -48,9 +50,51 @@ const UserProfileForm: React.FC = () => {
     }
   }, [user]);
 
+  // Utilisation du hook useAsyncHandler pour les opérations asynchrones
+  const { 
+    execute: updateProfile,
+    isLoading: isUpdatingProfile,
+    error: updateProfileError
+  } = useAsyncHandler(
+    async (data: Partial<UserData>) => {
+      return await authService.updateUserProfile(data);
+    },
+    {
+      successMessage: t('profile.profileUpdated'),
+      errorMessage: t('profile.errors.updateFailed')
+    }
+  );
+
+  const { 
+    execute: changePassword,
+    isLoading: isChangingPassword,
+    error: changePasswordError
+  } = useAsyncHandler(
+    async (currentPassword: string, newPassword: string) => {
+      return await authService.changePassword(currentPassword, newPassword);
+    },
+    {
+      successMessage: t('profile.passwordChanged'),
+      errorMessage: t('profile.errors.passwordChangeFailed')
+    }
+  );
+
+  const { 
+    execute: updatePreferences,
+    isLoading: isUpdatingPreferences,
+    error: updatePreferencesError
+  } = useAsyncHandler(
+    async (prefs: UserPreferences) => {
+      return await authService.updateUserPreferences(prefs);
+    },
+    {
+      successMessage: t('profile.preferences.updateSuccess'),
+      errorMessage: t('profile.preferences.updateFailed')
+    }
+  );
+
   const handleTabChange = (tab: ProfileTab) => {
     setActiveTab(tab);
-    setError(null);
     setSuccess(null);
   };
 
@@ -71,27 +115,27 @@ const UserProfileForm: React.FC = () => {
     setPreferences(prev => ({ ...prev, [name]: value }));
   };
 
-  const validateProfileData = () => {
+  const validateProfileData = (): boolean => {
     if (profileData.email && !profileData.email.includes('@')) {
-      setError('Please enter a valid email address');
+      showError(t('profile.validation.invalidEmail'));
       return false;
     }
     return true;
   };
 
-  const validatePasswordData = () => {
+  const validatePasswordData = (): boolean => {
     if (!passwordData.currentPassword) {
-      setError('Current password is required');
+      showError(t('profile.validation.currentPasswordRequired'));
       return false;
     }
     
     if (passwordData.newPassword.length < 8) {
-      setError('New password must be at least 8 characters long');
+      showError(t('profile.validation.passwordLength'));
       return false;
     }
     
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      setError('New passwords do not match');
+      showError(t('profile.validation.passwordsDoNotMatch'));
       return false;
     }
     
@@ -104,27 +148,10 @@ const UserProfileForm: React.FC = () => {
     if (!validateProfileData()) {
       return;
     }
-    
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-    
-    try {
-      const result = await authService.updateUserProfile(profileData);
-      
-      if (result.success) {
-        setSuccess('Profile updated successfully');
-        toast.success('Profile updated successfully');
-      } else {
-        setError(result.error?.message || 'Failed to update profile');
-        toast.error(result.error?.message || 'Failed to update profile');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
+
+    const result = await updateProfile(profileData);
+    if (result) {
+      setSuccess(t('profile.profileUpdated'));
     }
   };
 
@@ -135,73 +162,40 @@ const UserProfileForm: React.FC = () => {
       return;
     }
     
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
+    const result = await changePassword(
+      passwordData.currentPassword,
+      passwordData.newPassword
+    );
     
-    try {
-      const result = await authService.changePassword(
-        passwordData.currentPassword,
-        passwordData.newPassword
-      );
-      
-      if (result.success) {
-        setSuccess('Password changed successfully');
-        toast.success('Password changed successfully');
-        setPasswordData({
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
-        });
-      } else {
-        setError(result.error?.message || 'Failed to change password');
-        toast.error(result.error?.message || 'Failed to change password');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
+    if (result) {
+      setSuccess(t('profile.passwordChanged'));
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: '',
+      });
     }
   };
 
   const handleUpdatePreferences = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    setIsLoading(true);
-    setError(null);
-    setSuccess(null);
-    
-    try {
-      const result = await authService.updateUserPreferences(preferences);
-      
-      if (result.success) {
-        setSuccess('Preferences updated successfully');
-        toast.success('Preferences updated successfully');
-      } else {
-        setError(result.error?.message || 'Failed to update preferences');
-        toast.error(result.error?.message || 'Failed to update preferences');
-      }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
-      setError(errorMessage);
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
+    const result = await updatePreferences(preferences);
+    if (result) {
+      setSuccess(t('profile.preferences.updateSuccess'));
     }
   };
 
   if (!user) {
     return (
-      <Card title="Profile">
-        <p className="text-center py-4">Please log in to view your profile.</p>
+      <Card title={t('profile.title')}>
+        <p className="text-center py-4">{t('profile.pleaseLogin')}</p>
       </Card>
     );
   }
 
   return (
-    <Card title="Your Profile">
+    <Card title={t('profile.yourProfile')}>
       <div className="mb-4 border-b">
         <ul className="flex flex-wrap -mb-px text-sm font-medium text-center">
           <li className="mr-2">
@@ -213,7 +207,7 @@ const UserProfileForm: React.FC = () => {
               }`}
               onClick={() => handleTabChange('info')}
             >
-              Personal Information
+              {t('profile.personalInfo')}
             </button>
           </li>
           <li className="mr-2">
@@ -225,7 +219,7 @@ const UserProfileForm: React.FC = () => {
               }`}
               onClick={() => handleTabChange('password')}
             >
-              Change Password
+              {t('profile.changePassword')}
             </button>
           </li>
           <li>
@@ -237,15 +231,28 @@ const UserProfileForm: React.FC = () => {
               }`}
               onClick={() => handleTabChange('preferences')}
             >
-              Preferences
+              {t('profile.preferencesPage')}
             </button>
           </li>
         </ul>
       </div>
 
-      {error && (
+      {/* Display errors and success messages */}
+      {updateProfileError && activeTab === 'info' && (
         <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
-          {error}
+          {updateProfileError.message || t('profile.errors.updateFailed')}
+        </div>
+      )}
+
+      {changePasswordError && activeTab === 'password' && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          {changePasswordError.message || t('profile.errors.passwordChangeFailed')}
+        </div>
+      )}
+
+      {updatePreferencesError && activeTab === 'preferences' && (
+        <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">
+          {updatePreferencesError.message || t('profile.preferences.updateFailed')}
         </div>
       )}
 
@@ -259,27 +266,27 @@ const UserProfileForm: React.FC = () => {
         <form onSubmit={handleUpdateProfile}>
           <div className="mb-4">
             <Input
-              label="Full Name"
+              label={t('profile.fields.fullName')}
               type="text"
               name="name"
               value={profileData.name || ''}
               onChange={handleProfileChange}
-              placeholder="Your full name"
+              placeholder={t('profile.fields.fullNamePlaceholder')}
             />
           </div>
           <div className="mb-4">
             <Input
-              label="Email Address"
+              label={t('profile.fields.email')}
               type="email"
               name="email"
               value={profileData.email || ''}
               onChange={handleProfileChange}
-              placeholder="Your email address"
+              placeholder={t('profile.fields.emailPlaceholder')}
             />
           </div>
           <div className="mt-6">
-            <Button type="submit" variant="primary" disabled={isLoading}>
-              {isLoading ? 'Updating...' : 'Update Profile'}
+            <Button type="submit" variant="primary" disabled={isUpdatingProfile}>
+              {isUpdatingProfile ? t('common.buttons.updating') : t('profile.updateProfile')}
             </Button>
           </div>
         </form>
@@ -289,37 +296,37 @@ const UserProfileForm: React.FC = () => {
         <form onSubmit={handleChangePassword}>
           <div className="mb-4">
             <Input
-              label="Current Password"
+              label={t('common.labels.currentPassword')}
               type="password"
               name="currentPassword"
               value={passwordData.currentPassword}
               onChange={handlePasswordChange}
-              placeholder="Your current password"
+              placeholder={t('profile.fields.currentPasswordPlaceholder')}
             />
           </div>
           <div className="mb-4">
             <Input
-              label="New Password"
+              label={t('common.labels.newPassword')}
               type="password"
               name="newPassword"
               value={passwordData.newPassword}
               onChange={handlePasswordChange}
-              placeholder="New password"
+              placeholder={t('profile.fields.newPasswordPlaceholder')}
             />
           </div>
           <div className="mb-4">
             <Input
-              label="Confirm New Password"
+              label={t('common.labels.confirmPassword')}
               type="password"
               name="confirmPassword"
               value={passwordData.confirmPassword}
               onChange={handlePasswordChange}
-              placeholder="Confirm new password"
+              placeholder={t('profile.fields.confirmPasswordPlaceholder')}
             />
           </div>
           <div className="mt-6">
-            <Button type="submit" variant="primary" disabled={isLoading}>
-              {isLoading ? 'Changing Password...' : 'Change Password'}
+            <Button type="submit" variant="primary" disabled={isChangingPassword}>
+              {isChangingPassword ? t('profile.changingPassword') : t('profile.changePassword')}
             </Button>
           </div>
         </form>
@@ -329,56 +336,59 @@ const UserProfileForm: React.FC = () => {
         <form onSubmit={handleUpdatePreferences}>
           <div className="mb-4">
             <Select
-              label="Theme"
+              label={t('profile.preferences.theme')}
               name="theme"
               value={preferences.theme || 'light'}
               onChange={(e) => handlePreferenceChange('theme', e.target.value)}
               options={[
-                { value: 'light', label: 'Light' },
-                { value: 'dark', label: 'Dark' },
+                { value: 'light', label: t('profile.preferences.themes.light') },
+                { value: 'dark', label: t('profile.preferences.themes.dark') },
               ]}
             />
           </div>
           <div className="mb-4">
             <Select
-              label="Language"
+              label={t('common.labels.language')}
               name="language"
               value={preferences.language || 'en'}
               onChange={(e) => handlePreferenceChange('language', e.target.value)}
               options={[
-                { value: 'en', label: 'English' },
-                { value: 'fr', label: 'Français' },
-                { value: 'es', label: 'Español' },
+                { value: 'en', label: t('common.languages.en') },
+                { value: 'fr', label: t('common.languages.fr') },
               ]}
             />
           </div>
           <div className="mb-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="notifications"
+                name="notifications"
+                checked={preferences.notifications}
+                onChange={(e) => handlePreferenceChange('notifications', e.target.checked)}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+              />
+              <label htmlFor="notifications" className="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
+                {t('profile.preferences.enableNotifications')}
+              </label>
+            </div>
+          </div>
+          <div className="mb-4">
             <Select
-              label="Dashboard Layout"
+              label={t('profile.preferences.dashboardLayout')}
               name="dashboardLayout"
               value={preferences.dashboardLayout || 'default'}
               onChange={(e) => handlePreferenceChange('dashboardLayout', e.target.value)}
               options={[
-                { value: 'default', label: 'Default' },
-                { value: 'compact', label: 'Compact' },
-                { value: 'expanded', label: 'Expanded' },
+                { value: 'default', label: t('profile.preferences.layouts.default') },
+                { value: 'compact', label: t('profile.preferences.layouts.compact') },
+                { value: 'wide', label: t('profile.preferences.layouts.wide') },
               ]}
             />
           </div>
-          <div className="mb-4">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                checked={!!preferences.notifications}
-                onChange={(e) => handlePreferenceChange('notifications', e.target.checked)}
-                className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-              />
-              <span className="ml-2 text-sm text-gray-700">Enable Notifications</span>
-            </label>
-          </div>
           <div className="mt-6">
-            <Button type="submit" variant="primary" disabled={isLoading}>
-              {isLoading ? 'Updating...' : 'Save Preferences'}
+            <Button type="submit" variant="primary" disabled={isUpdatingPreferences}>
+              {isUpdatingPreferences ? t('common.buttons.saving') : t('common.buttons.save')}
             </Button>
           </div>
         </form>

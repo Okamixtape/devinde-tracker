@@ -18,11 +18,14 @@ import {
 import { BusinessPlanServiceImpl } from './core/business-plan-service';
 import { LocalStorageService } from './core/local-storage-service';
 import { UserData, UserRole } from './core/auth-service';
+import { I18nService } from './interfaces/i18n-service';
+import { I18nServiceImpl } from './core/i18n-service';
 
 // Singleton instances
 let businessPlanServiceInstance: BusinessPlanService | null = null;
 let sectionServiceInstance: SectionService | null = null;
 let authServiceInstance: AuthService | null = null;
+let i18nServiceInstance: I18nService | null = null;
 
 // Storage service instances
 let businessPlanStorageService: BusinessPlanService | null = null;
@@ -215,12 +218,25 @@ export function getAuthService(): AuthService {
 }
 
 /**
+ * Get the i18n service
+ */
+export function getI18nService(): I18nService {
+  if (!i18nServiceInstance) {
+    const storageService = new LocalStorageService<string>('devinde-tracker-preferences');
+    i18nServiceInstance = new I18nServiceImpl(storageService);
+  }
+  return i18nServiceInstance;
+}
+
+/**
  * Reset all service instances (mainly for testing)
  */
 export function resetServices(): void {
   businessPlanServiceInstance = null;
   sectionServiceInstance = null;
   authServiceInstance = null;
+  i18nServiceInstance = null;
+  
   businessPlanStorageService = null;
   sectionStorageService = null;
   userStorageService = null;
@@ -231,8 +247,11 @@ const serviceFactoryExports = {
   getBusinessPlanService,
   getSectionService,
   getAuthService,
+  getI18nService,
+  getBusinessPlanStorageService,
+  getSectionStorageService,
+  getUserStorageService,
   resetServices
 };
 
-// Export the object as the default export
 export default serviceFactoryExports;

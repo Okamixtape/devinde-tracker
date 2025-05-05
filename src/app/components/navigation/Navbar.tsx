@@ -9,7 +9,8 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { useAuth } from '../../hooks/useAuth';
 import ProfileNavigation from './ProfileNavigation';
 import SectionNavigation from './SectionNavigation';
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch, FiChevronRight, FiHome } from 'react-icons/fi';
+import LanguageSelector from '../common/LanguageSelector';
 
 /**
  * Navbar Component
@@ -81,225 +82,237 @@ export function Navbar() {
     if (!pathname) return false;
     return pathname.includes(path);
   };
+
+  // Générer le fil d'Ariane (breadcrumb)
+  const renderBreadcrumb = () => {
+    // Si nous sommes sur la page d'accueil, ne pas afficher de fil d'Ariane
+    if (pathname === '/') return null;
+
+    // Diviser le chemin en segments
+    const segments = pathname.split('/').filter(segment => segment);
+    
+    // Si nous sommes dans un plan d'affaires
+    if (planId && currentPlan) {
+      return (
+        <div className="flex items-center text-sm">
+          <Link href="/" className="text-blue-400 hover:text-blue-300 flex items-center">
+            <FiHome className="mr-1" />
+            <span className="sr-only sm:not-sr-only">Accueil</span>
+          </Link>
+          <FiChevronRight className="mx-2 text-blue-300" />
+          <Link href="/plans" className="text-blue-400 hover:text-blue-300">
+            Plans
+          </Link>
+          <FiChevronRight className="mx-2 text-blue-300" />
+          <span className="text-blue-100 font-medium truncate max-w-[150px]">
+            {currentPlan?.name}
+          </span>
+        </div>
+      );
+    }
+
+    // Pour les autres pages
+    return (
+      <div className="flex items-center text-sm">
+        <Link href="/" className="text-blue-400 hover:text-blue-300 flex items-center">
+          <FiHome className="mr-1" />
+          <span className="sr-only sm:not-sr-only">Accueil</span>
+        </Link>
+        {segments.map((segment, index) => (
+          <React.Fragment key={segment}>
+            <FiChevronRight className="mx-2 text-blue-300" />
+            {index === segments.length - 1 ? (
+              <span className="text-blue-100 font-medium capitalize">{segment}</span>
+            ) : (
+              <Link 
+                href={`/${segments.slice(0, index + 1).join('/')}`}
+                className="text-blue-400 hover:text-blue-300 capitalize"
+              >
+                {segment}
+              </Link>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
   
   // Si nous ne sommes pas dans un plan, affichons juste le menu basique
   if (!planId) {
     return (
-      <nav className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 w-full">
+      <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-lg sticky top-0 z-50 w-full">
         <div className="container mx-auto px-4">
           <div className="flex justify-between h-16">
-            <div className="flex items-center">
-              <Link href="/" className="flex-shrink-0 flex items-center text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">
+            <div className="flex items-center space-x-4">
+              <Link href="/" className="flex-shrink-0 flex items-center text-lg sm:text-xl font-bold text-white">
                 DevIndé Tracker
               </Link>
+              
+              {/* Fil d'Ariane (breadcrumb) */}
+              <div className="hidden sm:flex">
+                {renderBreadcrumb()}
+              </div>
             </div>
             
             {/* Menu desktop */}
             <div className="hidden sm:flex items-center space-x-2 sm:space-x-4">
               <Link 
                 href="/plans" 
-                className={`text-gray-700 dark:text-gray-300 hover:text-blue-600 px-2 sm:px-3 py-2 rounded-md text-sm font-medium ${isActive('/plans') ? 'text-blue-600 dark:text-blue-400' : ''}`}
+                className={`text-gray-200 hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out ${isActive('/plans') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700/40'}`}
               >
-                Mes Plans
+                Plans
               </Link>
               <Link 
-                href="/documentation" 
-                className={`text-gray-700 dark:text-gray-300 hover:text-blue-600 px-2 sm:px-3 py-2 rounded-md text-sm font-medium ${isActive('/documentation') ? 'text-blue-600 dark:text-blue-400' : ''}`}
+                href="/calculator" 
+                className={`text-gray-200 hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out ${isActive('/calculator') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700/40'}`}
               >
-                Documentation
+                Calculateur
               </Link>
               <Link 
-                href="/monitoring" 
-                className={`text-gray-700 dark:text-gray-300 hover:text-blue-600 px-2 sm:px-3 py-2 rounded-md text-sm font-medium ${isActive('/monitoring') ? 'text-blue-600 dark:text-blue-400' : ''}`}
+                href="/resources" 
+                className={`text-gray-200 hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out ${isActive('/resources') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700/40'}`}
               >
-                Monitoring
+                Ressources
               </Link>
-              <Link 
-                href="/search" 
-                className={`text-gray-700 dark:text-gray-300 hover:text-blue-600 px-2 sm:px-3 py-2 rounded-md text-sm font-medium flex items-center ${isActive('/search') ? 'text-blue-600 dark:text-blue-400' : ''}`}
+              
+              {/* Séparateur */}
+              <div className="mx-2 h-6 w-px bg-blue-600"></div>
+              
+              {/* Sélecteur de langue */}
+              <div className="px-2">
+                <LanguageSelector />
+              </div>
+              
+              {/* Recherche */}
+              <button 
+                className="text-gray-200 hover:text-white transition-colors duration-150 ease-in-out"
+                aria-label="Rechercher"
               >
-                <FiSearch className="mr-1" />
-                Recherche
-              </Link>
-              {isAuthenticated ? (
-                <div className="flex items-center space-x-2 sm:ml-4">
-                  <ProfileNavigation user={user} onLogout={logout} />
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2 sm:ml-4">
-                  <Link
-                    href="/login"
-                    className={`text-gray-700 dark:text-gray-300 hover:text-blue-600 px-2 sm:px-3 py-2 rounded-md text-sm font-medium ${isActive('/login') ? 'text-blue-600 dark:text-blue-400' : ''}`}
-                  >
-                    Connexion
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Inscription
-                  </Link>
-                </div>
-              )}
+                <FiSearch className="h-5 w-5" />
+              </button>
+              
+              {/* Profil utilisateur */}
+              <ProfileNavigation user={user} onLogout={logout} />
             </div>
             
             {/* Bouton menu mobile */}
             <div className="sm:hidden flex items-center">
               <button
                 onClick={() => setMenuOpen(!menuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-200 hover:text-white hover:bg-blue-700 focus:outline-none transition-colors duration-150 ease-in-out"
                 aria-expanded={menuOpen}
               >
-                <span className="sr-only">{menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}</span>
-                <svg 
-                  className="h-6 w-6" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor" 
-                  aria-hidden="true"
-                >
-                  {menuOpen ? (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  ) : (
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                  )}
+                <span className="sr-only">Ouvrir le menu principal</span>
+                {/* Icône hamburger */}
+                <svg className={`${menuOpen ? 'hidden' : 'block'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+                {/* Icône X */}
+                <svg className={`${menuOpen ? 'block' : 'hidden'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
           </div>
+          
+          {/* Fil d'Ariane (breadcrumb) pour mobile */}
+          <div className="sm:hidden -mt-2 pb-2 text-xs">
+            {renderBreadcrumb()}
+          </div>
         </div>
         
-        {/* Menu mobile déroulant */}
-        {menuOpen && (
-          <div className="sm:hidden fixed inset-0 bg-gray-800 bg-opacity-75 z-40 flex items-start pt-16">
-            <div 
-              ref={menuRef}
-              className="w-full h-auto bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 overflow-y-auto"
+        {/* Menu mobile */}
+        <div
+          ref={menuRef}
+          className={`${menuOpen ? 'fixed' : 'hidden'} sm:hidden bg-blue-800 inset-0 top-16 pt-2 px-4 pb-3 shadow-lg overflow-y-auto`}
+        >
+          <div className="space-y-1 mb-3">
+            <Link 
+              href="/plans" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+              onClick={() => setMenuOpen(false)}
             >
-              <div className="px-2 pt-2 pb-3 space-y-1">
-                <Link 
-                  href="/plans" 
-                  className={`px-3 py-2 rounded-md text-base font-medium ${isActive('/plans') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Mes Plans
-                </Link>
-                <Link 
-                  href="/documentation" 
-                  className={`px-3 py-2 rounded-md text-base font-medium ${isActive('/documentation') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Documentation
-                </Link>
-                <Link 
-                  href="/monitoring" 
-                  className={`px-3 py-2 rounded-md text-base font-medium ${isActive('/monitoring') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Monitoring
-                </Link>
-                <Link 
-                  href="/search" 
-                  className={`px-3 py-2 rounded-md text-base font-medium flex items-center ${isActive('/search') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <FiSearch className="mr-1" />
-                  Recherche
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
-    );
-  }
-  
-  // Navigation complète quand on est dans un plan
-  return (
-    <nav className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-50 w-full">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link href="/" className="flex-shrink-0 flex items-center text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 whitespace-nowrap">
-              DevIndé Tracker
+              Plans
             </Link>
-            
-            {/* Nom du plan courant - responsive */}
-            {currentPlan && (
-              <div className="ml-2 md:ml-4 px-2 sm:px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-md text-xs sm:text-sm truncate max-w-[100px] sm:max-w-[150px] md:max-w-[200px]">
-                {currentPlan.name || 'Plan sans nom'}
-              </div>
-            )}
-            
-            {/* Menu de navigation large écran avec dropdown */}
-            <div className="hidden md:ml-6 md:flex md:space-x-1 lg:space-x-2 items-center">
-              {planId && <SectionNavigation planId={planId} />}
-            </div>
-          </div>
-          
-          {/* Bouton menu mobile */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 dark:text-gray-300 hover:text-blue-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none"
-              aria-expanded={menuOpen}
+            <Link 
+              href="/calculator" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+              onClick={() => setMenuOpen(false)}
             >
-              <span className="sr-only">{menuOpen ? 'Fermer le menu' : 'Ouvrir le menu'}</span>
-              <svg 
-                className="h-6 w-6" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor" 
-                aria-hidden="true"
-              >
-                {menuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
+              Calculateur
+            </Link>
+            <Link 
+              href="/resources" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+              onClick={() => setMenuOpen(false)}
+            >
+              Ressources
+            </Link>
           </div>
           
-          {/* Liens vers tous les plans - visible seulement sur grands écrans */}
-          <div className="hidden md:flex items-center flex-grow justify-between">
-            <div className="flex items-center space-x-2">
-              <Link
-                href="/plans"
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                Tous les Plans
-              </Link>
-              <Link
-                href="/monitoring"
-                className={`px-3 py-2 rounded-md text-sm font-medium ${isActive('/monitoring') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              >
-                Monitoring
-              </Link>
-              <Link
-                href="/search"
-                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${isActive('/search') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-              >
-                <FiSearch className="mr-1" />
-                Recherche
-              </Link>
-            </div>
-            
+          {/* Séparateur */}
+          <div className="border-t border-blue-700 my-4"></div>
+          
+          {/* Sélecteur de langue (mobile) */}
+          <div className="px-3 py-2">
+            <div className="text-sm font-medium text-gray-300 mb-2">Langue</div>
+            <LanguageSelector />
+          </div>
+          
+          {/* Recherche (mobile) */}
+          <div className="px-3 py-2 flex items-center space-x-2 text-gray-200 hover:text-white">
+            <FiSearch className="h-5 w-5" />
+            <span className="text-sm font-medium">Rechercher</span>
+          </div>
+          
+          {/* Profil utilisateur (mobile) */}
+          <div className="mt-3 pt-3 border-t border-blue-700">
             {isAuthenticated ? (
-              <div className="flex items-center border-l pl-4 ml-4 border-gray-300 dark:border-gray-700">
-                <ProfileNavigation user={user} onLogout={logout} />
+              <div className="px-3 py-2">
+                <div className="text-sm font-medium text-gray-300 mb-2">Compte</div>
+                <div className="flex items-center mb-3">
+                  <div className="flex-shrink-0">
+                    <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
+                      {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  </div>
+                  <div className="ml-3">
+                    <div className="text-base font-medium text-white">{user?.name || user?.email}</div>
+                    <div className="text-sm font-medium text-gray-300">{user?.email}</div>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Link 
+                    href="/profile" 
+                    className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Profil
+                  </Link>
+                  <button 
+                    onClick={() => {
+                      logout();
+                      setMenuOpen(false);
+                    }}
+                    className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+                  >
+                    Déconnexion
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center">
-                <Link
-                  href="/login"
-                  className={`text-gray-700 dark:text-gray-300 hover:text-blue-600 px-2 sm:px-3 py-2 rounded-md text-sm font-medium ${isActive('/login') ? 'text-blue-600 dark:text-blue-400' : ''}`}
+              <div className="space-y-1 px-3">
+                <Link 
+                  href="/login" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+                  onClick={() => setMenuOpen(false)}
                 >
                   Connexion
                 </Link>
-                <Link
-                  href="/register"
-                  className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
+                <Link 
+                  href="/register" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+                  onClick={() => setMenuOpen(false)}
                 >
                   Inscription
                 </Link>
@@ -307,130 +320,220 @@ export function Navbar() {
             )}
           </div>
         </div>
-      </div>
+      </nav>
+    );
+  }
+
+  // Sinon, nous affichons le menu contextuel avec les sections du plan d'affaires
+  return (
+    <div className="sticky top-0 z-50 w-full">
+      {/* Barre principale avec le titre */}
+      <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-md">
+        <div className="container mx-auto px-4">
+          {/* Barre de navigation supérieure */}
+          <div className="flex justify-between h-16">
+            <div className="flex items-center space-x-4">
+              <Link href="/" className="text-lg sm:text-xl font-bold text-white">
+                DevIndé Tracker
+              </Link>
+              
+              {/* Fil d'Ariane */}
+              <div className="hidden md:flex items-center">
+                <span className="mx-1 text-gray-400">/</span>
+                <span className="text-gray-200 font-medium truncate max-w-[200px]">
+                  {currentPlan?.name}
+                </span>
+              </div>
+              
+              {/* SectionNavigation intégré dans le header principal */}
+              <div className="hidden md:block ml-4">
+                <SectionNavigation planId={planId} />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              {/* Utilities in the top bar */}
+              <div className="px-2">
+                <LanguageSelector />
+              </div>
+              
+              <button 
+                className="text-gray-200 hover:text-white transition-colors duration-150 ease-in-out"
+                aria-label="Rechercher"
+              >
+                <FiSearch className="h-5 w-5" />
+              </button>
+              
+              <ProfileNavigation user={user} onLogout={logout} />
+            </div>
+            
+            {/* Bouton menu mobile */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-200 hover:text-white hover:bg-blue-700 focus:outline-none transition-colors duration-150 ease-in-out"
+                aria-expanded={menuOpen}
+              >
+                <span className="sr-only">Ouvrir le menu principal</span>
+                {/* Icône hamburger */}
+                <svg className={`${menuOpen ? 'hidden' : 'block'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+                {/* Icône X */}
+                <svg className={`${menuOpen ? 'block' : 'hidden'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          {/* Version mobile de SectionNavigation si le menu n'est pas ouvert */}
+          <div className="md:hidden pb-2">
+            {!menuOpen && <SectionNavigation planId={planId} />}
+          </div>
+        </div>
+      </nav>
       
-      {/* Menu mobile déroulant amélioré */}
-      {menuOpen && (
-        <div className="md:hidden fixed inset-0 bg-gray-800 bg-opacity-75 z-40 flex items-start pt-16">
-          <div 
-            ref={menuRef}
-            className="w-full h-auto bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 overflow-y-auto"
+      {/* Menu mobile */}
+      <div
+        ref={menuRef}
+        className={`${menuOpen ? 'fixed' : 'hidden'} md:hidden bg-blue-800 inset-0 top-16 pt-2 px-4 pb-3 shadow-lg overflow-y-auto`}
+      >
+        {currentPlan && (
+          <div className="py-2 mb-2">
+            <h2 className="text-lg font-semibold text-white">{currentPlan?.name}</h2>
+          </div>
+        )}
+        
+        {/* Sélecteur de langue (mobile) */}
+        <div className="px-3 py-2">
+          <div className="text-sm font-medium text-gray-300 mb-2">Langue</div>
+          <LanguageSelector />
+        </div>
+        
+        {/* Recherche (mobile) */}
+        <div className="px-3 py-2 flex items-center space-x-2 text-gray-200 hover:text-white">
+          <FiSearch className="h-5 w-5" />
+          <span className="text-sm font-medium">Rechercher</span>
+        </div>
+        
+        {/* Navigation principale (mobile) */}
+        <div className="border-t border-blue-700 my-2 pt-2">
+          <Link 
+            href="/plans" 
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+            onClick={() => setMenuOpen(false)}
           >
-            <div className="px-2 pt-2 pb-3 space-y-1">
+            Tous les plans
+          </Link>
+          <Link 
+            href="/calculator" 
+            className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+            onClick={() => setMenuOpen(false)}
+          >
+            Calculateur
+          </Link>
+          
+          {/* Sections du plan (mobile) */}
+          {planId && (
+            <div className="mt-2 pt-2 border-t border-blue-700">
+              <div className="px-3 pb-1 text-sm font-medium text-gray-300">
+                Sections du plan
+              </div>
               <Link 
-                href={`/plans/${planId}/dashboard`}
-                className={`px-3 py-3 rounded-md text-base font-medium ${isActive('/dashboard') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                href={`/plans/${planId}/dashboard`} 
+                className={`block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700/70 transition-colors duration-150 ease-in-out ${isActive(`/plans/${planId}/dashboard`) ? 'bg-blue-700' : ''}`}
                 onClick={() => setMenuOpen(false)}
               >
-                Tableau de Bord
+                Tableau de bord
               </Link>
               <Link 
-                href={`/plans/${planId}/business-model`}
-                className={`px-3 py-3 rounded-md text-base font-medium ${isActive('/business-model') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                href={`/plans/${planId}/business-model`} 
+                className={`block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700/70 transition-colors duration-150 ease-in-out ${isActive(`/plans/${planId}/business-model`) ? 'bg-blue-700' : ''}`}
                 onClick={() => setMenuOpen(false)}
               >
-                Modèle Économique
+                Modèle économique
               </Link>
               <Link 
-                href={`/plans/${planId}/market-analysis`}
-                className={`px-3 py-3 rounded-md text-base font-medium ${isActive('/market-analysis') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                href={`/plans/${planId}/market-analysis`} 
+                className={`block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700/70 transition-colors duration-150 ease-in-out ${isActive(`/plans/${planId}/market-analysis`) ? 'bg-blue-700' : ''}`}
                 onClick={() => setMenuOpen(false)}
               >
-                Analyse Marché
+                Analyse marché
               </Link>
               <Link 
-                href={`/plans/${planId}/finances`}
-                className={`px-3 py-3 rounded-md text-base font-medium ${isActive('/finances') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                href={`/plans/${planId}/finances`} 
+                className={`block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700/70 transition-colors duration-150 ease-in-out ${isActive(`/plans/${planId}/finances`) ? 'bg-blue-700' : ''}`}
                 onClick={() => setMenuOpen(false)}
               >
                 Finances
               </Link>
               <Link 
-                href={`/plans/${planId}/action-plan`}
-                className={`px-3 py-3 rounded-md text-base font-medium ${isActive('/action-plan') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                href={`/plans/${planId}/action-plan`} 
+                className={`block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700/70 transition-colors duration-150 ease-in-out ${isActive(`/plans/${planId}/action-plan`) ? 'bg-blue-700' : ''}`}
                 onClick={() => setMenuOpen(false)}
               >
-                Plan d&apos;Action
+                Plan d&apos;action
               </Link>
-              <Link 
-                href={`/plans/${planId}/revenue`}
-                className={`px-3 py-3 rounded-md text-base font-medium ${isActive('/revenue') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                onClick={() => setMenuOpen(false)}
-              >
-                Projections
-              </Link>
-              
-              {/* Liens supplémentaires spécifiques au mobile */}
-              <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
-                <Link 
-                  href="/plans"
-                  className="px-3 py-3 rounded-md text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Tous les Plans
-                </Link>
-                <Link 
-                  href="/monitoring"
-                  className={`px-3 py-3 rounded-md text-base font-medium ${isActive('/monitoring') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Monitoring
-                </Link>
-                <Link 
-                  href="/search"
-                  className={`px-3 py-3 rounded-md text-base font-medium flex items-center ${isActive('/search') ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <FiSearch className="mr-1" />
-                  Recherche
-                </Link>
-                {isAuthenticated ? (
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex items-center bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1 mb-1">
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        {user?.name || user?.email}
-                      </span>
-                    </div>
-                    <Link
-                      href="/profile"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <span className="mr-2">👤</span>
-                      Profil
-                    </Link>
-                    <button
-                      onClick={() => {
-                        logout();
-                        setMenuOpen(false);
-                      }}
-                      className="flex items-center w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
-                    >
-                      <span className="mr-2">🚪</span>
-                      Déconnexion
-                    </button>
+            </div>
+          )}
+        </div>
+        
+        {/* Profil utilisateur (mobile) */}
+        <div className="border-t border-blue-700 mt-2 pt-2">
+          {isAuthenticated ? (
+            <div className="px-3 py-2">
+              <div className="text-sm font-medium text-gray-300 mb-2">Compte</div>
+              <div className="flex items-center mb-3">
+                <div className="flex-shrink-0">
+                  <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
+                    {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
                   </div>
-                ) : (
-                  <div className="flex flex-col space-y-2">
-                    <Link
-                      href="/login"
-                      className={`text-gray-700 dark:text-gray-300 hover:text-blue-600 px-2 sm:px-3 py-2 rounded-md text-sm font-medium ${isActive('/login') ? 'text-blue-600 dark:text-blue-400' : ''}`}
-                    >
-                      Connexion
-                    </Link>
-                    <Link
-                      href="/register"
-                      className="bg-blue-600 text-white hover:bg-blue-700 px-3 py-2 rounded-md text-sm font-medium"
-                    >
-                      Inscription
-                    </Link>
-                  </div>
-                )}
+                </div>
+                <div className="ml-3">
+                  <div className="text-base font-medium text-white">{user?.name || user?.email?.split('@')[0]}</div>
+                  <div className="text-sm font-medium text-gray-300">{user?.email}</div>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <Link 
+                  href="/profile" 
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Profil
+                </Link>
+                <button 
+                  onClick={() => {
+                    logout();
+                    setMenuOpen(false);
+                  }}
+                  className="w-full text-left block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+                >
+                  Déconnexion
+                </button>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-1 px-3">
+              <Link 
+                href="/login" 
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+                onClick={() => setMenuOpen(false)}
+              >
+                Connexion
+              </Link>
+              <Link 
+                href="/register" 
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+                onClick={() => setMenuOpen(false)}
+              >
+                Inscription
+              </Link>
+            </div>
+          )}
         </div>
-      )}
-    </nav>
+      </div>
+    </div>
   );
 }

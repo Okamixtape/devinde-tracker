@@ -6,6 +6,9 @@ import "./styles/responsive.css";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Navbar } from "./components/navigation/Navbar";
 import { DataServiceProvider } from "./contexts/DataServiceContext";
+import { ErrorProvider } from "./context/ErrorContext";
+import { ToastProvider } from "./components/error/ToastManager";
+import { I18nProvider } from "./context/I18nContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,12 +37,18 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <DataServiceProvider>
-            <AuthProvider>
-              <Navbar />
-              <main className="min-h-screen">
-                {children}
-              </main>
-            </AuthProvider>
+            <ErrorProvider>
+              <ToastProvider>
+                <I18nProvider>
+                  <AuthProvider>
+                    <Navbar />
+                    <main className="min-h-screen">
+                      {children}
+                    </main>
+                  </AuthProvider>
+                </I18nProvider>
+              </ToastProvider>
+            </ErrorProvider>
           </DataServiceProvider>
         </ThemeProvider>
       </body>

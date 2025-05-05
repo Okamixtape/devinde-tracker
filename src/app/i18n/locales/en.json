@@ -1,0 +1,363 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "create": "Create",
+      "add": "Add",
+      "close": "Close",
+      "confirm": "Confirm",
+      "back": "Back",
+      "next": "Next",
+      "submit": "Submit",
+      "updating": "Updating...",
+      "saving": "Saving..."
+    },
+    "labels": {
+      "name": "Name",
+      "description": "Description",
+      "email": "Email",
+      "password": "Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "search": "Search",
+      "filter": "Filter",
+      "sort": "Sort",
+      "startDate": "Start Date",
+      "endDate": "End Date",
+      "status": "Status",
+      "amount": "Amount",
+      "currency": "Currency",
+      "language": "Language"
+    },
+    "notifications": {
+      "success": "Success",
+      "error": "Error",
+      "warning": "Warning",
+      "info": "Information"
+    },
+    "validation": {
+      "required": "This field is required",
+      "invalidEmail": "Invalid email address",
+      "invalidPassword": "Password must contain at least 8 characters",
+      "passwordsDoNotMatch": "Passwords do not match",
+      "minLength": "Must contain at least {{count}} characters",
+      "maxLength": "Must not exceed {{count}} characters",
+      "invalidAmount": "Invalid amount"
+    },
+    "languages": {
+      "fr": "French",
+      "en": "English"
+    },
+    "loading": "Loading...",
+    "creating": "Creating...",
+    "noData": "No data available",
+    "selectOption": "Select an option",
+    "months": {
+      "january": "January",
+      "february": "February",
+      "march": "March",
+      "april": "April",
+      "may": "May",
+      "june": "June",
+      "july": "July",
+      "august": "August",
+      "september": "September",
+      "october": "October",
+      "november": "November",
+      "december": "December"
+    },
+    "status": {
+      "completed": "Completed",
+      "in_progress": "In Progress",
+      "planned": "Planned"
+    },
+    "category": {
+      "business": "Business",
+      "technical": "Technical",
+      "marketing": "Marketing",
+      "admin": "Administrative",
+      "financial": "Financial"
+    },
+    "all": "All"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "changePassword": "Change Password",
+    "emailPlaceholder": "Your email address",
+    "passwordPlaceholder": "Your password",
+    "rememberMe": "Remember me",
+    "dontHaveAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "accountCreated": "Account created successfully",
+    "loginSuccess": "Login successful",
+    "logoutSuccess": "Logout successful",
+    "passwordChanged": "Password changed successfully",
+    "account": "Account",
+    "unauthorized": "You must be logged in to access this page.",
+    "unauthorizedCalculator": "You must be logged in to access the financial calculator.",
+    "unauthorizedResources": "You must be logged in to access resources.",
+    "email": "Email",
+    "password": "Password",
+    "name": "Full Name",
+    "namePlaceholder": "John Doe",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "nameRequired": "Name is required",
+    "passwordLength": "Password must be at least 8 characters long",
+    "errors": {
+      "invalidCredentials": "Incorrect email or password",
+      "emailAlreadyExists": "This email is already in use",
+      "weakPassword": "Password is too weak",
+      "unauthorized": "You must be logged in to access this page"
+    },
+    "loginPageDescription": "Login to access your account",
+    "registerPageDescription": "Create an account to start using DevIndé Tracker",
+    "passwordRequirements": "Password must be at least 8 characters long"
+  },
+  "profile": {
+    "title": "Profile",
+    "yourProfile": "Your Profile",
+    "pleaseLogin": "Please log in to view your profile",
+    "personalInfo": "Personal Information",
+    "accountSettings": "Account Settings",
+    "preferencesPage": "Preferences",
+    "updateProfile": "Update Profile",
+    "profileUpdated": "Profile updated successfully",
+    "uploadPhoto": "Upload Photo",
+    "removePhoto": "Remove Photo",
+    "deleteAccount": "Delete Account",
+    "confirmDeleteAccount": "Are you sure you want to delete your account? This action is irreversible.",
+    "changePassword": "Change Password",
+    "changingPassword": "Changing password...",
+    "passwordChanged": "Password changed successfully",
+    "fields": {
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "displayName": "Display Name",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Your full name",
+      "email": "Email Address",
+      "emailPlaceholder": "Your email address",
+      "currentPasswordPlaceholder": "Your current password",
+      "newPasswordPlaceholder": "New password",
+      "confirmPasswordPlaceholder": "Confirm new password",
+      "bio": "Bio",
+      "phone": "Phone",
+      "address": "Address",
+      "city": "City",
+      "country": "Country",
+      "postalCode": "Postal Code",
+      "website": "Website",
+      "company": "Company",
+      "position": "Position"
+    },
+    "preferences": {
+      "theme": "Theme",
+      "themes": {
+        "light": "Light",
+        "dark": "Dark",
+        "system": "System"
+      },
+      "notifications": "Notifications",
+      "enableNotifications": "Enable notifications",
+      "updateSuccess": "Preferences updated successfully",
+      "updateFailed": "Failed to update preferences",
+      "notificationTypes": {
+        "email": "Email",
+        "push": "Push",
+        "sms": "SMS"
+      },
+      "dashboardLayout": "Dashboard Layout",
+      "layouts": {
+        "default": "Default",
+        "compact": "Compact",
+        "wide": "Wide"
+      }
+    },
+    "validation": {
+      "invalidEmail": "Please enter a valid email address",
+      "currentPasswordRequired": "Current password is required",
+      "passwordLength": "New password must be at least 8 characters long",
+      "passwordsDoNotMatch": "New passwords do not match"
+    },
+    "errors": {
+      "updateFailed": "Failed to update profile",
+      "passwordChangeFailed": "Failed to change password"
+    }
+  },
+  "business_plan": {
+    "title": "Business Plan",
+    "new": "New Business Plan",
+    "edit": "Edit Business Plan",
+    "delete": "Delete Business Plan",
+    "confirmDelete": "Are you sure you want to delete this Business Plan?",
+    "saved": "Business Plan saved successfully",
+    "sections": {
+      "pitch": "Pitch",
+      "services": "Services",
+      "businessModel": "Business Model",
+      "marketAnalysis": "Market Analysis",
+      "financials": "Financials",
+      "actionPlan": "Action Plan"
+    },
+    "pitch": {
+      "title": "Pitch",
+      "summary": "Summary",
+      "vision": "Vision",
+      "values": "Values"
+    },
+    "services": {
+      "title": "Services",
+      "offerings": "Offerings",
+      "technologies": "Technologies",
+      "process": "Process"
+    },
+    "businessModel": {
+      "title": "Business Model",
+      "hourlyRates": "Hourly Rates",
+      "packages": "Packages",
+      "subscriptions": "Subscriptions"
+    },
+    "marketAnalysis": {
+      "title": "Market Analysis",
+      "competitors": "Competitors",
+      "targetClients": "Target Clients",
+      "trends": "Trends"
+    },
+    "financials": {
+      "title": "Financials",
+      "initialInvestment": "Initial Investment",
+      "quarterlyGoals": "Quarterly Goals",
+      "expenses": "Expenses",
+      "projects": "Projects"
+    },
+    "action_plan": {
+      "title": "Action Plan",
+      "description": "Plan and track important milestones for your business",
+      "status": "Status",
+      "category": "Category",
+      "date": "Date",
+      "add_milestone": "Add Milestone",
+      "edit_milestone": "Edit Milestone",
+      "global_progress": "Global Progress",
+      "milestones_completed": "milestones completed",
+      "objective": "Objective",
+      "no_milestones": "No milestones defined",
+      "no_milestones_description": "Start by adding important milestones to track the development of your business",
+      "title_placeholder": "Ex: Apply for ARCE grant",
+      "description_placeholder": "Additional details about this milestone...",
+      "confirm_delete": "Are you sure you want to delete this milestone?"
+    }
+  },
+  "calculator": {
+    "title": "Financial Calculator",
+    "income": "Income",
+    "expenses": "Expenses",
+    "savings": "Savings",
+    "taxes": "Taxes",
+    "projections": "Projections",
+    "description": "Manage your finances and run simulations for your freelance business.",
+    "incomeTypes": {
+      "hourly": "Hourly Rate",
+      "fixed": "Fixed Fee",
+      "recurring": "Recurring"
+    },
+    "expenseTypes": {
+      "fixed": "Fixed",
+      "variable": "Variable",
+      "oneTime": "One-time",
+      "recurring": "Recurring"
+    },
+    "timeframes": {
+      "monthly": "Monthly",
+      "quarterly": "Quarterly",
+      "yearly": "Yearly"
+    },
+    "taxSettings": {
+      "title": "Tax Settings",
+      "country": "Country",
+      "taxRate": "Tax Rate",
+      "socialCharges": "Social Charges"
+    },
+    "summary": {
+      "title": "Summary",
+      "totalIncome": "Total Income",
+      "totalExpenses": "Total Expenses",
+      "netIncome": "Net Income",
+      "taxAmount": "Tax Amount",
+      "finalAmount": "Final Amount"
+    },
+    "projects": {
+      "title": "Financial Projects",
+      "new": "New Project",
+      "edit": "Edit Project",
+      "delete": "Delete Project",
+      "details": "Project Details",
+      "status": {
+        "planned": "Planned",
+        "active": "Active",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "category": {
+        "client": "Client",
+        "internal": "Internal",
+        "investment": "Investment"
+      },
+      "transactions": {
+        "title": "Transactions",
+        "new": "New Transaction",
+        "edit": "Edit Transaction",
+        "delete": "Delete Transaction",
+        "type": {
+          "income": "Income",
+          "expense": "Expense"
+        },
+        "status": {
+          "pending": "Pending",
+          "completed": "Completed"
+        }
+      }
+    }
+  },
+  "resources": {
+    "title": "Resources",
+    "description": "Access useful resources for your freelance business.",
+    "documentation": "Documentation",
+    "templates": "Templates",
+    "guides": "Guides",
+    "legalInfo": "Legal Information"
+  },
+  "errors": {
+    "general": "An error occurred",
+    "network": "Network connection error",
+    "notFound": "Page not found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Access denied",
+    "serverError": "Server error",
+    "validation": "Validation error",
+    "dataNotFound": "Data not found",
+    "try_again": "Please try again"
+  },
+  "settings": {
+    "title": "Settings",
+    "account": "Account",
+    "security": "Security",
+    "notifications": "Notifications",
+    "language": "Language",
+    "languageChanged": "Language changed successfully",
+    "languageChangeFailed": "Failed to change language",
+    "theme": "Theme",
+    "help": "Help",
+    "about": "About",
+    "saveSuccess": "Settings saved successfully"
+  }
+}

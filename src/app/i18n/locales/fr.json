@@ -1,0 +1,364 @@
+{
+  "common": {
+    "buttons": {
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "delete": "Supprimer",
+      "edit": "Modifier",
+      "create": "Créer",
+      "add": "Ajouter",
+      "close": "Fermer",
+      "confirm": "Confirmer",
+      "back": "Retour",
+      "next": "Suivant",
+      "submit": "Soumettre",
+      "updating": "Mise à jour en cours...",
+      "saving": "Enregistrement..."
+    },
+    "labels": {
+      "name": "Nom",
+      "description": "Description",
+      "email": "Email",
+      "password": "Mot de passe",
+      "currentPassword": "Mot de passe actuel",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmer le mot de passe",
+      "search": "Rechercher",
+      "filter": "Filtrer",
+      "sort": "Trier",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "status": "Statut",
+      "amount": "Montant",
+      "currency": "Devise",
+      "language": "Langue"
+    },
+    "notifications": {
+      "success": "Succès",
+      "error": "Erreur",
+      "warning": "Attention",
+      "info": "Information"
+    },
+    "validation": {
+      "required": "Ce champ est requis",
+      "invalidEmail": "Adresse email invalide",
+      "invalidPassword": "Le mot de passe doit contenir au moins 8 caractères",
+      "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+      "minLength": "Doit contenir au moins {{count}} caractères",
+      "maxLength": "Ne doit pas dépasser {{count}} caractères",
+      "invalidAmount": "Montant invalide"
+    },
+    "languages": {
+      "fr": "Français",
+      "en": "Anglais"
+    },
+    "loading": "Chargement...",
+    "creating": "Création en cours...",
+    "noData": "Aucune donnée disponible",
+    "selectOption": "Sélectionner une option",
+    "months": {
+      "january": "janvier",
+      "february": "février",
+      "march": "mars",
+      "april": "avril",
+      "may": "mai",
+      "june": "juin",
+      "july": "juillet",
+      "august": "août",
+      "september": "septembre",
+      "october": "octobre",
+      "november": "novembre",
+      "december": "décembre"
+    },
+    "status": {
+      "completed": "Terminé",
+      "in_progress": "En cours",
+      "planned": "Planifié"
+    },
+    "category": {
+      "business": "Business",
+      "technical": "Technique",
+      "marketing": "Marketing",
+      "admin": "Administratif",
+      "financial": "Financier"
+    },
+    "all": "Tous"
+  },
+  "auth": {
+    "login": "Connexion",
+    "register": "Inscription",
+    "logout": "Déconnexion",
+    "forgotPassword": "Mot de passe oublié?",
+    "resetPassword": "Réinitialiser le mot de passe",
+    "changePassword": "Changer de mot de passe",
+    "emailPlaceholder": "Votre adresse email",
+    "passwordPlaceholder": "Votre mot de passe",
+    "rememberMe": "Se souvenir de moi",
+    "dontHaveAccount": "Vous n'avez pas de compte?",
+    "alreadyHaveAccount": "Vous avez déjà un compte?",
+    "accountCreated": "Compte créé avec succès",
+    "loginSuccess": "Connexion réussie",
+    "logoutSuccess": "Déconnexion réussie",
+    "passwordChanged": "Mot de passe modifié avec succès",
+    "account": "Compte",
+    "unauthorized": "Vous devez être connecté pour accéder à cette page.",
+    "unauthorizedCalculator": "Vous devez être connecté pour accéder au calculateur financier.",
+    "unauthorizedResources": "Vous devez être connecté pour accéder aux ressources.",
+    "loginRequired": "Connexion requise",
+    "redirectingToLogin": "Redirection vers la page de connexion...",
+    "errors": {
+      "invalidCredentials": "Email ou mot de passe incorrect",
+      "emailAlreadyExists": "Cette adresse email est déjà utilisée",
+      "weakPassword": "Le mot de passe est trop faible",
+      "unauthorized": "Vous devez être connecté pour accéder à cette page"
+    },
+    "email": "Email",
+    "password": "Mot de passe",
+    "name": "Nom complet",
+    "namePlaceholder": "Jean Dupont",
+    "emailRequired": "L'email est obligatoire",
+    "passwordRequired": "Le mot de passe est obligatoire",
+    "nameRequired": "Le nom est obligatoire",
+    "passwordLength": "Le mot de passe doit contenir au moins 8 caractères",
+    "loginPageDescription": "Connectez-vous pour accéder à votre espace",
+    "registerPageDescription": "Créez un compte pour commencer à utiliser DevIndé Tracker",
+    "passwordRequirements": "Le mot de passe doit contenir au moins 8 caractères"
+  },
+  "profile": {
+    "title": "Profil",
+    "yourProfile": "Votre Profil",
+    "pleaseLogin": "Veuillez vous connecter pour voir votre profil",
+    "personalInfo": "Informations personnelles",
+    "accountSettings": "Paramètres du compte",
+    "preferencesPage": "Préférences",
+    "updateProfile": "Mettre à jour le profil",
+    "profileUpdated": "Profil mis à jour avec succès",
+    "uploadPhoto": "Télécharger une photo",
+    "removePhoto": "Supprimer la photo",
+    "deleteAccount": "Supprimer le compte",
+    "confirmDeleteAccount": "Êtes-vous sûr de vouloir supprimer votre compte? Cette action est irréversible.",
+    "changePassword": "Changer de mot de passe",
+    "changingPassword": "Changement de mot de passe...",
+    "passwordChanged": "Mot de passe modifié avec succès",
+    "fields": {
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "displayName": "Nom d'affichage",
+      "fullName": "Nom complet",
+      "fullNamePlaceholder": "Votre nom complet",
+      "email": "Adresse e-mail",
+      "emailPlaceholder": "Votre adresse e-mail",
+      "currentPasswordPlaceholder": "Votre mot de passe actuel",
+      "newPasswordPlaceholder": "Nouveau mot de passe",
+      "confirmPasswordPlaceholder": "Confirmer le nouveau mot de passe",
+      "bio": "Biographie",
+      "phone": "Téléphone",
+      "address": "Adresse",
+      "city": "Ville",
+      "country": "Pays",
+      "postalCode": "Code postal",
+      "website": "Site web",
+      "company": "Entreprise",
+      "position": "Poste"
+    },
+    "preferences": {
+      "theme": "Thème",
+      "themes": {
+        "light": "Clair",
+        "dark": "Sombre",
+        "system": "Système"
+      },
+      "notifications": "Notifications",
+      "enableNotifications": "Activer les notifications",
+      "updateSuccess": "Préférences mises à jour avec succès",
+      "updateFailed": "Échec de la mise à jour des préférences",
+      "notificationTypes": {
+        "email": "Email",
+        "push": "Push",
+        "sms": "SMS"
+      },
+      "dashboardLayout": "Disposition du tableau de bord",
+      "layouts": {
+        "default": "Par défaut",
+        "compact": "Compact",
+        "wide": "Large"
+      }
+    },
+    "validation": {
+      "invalidEmail": "Veuillez entrer une adresse email valide",
+      "currentPasswordRequired": "Le mot de passe actuel est requis",
+      "passwordLength": "Le nouveau mot de passe doit contenir au moins 8 caractères",
+      "passwordsDoNotMatch": "Les nouveaux mots de passe ne correspondent pas"
+    },
+    "errors": {
+      "updateFailed": "Échec de la mise à jour du profil",
+      "passwordChangeFailed": "Échec du changement de mot de passe"
+    }
+  },
+  "business_plan": {
+    "title": "Business Plan",
+    "new": "Nouveau Business Plan",
+    "edit": "Modifier le Business Plan",
+    "delete": "Supprimer le Business Plan",
+    "confirmDelete": "Êtes-vous sûr de vouloir supprimer ce Business Plan?",
+    "saved": "Business Plan enregistré avec succès",
+    "sections": {
+      "pitch": "Pitch",
+      "services": "Services",
+      "businessModel": "Modèle d'affaires",
+      "marketAnalysis": "Analyse de marché",
+      "financials": "Finances",
+      "actionPlan": "Plan d'action"
+    },
+    "pitch": {
+      "title": "Pitch",
+      "summary": "Résumé",
+      "vision": "Vision",
+      "values": "Valeurs"
+    },
+    "services": {
+      "title": "Services",
+      "offerings": "Offres",
+      "technologies": "Technologies",
+      "process": "Processus"
+    },
+    "businessModel": {
+      "title": "Modèle d'affaires",
+      "hourlyRates": "Taux horaires",
+      "packages": "Forfaits",
+      "subscriptions": "Abonnements"
+    },
+    "marketAnalysis": {
+      "title": "Analyse de marché",
+      "competitors": "Concurrents",
+      "targetClients": "Clients cibles",
+      "trends": "Tendances"
+    },
+    "financials": {
+      "title": "Finances",
+      "initialInvestment": "Investissement initial",
+      "quarterlyGoals": "Objectifs trimestriels",
+      "expenses": "Dépenses",
+      "projects": "Projets"
+    },
+    "action_plan": {
+      "title": "Plan d'action",
+      "description": "Planifiez et suivez les jalons importants de votre activité",
+      "status": "Statut",
+      "category": "Catégorie",
+      "date": "Date",
+      "add_milestone": "Ajouter un jalon",
+      "edit_milestone": "Modifier le jalon",
+      "global_progress": "Progression globale",
+      "milestones_completed": "jalons terminés",
+      "objective": "Objectif",
+      "no_milestones": "Aucun jalon défini",
+      "no_milestones_description": "Commencez par ajouter des jalons importants pour suivre le développement de votre activité",
+      "title_placeholder": "Ex: Dépôt demande ARCE",
+      "description_placeholder": "Détails supplémentaires sur ce jalon...",
+      "confirm_delete": "Êtes-vous sûr de vouloir supprimer ce jalon ?"
+    }
+  },
+  "calculator": {
+    "title": "Calculateur financier",
+    "income": "Revenus",
+    "expenses": "Dépenses",
+    "savings": "Épargne",
+    "taxes": "Impôts",
+    "projections": "Projections",
+    "incomeTypes": {
+      "hourly": "Taux horaire",
+      "fixed": "Forfait",
+      "recurring": "Récurrent"
+    },
+    "expenseTypes": {
+      "fixed": "Fixe",
+      "variable": "Variable",
+      "oneTime": "Ponctuel",
+      "recurring": "Récurrent"
+    },
+    "timeframes": {
+      "monthly": "Mensuel",
+      "quarterly": "Trimestriel",
+      "yearly": "Annuel"
+    },
+    "taxSettings": {
+      "title": "Paramètres fiscaux",
+      "country": "Pays",
+      "taxRate": "Taux d'imposition",
+      "socialCharges": "Charges sociales"
+    },
+    "summary": {
+      "title": "Résumé",
+      "totalIncome": "Revenu total",
+      "totalExpenses": "Dépenses totales",
+      "netIncome": "Revenu net",
+      "taxAmount": "Montant des impôts",
+      "finalAmount": "Montant final"
+    },
+    "projects": {
+      "title": "Projets financiers",
+      "new": "Nouveau projet",
+      "edit": "Modifier le projet",
+      "delete": "Supprimer le projet",
+      "details": "Détails du projet",
+      "status": {
+        "planned": "Planifié",
+        "active": "Actif",
+        "completed": "Terminé",
+        "cancelled": "Annulé"
+      },
+      "category": {
+        "client": "Client",
+        "internal": "Interne",
+        "investment": "Investissement"
+      },
+      "transactions": {
+        "title": "Transactions",
+        "new": "Nouvelle transaction",
+        "edit": "Modifier la transaction",
+        "delete": "Supprimer la transaction",
+        "type": {
+          "income": "Revenu",
+          "expense": "Dépense"
+        },
+        "status": {
+          "pending": "En attente",
+          "completed": "Terminé"
+        }
+      }
+    }
+  },
+  "errors": {
+    "general": "Une erreur est survenue",
+    "network": "Erreur de connexion réseau",
+    "notFound": "Page non trouvée",
+    "unauthorized": "Non autorisé",
+    "forbidden": "Accès refusé",
+    "serverError": "Erreur du serveur",
+    "validation": "Erreur de validation",
+    "dataNotFound": "Données non trouvées",
+    "try_again": "Veuillez réessayer"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "account": "Compte",
+    "security": "Sécurité",
+    "notifications": "Notifications",
+    "language": "Langue",
+    "languageChanged": "Langue modifiée avec succès",
+    "languageChangeFailed": "Échec de changement de langue",
+    "theme": "Thème",
+    "help": "Aide",
+    "about": "À propos",
+    "saveSuccess": "Paramètres enregistrés avec succès"
+  },
+  "resources": {
+    "title": "Ressources",
+    "description": "Accédez à des ressources utiles pour votre activité d'indépendant.",
+    "documentation": "Documentation",
+    "templates": "Modèles",
+    "guides": "Guides",
+    "legalInfo": "Informations légales"
+  }
+}

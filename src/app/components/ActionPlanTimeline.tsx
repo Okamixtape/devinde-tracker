@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { BusinessPlanData } from "./types";
 import { UI_CLASSES } from "../styles/ui-classes";
+import { useI18n } from "../hooks/useI18n";
 
 // Types pour les jalons
 type Milestone = {
@@ -35,6 +36,8 @@ type Props = {
 };
 
 export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
+  const { t } = useI18n();
+  
   // État local pour le formulaire
   const [showForm, setShowForm] = useState(false);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -63,7 +66,20 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
         // Détermination du mois
         let month = 1;
         if (dateMatch && dateMatch[1]) {
-          const monthNames = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+          const monthNames = [
+            t('common.months.january').toLowerCase(),
+            t('common.months.february').toLowerCase(),
+            t('common.months.march').toLowerCase(),
+            t('common.months.april').toLowerCase(),
+            t('common.months.may').toLowerCase(),
+            t('common.months.june').toLowerCase(),
+            t('common.months.july').toLowerCase(),
+            t('common.months.august').toLowerCase(),
+            t('common.months.september').toLowerCase(),
+            t('common.months.october').toLowerCase(),
+            t('common.months.november').toLowerCase(),
+            t('common.months.december').toLowerCase()
+          ];
           month = monthNames.findIndex(m => m === dateMatch[1].toLowerCase()) + 1;
         }
         
@@ -223,8 +239,8 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       {/* En-tête et filtres */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-6">
         <div>
-          <h2 className={UI_CLASSES.HEADING_2}>Plan d&apos;action</h2>
-          <p className={UI_CLASSES.TEXT_SMALL}>Planifiez et suivez les jalons importants de votre activité</p>
+          <h2 className={UI_CLASSES.HEADING_2}>{t('business_plan.action_plan.title')}</h2>
+          <p className={UI_CLASSES.TEXT_SMALL}>{t('business_plan.action_plan.description')}</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
@@ -241,9 +257,9 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                 }}
               >
                 <Filter size={16} />
-                <span>Statut: {filterStatus === "all" ? "Tous" : 
-                                filterStatus === "completed" ? "Terminés" : 
-                                filterStatus === "in-progress" ? "En cours" : "Planifiés"}</span>
+                <span>{t('business_plan.action_plan.status')}: {filterStatus === "all" ? t('common.all') : 
+                                filterStatus === "completed" ? t('common.status.completed') : 
+                                filterStatus === "in-progress" ? t('common.status.in_progress') : t('common.status.planned')}</span>
                 <ChevronDown size={14} />
               </button>
               
@@ -256,7 +272,7 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                       document.getElementById('status-dropdown')?.classList.add('hidden');
                     }}
                   >
-                    Tous
+                    {t('common.all')}
                   </button>
                   <button 
                     className={`px-4 py-2 text-sm w-full text-left ${filterStatus === "completed" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
@@ -265,7 +281,7 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                       document.getElementById('status-dropdown')?.classList.add('hidden');
                     }}
                   >
-                    Terminés
+                    {t('common.status.completed')}
                   </button>
                   <button 
                     className={`px-4 py-2 text-sm w-full text-left ${filterStatus === "in-progress" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
@@ -274,7 +290,7 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                       document.getElementById('status-dropdown')?.classList.add('hidden');
                     }}
                   >
-                    En cours
+                    {t('common.status.in_progress')}
                   </button>
                   <button 
                     className={`px-4 py-2 text-sm w-full text-left ${filterStatus === "planned" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300" : "hover:bg-gray-100 dark:hover:bg-gray-700"}`}
@@ -283,7 +299,7 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                       document.getElementById('status-dropdown')?.classList.add('hidden');
                     }}
                   >
-                    Planifiés
+                    {t('common.status.planned')}
                   </button>
                 </div>
               </div>
@@ -300,11 +316,11 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                 }}
               >
                 <Tag size={16} />
-                <span>Catégorie: {filterCategory === "all" ? "Toutes" : 
-                                  filterCategory === "business" ? "Business" : 
-                                  filterCategory === "technical" ? "Technique" : 
-                                  filterCategory === "marketing" ? "Marketing" : 
-                                  filterCategory === "admin" ? "Administratif" : "Financier"}</span>
+                <span>{t('business_plan.action_plan.category')}: {filterCategory === "all" ? t('common.all') : 
+                                  filterCategory === "business" ? t('common.category.business') : 
+                                  filterCategory === "technical" ? t('common.category.technical') : 
+                                  filterCategory === "marketing" ? t('common.category.marketing') : 
+                                  filterCategory === "admin" ? t('common.category.admin') : t('common.category.financial')}</span>
                 <ChevronDown size={14} />
               </button>
               
@@ -317,7 +333,7 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                       document.getElementById('category-dropdown')?.classList.add('hidden');
                     }}
                   >
-                    Toutes
+                    {t('common.all')}
                   </button>
                   {uniqueCategories.map((category) => (
                     <button 
@@ -328,10 +344,10 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                         document.getElementById('category-dropdown')?.classList.add('hidden');
                       }}
                     >
-                      {category === "business" ? "Business" : 
-                       category === "technical" ? "Technique" : 
-                       category === "marketing" ? "Marketing" : 
-                       category === "admin" ? "Administratif" : "Financier"}
+                      {category === "business" ? t('common.category.business') : 
+                       category === "technical" ? t('common.category.technical') : 
+                       category === "marketing" ? t('common.category.marketing') : 
+                       category === "admin" ? t('common.category.admin') : t('common.category.financial')}
                     </button>
                   ))}
                 </div>
@@ -347,7 +363,7 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
             }}
           >
             {showForm ? <X size={16} className="mr-1" /> : <Plus size={16} className="mr-1" />}
-            {showForm ? "Annuler" : "Ajouter un jalon"}
+            {showForm ? t('common.cancel') : t('business_plan.action_plan.add_milestone')}
           </button>
         </div>
       </div>
@@ -355,7 +371,7 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       {/* Progression globale */}
       <div className={UI_CLASSES.CARD}>
         <div className="flex justify-between items-center mb-2">
-          <h3 className={UI_CLASSES.HEADING_3 + " !mb-0"}>Progression globale</h3>
+          <h3 className={UI_CLASSES.HEADING_3 + " !mb-0"}>{t('business_plan.action_plan.global_progress')}</h3>
           <span className={`text-sm font-medium ${progressPercentage >= 70 ? "text-green-600 dark:text-green-400" : 
                                                  progressPercentage >= 30 ? "text-blue-600 dark:text-blue-400" : 
                                                  "text-yellow-600 dark:text-yellow-400"}`}>
@@ -373,31 +389,31 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
           ></div>
         </div>
         <div className="flex justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
-          <span>{completedCount} sur {milestones.length} jalons terminés</span>
-          <span>Objectif: 100%</span>
+          <span>{completedCount} sur {milestones.length} {t('business_plan.action_plan.milestones_completed')}</span>
+          <span>{t('business_plan.action_plan.objective')}: 100%</span>
         </div>
       </div>
       
       {/* Formulaire d'ajout/édition */}
       {showForm && (
         <div className={UI_CLASSES.CARD + " border border-blue-200 dark:border-blue-800 shadow-md animate-fadeIn"}>
-          <h3 className={UI_CLASSES.HEADING_3}>{editingIndex !== null ? "Modifier le jalon" : "Ajouter un jalon"}</h3>
+          <h3 className={UI_CLASSES.HEADING_3}>{editingIndex !== null ? t('business_plan.action_plan.edit_milestone') : t('business_plan.action_plan.add_milestone')}</h3>
           <form onSubmit={saveMilestone} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label htmlFor="title" className={UI_CLASSES.LABEL}>Titre</label>
+                <label htmlFor="title" className={UI_CLASSES.LABEL}>{t('business_plan.action_plan.title')}</label>
                 <input 
                   type="text" 
                   id="title"
                   name="title" 
                   className={UI_CLASSES.INPUT}
-                  placeholder="Ex: Dépôt demande ARCE" 
+                  placeholder={t('business_plan.action_plan.title_placeholder')} 
                   defaultValue={editingIndex !== null ? milestones[editingIndex].title : ""}
                   required 
                 />
               </div>
               <div>
-                <label htmlFor="date" className={UI_CLASSES.LABEL}>Date</label>
+                <label htmlFor="date" className={UI_CLASSES.LABEL}>{t('business_plan.action_plan.date')}</label>
                 <input 
                   type="date" 
                   id="date"
@@ -408,41 +424,41 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                 />
               </div>
               <div>
-                <label htmlFor="status" className={UI_CLASSES.LABEL}>Statut</label>
+                <label htmlFor="status" className={UI_CLASSES.LABEL}>{t('business_plan.action_plan.status')}</label>
                 <select 
                   id="status"
                   name="status" 
                   className={UI_CLASSES.INPUT}
                   defaultValue={editingIndex !== null ? milestones[editingIndex].status : "planned"}
                 >
-                  <option value="planned">Planifié</option>
-                  <option value="in-progress">En cours</option>
-                  <option value="completed">Terminé</option>
+                  <option value="planned">{t('common.status.planned')}</option>
+                  <option value="in-progress">{t('common.status.in_progress')}</option>
+                  <option value="completed">{t('common.status.completed')}</option>
                 </select>
               </div>
               <div>
-                <label htmlFor="category" className={UI_CLASSES.LABEL}>Catégorie</label>
+                <label htmlFor="category" className={UI_CLASSES.LABEL}>{t('business_plan.action_plan.category')}</label>
                 <select 
                   id="category"
                   name="category" 
                   className={UI_CLASSES.INPUT}
                   defaultValue={editingIndex !== null ? milestones[editingIndex].category : "business"}
                 >
-                  <option value="business">Business</option>
-                  <option value="technical">Technique</option>
-                  <option value="marketing">Marketing</option>
-                  <option value="admin">Administratif</option>
-                  <option value="financial">Financier</option>
+                  <option value="business">{t('common.category.business')}</option>
+                  <option value="technical">{t('common.category.technical')}</option>
+                  <option value="marketing">{t('common.category.marketing')}</option>
+                  <option value="admin">{t('common.category.admin')}</option>
+                  <option value="financial">{t('common.category.financial')}</option>
                 </select>
               </div>
               <div className="md:col-span-2">
-                <label htmlFor="description" className={UI_CLASSES.LABEL}>Description (optionnelle)</label>
+                <label htmlFor="description" className={UI_CLASSES.LABEL}>{t('business_plan.action_plan.description')}</label>
                 <textarea 
                   id="description"
                   name="description" 
                   className={UI_CLASSES.INPUT}
                   rows={3}
-                  placeholder="Détails supplémentaires sur ce jalon..."
+                  placeholder={t('business_plan.action_plan.description_placeholder')} 
                   defaultValue={editingIndex !== null ? milestones[editingIndex].description || "" : ""}
                 />
               </div>
@@ -456,14 +472,14 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                   setEditingIndex(null);
                 }}
               >
-                Annuler
+                {t('common.cancel')}
               </button>
               <button 
                 type="submit" 
                 className={UI_CLASSES.BUTTON_PRIMARY + " flex items-center"}
               >
                 <Save size={16} className="mr-2" />
-                {editingIndex !== null ? "Mettre à jour" : "Ajouter"}
+                {editingIndex !== null ? t('common.save') : t('business_plan.action_plan.add_milestone')}
               </button>
             </div>
           </form>
@@ -474,9 +490,9 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
       {milestones.length === 0 && (
         <div className={UI_CLASSES.CARD + " py-8 text-center"}>
           <AlertCircle className="mx-auto mb-4 text-yellow-500 dark:text-yellow-400" size={48} />
-          <h3 className="text-lg font-medium mb-2">Aucun jalon défini</h3>
+          <h3 className="text-lg font-medium mb-2">{t('business_plan.action_plan.no_milestones')}</h3>
           <p className={UI_CLASSES.TEXT + " mb-6"}>
-            Commencez par ajouter des jalons importants pour suivre le développement de votre activité
+            {t('business_plan.action_plan.no_milestones_description')}
           </p>
           <button
             className={UI_CLASSES.BUTTON_PRIMARY + " flex items-center mx-auto"}
@@ -486,7 +502,7 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
             }}
           >
             <Plus size={16} className="mr-1" />
-            Ajouter mon premier jalon
+            {t('business_plan.action_plan.add_milestone')}
           </button>
         </div>
       )}
@@ -528,17 +544,17 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                       <div className="flex flex-wrap gap-2 mt-2">
                         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                           <Clock size={14} className="mr-1" />
-                          {milestone.status === "completed" ? "Terminé" : 
-                           milestone.status === "in-progress" ? "En cours" : "Planifié"}
+                          {milestone.status === "completed" ? t('common.status.completed') : 
+                           milestone.status === "in-progress" ? t('common.status.in_progress') : t('common.status.planned')}
                         </div>
                         
                         {milestone.category && (
                           <div className={`flex items-center text-xs px-2 py-0.5 rounded-full ${getCategoryColor(milestone.category)}`}>
                             <Tag size={12} className="mr-1" />
-                            {milestone.category === "business" ? "Business" : 
-                             milestone.category === "technical" ? "Technique" : 
-                             milestone.category === "marketing" ? "Marketing" : 
-                             milestone.category === "admin" ? "Administratif" : "Financier"}
+                            {milestone.category === "business" ? t('common.category.business') : 
+                             milestone.category === "technical" ? t('common.category.technical') : 
+                             milestone.category === "marketing" ? t('common.category.marketing') : 
+                             milestone.category === "admin" ? t('common.category.admin') : t('common.category.financial')}
                           </div>
                         )}
                       </div>
@@ -552,20 +568,20 @@ export const ActionPlanTimeline: React.FC<Props> = ({ data, updateData }) => {
                       <button 
                         className="p-1.5 text-blue-500 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-gray-700 rounded transition-colors"
                         onClick={() => editMilestone(index)}
-                        aria-label="Modifier"
-                        title="Modifier"
+                        aria-label={t('common.edit')}
+                        title={t('common.edit')}
                       >
                         <Edit size={16} />
                       </button>
                       <button 
                         className="p-1.5 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-gray-700 rounded transition-colors"
                         onClick={() => {
-                          if (window.confirm("Êtes-vous sûr de vouloir supprimer ce jalon ?")) {
+                          if (window.confirm(t('business_plan.action_plan.confirm_delete'))) {
                             deleteMilestone(index);
                           }
                         }}
-                        aria-label="Supprimer"
-                        title="Supprimer"
+                        aria-label={t('common.delete')}
+                        title={t('common.delete')}
                       >
                         <Trash2 size={16} />
                       </button>
