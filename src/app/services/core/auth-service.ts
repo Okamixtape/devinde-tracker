@@ -42,6 +42,15 @@ export interface AuthToken {
   expiresAt: number;
 }
 
+// Define user preferences
+export interface UserPreferences {
+  theme?: 'light' | 'dark';
+  notifications?: boolean;
+  language?: string;
+  dashboardLayout?: string;
+  [key: string]: string | boolean | undefined; // Type plus spécifique
+}
+
 // Key for storing users in localStorage
 export const USERS_STORAGE_KEY = 'devinde-tracker-users';
 // Key for storing current session
@@ -472,8 +481,274 @@ export class AuthServiceImpl implements AuthService {
    * Helper method to remove password from user object
    */
   private removePasswordFromUser(user: User): UserData {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...userWithoutPassword } = user;
-    return userWithoutPassword as UserData;
+    const { password, ...userData } = user;
+    return userData;
+  }
+
+  /**
+   * Update user profile information
+   */
+  async updateUserProfile(userData: Partial<UserData>): Promise<ServiceResult<UserData>> {
+    try {
+      // Verify that user is authenticated
+      if (!this.verifySession().valid) {
+        return {
+          success: false,
+          error: {
+            code: 'NOT_AUTHENTICATED',
+            message: 'User is not authenticated'
+          }
+        };
+      }
+
+      // Get current user
+      const userResult = await this.getCurrentUser();
+      if (!userResult.success || !userResult.data) {
+        return {
+          success: false,
+          error: userResult.error
+        };
+      }
+
+      const currentUser = userResult.data;
+      
+      // Get the full user with password from storage
+      const fullUserResult = await this.userStorage.getItem(currentUser.id);
+      if (!fullUserResult.success || !fullUserResult.data) {
+        return {
+          success: false,
+          error: fullUserResult.error
+        };
+      }
+
+      const user = fullUserResult.data;
+      
+      // Only update allowed fields (email, name)
+      const updatedFields: Partial<User> = {};
+      
+      if (userData.name !== undefined) {
+        updatedFields.name = userData.name;
+      }
+      
+      if (userData.email !== undefined && userData.email !== user.email) {
+        // Validate email format
+        if (!this.isValidEmail(userData.email)) {
+          return {
+            success: false,
+            error: {
+              code: 'INVALID_EMAIL',
+              message: 'The provided email is not valid'
+            }
+          };
+        }
+        
+        // Check if email is already in use
+        const users = await this.userStorage.getItems();
+        const existingUser = users.data?.find(u => 
+          u.email.toLowerCase() === userData.email?.toLowerCase() && u.id !== user.id
+        );
+        
+        if (existingUser) {
+          return {
+            success: false,
+            error: {
+              code: 'EMAIL_IN_USE',
+              message: 'This email is already associated with another account'
+            }
+          };
+        }
+        
+        updatedFields.email = userData.email;
+      }
+      
+      // If no changes were made, return current user data
+      if (Object.keys(updatedFields).length === 0) {
+        return {
+          success: true,
+          data: currentUser
+        };
+      }
+      
+      // Update user in storage
+      const updateResult = await this.userStorage.updateItem(user.id, updatedFields);
+      
+      if (!updateResult.success) {
+        return {
+          success: false,
+          error: updateResult.error
+        };
+      }
+      
+      // Update session with new user data
+      const updatedUserData = this.removePasswordFromUser(updateResult.data);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUserData));
+      
+      return {
+        success: true,
+        data: updatedUserData
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: {
+          code: 'UPDATE_PROFILE_ERROR',
+          message: 'Failed to update profile',
+          details: e instanceof Error ? e.message : String(e)
+        }
+      };
+    }
+  }
+
+  /**
+   * Change user password
+   */
+  async changePassword(currentPassword: string, newPassword: string): Promise<ServiceResult<boolean>> {
+    try {
+      // Verify that user is authenticated
+      if (!this.verifySession().valid) {
+        return {
+          success: false,
+          error: {
+            code: 'NOT_AUTHENTICATED',
+            message: 'User is not authenticated'
+          }
+        };
+      }
+
+      // Get current user
+      const userResult = await this.getCurrentUser();
+      if (!userResult.success || !userResult.data) {
+        return {
+          success: false,
+          error: userResult.error
+        };
+      }
+
+      // Get the full user with password from storage
+      const fullUserResult = await this.userStorage.getItem(userResult.data.id);
+      if (!fullUserResult.success || !fullUserResult.data) {
+        return {
+          success: false,
+          error: fullUserResult.error
+        };
+      }
+
+      const user = fullUserResult.data;
+      
+      // Verify current password
+      if (user.password !== currentPassword) {
+        return {
+          success: false,
+          error: {
+            code: 'INVALID_PASSWORD',
+            message: 'Current password is incorrect'
+          }
+        };
+      }
+      
+      // Validate new password
+      if (!this.isValidPassword(newPassword)) {
+        return {
+          success: false,
+          error: {
+            code: 'WEAK_PASSWORD',
+            message: 'Password must be at least 8 characters long and include at least one number, one uppercase letter, and one special character'
+          }
+        };
+      }
+      
+      // Update password in storage
+      const updateResult = await this.userStorage.updateItem(user.id, {
+        password: newPassword
+      });
+      
+      if (!updateResult.success) {
+        return {
+          success: false,
+          error: updateResult.error
+        };
+      }
+      
+      return {
+        success: true,
+        data: true
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: {
+          code: 'CHANGE_PASSWORD_ERROR',
+          message: 'Failed to change password',
+          details: e instanceof Error ? e.message : String(e)
+        }
+      };
+    }
+  }
+
+  /**
+   * Update user preferences
+   */
+  async updateUserPreferences(preferences: UserPreferences): Promise<ServiceResult<UserPreferences>> {
+    try {
+      // Verify that user is authenticated
+      if (!this.verifySession().valid) {
+        return {
+          success: false,
+          error: {
+            code: 'NOT_AUTHENTICATED',
+            message: 'User is not authenticated'
+          }
+        };
+      }
+
+      // Get current user
+      const userResult = await this.getCurrentUser();
+      if (!userResult.success || !userResult.data) {
+        return {
+          success: false,
+          error: userResult.error
+        };
+      }
+
+      const currentUser = userResult.data;
+      
+      // Get the full user from storage
+      const fullUserResult = await this.userStorage.getItem(currentUser.id);
+      if (!fullUserResult.success || !fullUserResult.data) {
+        return {
+          success: false,
+          error: fullUserResult.error
+        };
+      }
+
+      const user = fullUserResult.data;
+      
+      // Key for storing user preferences
+      const PREFERENCES_KEY = `devinde-tracker-user-preferences-${user.id}`;
+      
+      // Get current preferences
+      const currentPrefsJSON = localStorage.getItem(PREFERENCES_KEY);
+      const currentPrefs: UserPreferences = currentPrefsJSON ? JSON.parse(currentPrefsJSON) : {};
+      
+      // Update preferences
+      const updatedPrefs = { ...currentPrefs, ...preferences };
+      
+      // Save to localStorage
+      localStorage.setItem(PREFERENCES_KEY, JSON.stringify(updatedPrefs));
+      
+      return {
+        success: true,
+        data: updatedPrefs
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: {
+          code: 'UPDATE_PREFERENCES_ERROR',
+          message: 'Failed to update preferences',
+          details: e instanceof Error ? e.message : String(e)
+        }
+      };
+    }
   }
 }

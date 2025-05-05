@@ -19,8 +19,16 @@ export function generateUUID(): string {
  * Get the current timestamp in ISO format
  * @returns Current time as ISO string
  */
-export function getCurrentTimestamp(): string {
+export function getCurrentISOTimestamp(): string {
   return new Date().toISOString();
+}
+
+/**
+ * Get the current timestamp in milliseconds
+ * @returns Current time in milliseconds since epoch
+ */
+export function getCurrentTimestamp(): number {
+  return Date.now();
 }
 
 /**
@@ -29,10 +37,10 @@ export function getCurrentTimestamp(): string {
  * @param requiredFields Array of field names that must be present and non-empty
  * @returns A validation result object
  */
-export function validateObject(object: any, requiredFields: string[]): { valid: boolean; missingFields: string[] } {
+export function validateObject<T extends object>(object: T, requiredFields: string[]): { valid: boolean; missingFields: string[] } {
   const missingFields = requiredFields.filter(field => {
     // Check if the field exists and has a value
-    const value = object[field];
+    const value = (object as Record<string, unknown>)[field];
     return value === undefined || value === null || value === '';
   });
   

@@ -1,11 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
+import { usePathname, useRouter } from 'next/navigation';
 
 type AuthMode = 'login' | 'register';
 
 const AuthForm: React.FC = () => {
+  const pathname = usePathname();
+  const router = useRouter();
   const [mode, setMode] = useState<AuthMode>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,9 +17,22 @@ const AuthForm: React.FC = () => {
   
   const { login, register, isLoading, error } = useAuth();
   
+  useEffect(() => {
+    if (pathname === '/register') {
+      setMode('register');
+    } else {
+      setMode('login');
+    }
+  }, [pathname]);
+  
   const toggleMode = () => {
     setMode(mode === 'login' ? 'register' : 'login');
     setFormError('');
+    if (mode === 'login') {
+      router.push('/register');
+    } else {
+      router.push('/login');
+    }
   };
   
   const validateForm = (): boolean => {
@@ -62,6 +78,19 @@ const AuthForm: React.FC = () => {
       
       if (!success) {
         setFormError('Authentication failed. Please check your credentials.');
+      } else {
+        // Vérifier s'il existe une URL à restaurer après connexion
+        const savedPath = typeof window !== 'undefined' ? sessionStorage.getItem('redirectAfterLogin') : null;
+        
+        if (savedPath) {
+          // Nettoyer la session storage
+          sessionStorage.removeItem('redirectAfterLogin');
+          // Rediriger vers l'URL sauvegardée
+          router.push(savedPath);
+        } else {
+          // Rediriger vers la liste des plans par défaut
+          router.push('/plans');
+        }
       }
     } catch (err) {
       setFormError('An unexpected error occurred. Please try again.');

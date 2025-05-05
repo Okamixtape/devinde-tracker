@@ -175,6 +175,20 @@ export default function BusinessModelPage() {
           Cette section vous permet de définir les éléments clés de votre modèle économique en tant qu&apos;indépendant, 
           en utilisant le cadre du Business Model Canvas adapté à votre situation.
         </p>
+        <p className="text-blue-700 dark:text-blue-400 mb-2">
+          Le Business Model Canvas est un outil stratégique qui vous permet de décrire et visualiser votre modèle économique à travers 9 composantes essentielles :
+        </p>
+        <ul className="list-disc pl-6 text-blue-700 dark:text-blue-400 mb-2 space-y-1">
+          <li>Les partenaires clés (avec qui vous collaborez)</li>
+          <li>Les activités clés (ce que vous faites)</li>
+          <li>Les ressources clés (ce dont vous avez besoin)</li>
+          <li>La proposition de valeur (ce que vous offrez)</li>
+          <li>Les relations clients (comment vous interagissez)</li>
+          <li>Les canaux de communication (comment vous êtes découvert)</li>
+          <li>Les segments de clientèle (pour qui vous créez de la valeur)</li>
+          <li>La structure de coûts (ce que vous dépensez)</li>
+          <li>Les sources de revenus (comment vous générez des fonds)</li>
+        </ul>
         <p className="text-blue-700 dark:text-blue-400">
           Complétez les différentes sections pour avoir une vision claire de votre proposition de valeur, 
           de vos clients, de vos revenus et de vos coûts. Utilisez également la visualisation d&apos;impact 

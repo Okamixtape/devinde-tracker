@@ -51,6 +51,11 @@ export default function BusinessPlansPage() {
     router.push(`/plans/${id}`);
   };
   
+  // Handle viewing a plan's dashboard
+  const handleViewPlan = (id: string) => {
+    router.push(`/plans/${id}/dashboard`);
+  };
+  
   // Handle plan duplication
   const handleDuplicatePlan = async (id: string) => {
     try {
@@ -140,8 +145,11 @@ export default function BusinessPlansPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map(plan => (
-            <div key={plan.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-              <div className="p-6">
+            <div key={plan.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div 
+                className="p-6 cursor-pointer"
+                onClick={() => handleViewPlan(plan.id!)}
+              >
                 <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
                   {plan.description || 'Aucune description'}
@@ -153,20 +161,38 @@ export default function BusinessPlansPage() {
               
               <div className="bg-gray-50 dark:bg-gray-700 px-6 py-3 flex justify-between">
                 <button
-                  onClick={() => handleEditPlan(plan.id!)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditPlan(plan.id!);
+                  }}
                   className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                 >
                   Éditer
                 </button>
                 <div className="space-x-4">
                   <button
-                    onClick={() => handleDuplicatePlan(plan.id!)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleViewPlan(plan.id!);
+                    }}
+                    className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
+                  >
+                    Voir le tableau de bord
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDuplicatePlan(plan.id!);
+                    }}
                     className="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
                   >
                     Dupliquer
                   </button>
                   <button
-                    onClick={() => handleDeletePlan(plan.id!)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeletePlan(plan.id!);
+                    }}
                     className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                   >
                     Supprimer

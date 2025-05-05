@@ -1,0 +1,318 @@
+/**
+ * Styles responsives - DevIndé Tracker
+ * 
+ * Classes utilitaires pour aider à gérer le responsive design dans l'application.
+ * Ces classes sont complémentaires à celles fournies par Tailwind CSS.
+ */
+
+/* Classes pour masquer des éléments sur différentes tailles d'écran */
+.hide-xs {
+  @media (max-width: 639px) {
+    display: none !important;
+  }
+}
+
+.hide-sm-down {
+  @media (max-width: 767px) {
+    display: none !important;
+  }
+}
+
+.hide-md-down {
+  @media (max-width: 1023px) {
+    display: none !important;
+  }
+}
+
+.hide-lg-down {
+  @media (max-width: 1279px) {
+    display: none !important;
+  }
+}
+
+.hide-sm-up {
+  @media (min-width: 640px) {
+    display: none !important;
+  }
+}
+
+.hide-md-up {
+  @media (min-width: 768px) {
+    display: none !important;
+  }
+}
+
+.hide-lg-up {
+  @media (min-width: 1024px) {
+    display: none !important;
+  }
+}
+
+.hide-xl-up {
+  @media (min-width: 1280px) {
+    display: none !important;
+  }
+}
+
+/* Classes pour ajuster les espacements sur mobile */
+.responsive-container {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 80rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-container {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+.responsive-section {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-section {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-section {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-section {
+    margin-top: 3rem;
+    margin-bottom: 3rem;
+  }
+}
+
+/* Classes pour les grilles responsives */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.responsive-grid-tight {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-grid-tight {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid-tight {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .responsive-grid-tight {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* Classes pour la typographie responsive */
+.responsive-heading {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .responsive-heading {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-heading {
+    font-size: 1.875rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-heading {
+    font-size: 2.25rem;
+  }
+}
+
+.responsive-subheading {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+@media (min-width: 640px) {
+  .responsive-subheading {
+    font-size: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-subheading {
+    font-size: 1.375rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-subheading {
+    font-size: 1.5rem;
+  }
+}
+
+/* Classe utilitaire pour les espaces responsifs */
+.responsive-padding {
+  padding: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-padding {
+    padding: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-padding {
+    padding: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-padding {
+    padding: 2rem;
+  }
+}
+
+.responsive-padding-x {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-padding-x {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-padding-x {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-padding-x {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.responsive-padding-y {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .responsive-padding-y {
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .responsive-padding-y {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-padding-y {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+}
+
+/* Ajustements pour les petits écrans */
+.responsive-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 640px) {
+  .responsive-stack {
+    flex-direction: row;
+  }
+}
+
+/* Ajustements pour l'orientation de l'appareil */
+@media (orientation: portrait) {
+  .portrait-only {
+    display: block !important;
+  }
+  
+  .landscape-only {
+    display: none !important;
+  }
+}
+
+@media (orientation: landscape) {
+  .portrait-only {
+    display: none !important;
+  }
+  
+  .landscape-only {
+    display: block !important;
+  }
+}

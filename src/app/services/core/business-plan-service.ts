@@ -7,7 +7,8 @@ import {
   ServiceResult
 } from '../interfaces/data-models';
 import { LocalStorageService } from './local-storage-service';
-import { generateUUID, getCurrentTimestamp, validateObject } from '../utils/helpers';
+import { generateUUID, getCurrentISOTimestamp, validateObject } from '../utils/helpers';
+import { secureLocalStorage } from '../utils/security';
 
 /**
  * Storage key for business plans
@@ -60,6 +61,82 @@ export class BusinessPlanServiceImpl
   
   constructor() {
     super(BUSINESS_PLANS_STORAGE_KEY);
+    
+    // Reset corrupted storage on init
+    this.resetStorageIfCorrupted();
+  }
+  
+  /**
+   * Reset storage if it contains corrupted data
+   */
+  private resetStorageIfCorrupted(): void {
+    // Vérifier si l'on est côté client (navigateur) avant d'utiliser localStorage
+    if (typeof window === 'undefined') {
+      // On est côté serveur, localStorage n'est pas disponible
+      console.log('resetStorageIfCorrupted appelé côté serveur - ignoré');
+      return;
+    }
+    
+    try {
+      // Approche plus agressive : vérifier et nettoyer toutes les clés de localStorage
+      // liées aux plans d'affaires
+      const keysToCheck = [
+        BUSINESS_PLANS_STORAGE_KEY,
+        'devinde-tracker-sections',
+        'devinde-tracker-user',
+        'devinde-tracker-auth'
+      ];
+      
+      for (const key of keysToCheck) {
+        try {
+          // Essayer de récupérer et décrypter les données
+          const rawData = localStorage.getItem(key);
+          if (rawData) {
+            try {
+              // Si la déchiffrement échoue, supprimer cette clé
+              secureLocalStorage.getItem(key);
+            } catch (error) {
+              console.log(`Détection de données corrompues pour ${key}, nettoyage:`, 
+                error instanceof Error ? error.message : 'Erreur inconnue');
+              localStorage.removeItem(key);
+            }
+          }
+        } catch (error) {
+          console.log(`Erreur lors de l'accès à ${key}, suppression:`, 
+            error instanceof Error ? error.message : 'Erreur inconnue');
+          localStorage.removeItem(key);
+        }
+      }
+      
+      // Vérifier s'il existe des clés orphelines ou corrompues qui commencent par devinde-tracker
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('devinde-tracker')) {
+          if (!keysToCheck.includes(key)) {
+            try {
+              // Essayer de déchiffrer, sinon supprimer
+              secureLocalStorage.getItem(key);
+            } catch (error) {
+              console.log(`Détection d'une clé orpheline ou corrompue ${key}, nettoyage:`, 
+                error instanceof Error ? error.message : 'Erreur inconnue');
+              localStorage.removeItem(key);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // En cas d'erreur grave, réinitialiser complètement le stockage lié à l'application
+      console.log('Erreur critique lors du nettoyage du stockage, réinitialisation complète:', 
+        error instanceof Error ? error.message : 'Erreur inconnue');
+      
+      // Supprimer toutes les clés liées à l'application
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('devinde-tracker')) {
+          localStorage.removeItem(key);
+        }
+      }
+    }
   }
 
   /**
@@ -80,7 +157,7 @@ export class BusinessPlanServiceImpl
     }
     
     // Set default values for new business plan
-    const now = getCurrentTimestamp();
+    const now = getCurrentISOTimestamp();
     const defaultData = getDefaultBusinessPlanData();
     
     const newItem: BusinessPlanData = {
@@ -119,7 +196,7 @@ export class BusinessPlanServiceImpl
     }
     
     const currentItem = currentResult.data;
-    const now = getCurrentTimestamp();
+    const now = getCurrentISOTimestamp();
     
     // Update metadata while preserving other fields
     const updatedItem: Partial<BusinessPlanData> = {
@@ -192,7 +269,7 @@ export class BusinessPlanServiceImpl
         success: true,
         data: {
           content: JSON.stringify(plan, null, 2),
-          filename: `${plan.name.replace(/\s+/g, '-').toLowerCase()}-${getCurrentTimestamp().split('T')[0]}.json`,
+          filename: `${plan.name.replace(/\s+/g, '-').toLowerCase()}-${getCurrentISOTimestamp().split('T')[0]}.json`,
           contentType: 'application/json'
         }
       };
@@ -241,12 +318,12 @@ export class BusinessPlanServiceImpl
         ...planData,
         name: planData.name,
         id: generateUUID(),
-        createdAt: getCurrentTimestamp(),
-        updatedAt: getCurrentTimestamp(),
+        createdAt: getCurrentISOTimestamp(),
+        updatedAt: getCurrentISOTimestamp(),
         meta: {
           version: 1,
           exportCount: 0,
-          lastUpdated: getCurrentTimestamp(),
+          lastUpdated: getCurrentISOTimestamp(),
           ...(planData.meta || {})
         }
       };
@@ -288,12 +365,12 @@ export class BusinessPlanServiceImpl
       ...originalPlan,
       id: generateUUID(),
       name: newName || `${originalPlan.name} (Copy)`,
-      createdAt: getCurrentTimestamp(),
-      updatedAt: getCurrentTimestamp(),
+      createdAt: getCurrentISOTimestamp(),
+      updatedAt: getCurrentISOTimestamp(),
       meta: {
         version: 1,
         exportCount: 0,
-        lastUpdated: getCurrentTimestamp(),
+        lastUpdated: getCurrentISOTimestamp(),
         ...(originalPlan.meta || {})
       }
     };

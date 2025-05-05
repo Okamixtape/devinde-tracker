@@ -11,39 +11,13 @@ import {
   AuthService,
   StorageService
 } from './interfaces/service-interfaces';
-import { ServiceResult } from './interfaces/data-models';
-
-// Define missing interfaces that would be in data-models.ts
-interface BusinessPlanData {
-  id?: string;
-  name: string;
-  description?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  sections?: SectionData[];
-}
-
-interface SectionData {
-  id?: string;
-  businessPlanId: string;
-  title: string;
-  content: string;
-  order: number;
-  completion?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-interface UserData {
-  id?: string;
-  username: string;
-  password?: string;
-  email?: string;
-  name?: string;
-  role?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
+import { 
+  ServiceResult, 
+  Section 
+} from './interfaces/data-models';
+import { BusinessPlanServiceImpl } from './core/business-plan-service';
+import { LocalStorageService } from './core/local-storage-service';
+import { UserData, UserRole } from './core/auth-service';
 
 // Singleton instances
 let businessPlanServiceInstance: BusinessPlanService | null = null;
@@ -51,82 +25,32 @@ let sectionServiceInstance: SectionService | null = null;
 let authServiceInstance: AuthService | null = null;
 
 // Storage service instances
-let businessPlanStorageService: StorageService<BusinessPlanData> | null = null;
-let sectionStorageService: StorageService<SectionData> | null = null;
+let businessPlanStorageService: BusinessPlanService | null = null;
+let sectionStorageService: StorageService<Section> | null = null;
 let userStorageService: StorageService<UserData> | null = null;
 
 /**
  * Get the storage service for business plans
  */
-export function getBusinessPlanStorageService(): StorageService<BusinessPlanData> {
+export function getBusinessPlanStorageService(): BusinessPlanService {
   if (!businessPlanStorageService) {
-    businessPlanStorageService = {
-      getItems: async (): Promise<ServiceResult<BusinessPlanData[]>> => {
-        return { success: true, data: [] };
-      },
-      getItem: async (id: string): Promise<ServiceResult<BusinessPlanData>> => {
-        // Log the id to ensure it's used
-        console.log(`Fetching business plan with id: ${id}`);
-        return { success: true, data: { id, name: 'Example Plan' } };
-      },
-      createItem: async (item: BusinessPlanData): Promise<ServiceResult<BusinessPlanData>> => {
-        return { success: true, data: { ...item, id: 'new-id' } };
-      },
-      updateItem: async (id: string, updates: Partial<BusinessPlanData>): Promise<ServiceResult<BusinessPlanData>> => {
-        return { success: true, data: { ...updates, id, name: updates.name || 'Updated Plan' } };
-      },
-      deleteItem: async (id: string): Promise<ServiceResult<boolean>> => {
-        return { success: true, data: true };
-      }
-    };
+    // Use the real BusinessPlanServiceImpl instead of the mock implementation
+    businessPlanStorageService = new BusinessPlanServiceImpl();
   }
-  return businessPlanStorageService;
+  // Not null assertion is safe here because we just instantiated it if it was null
+  return businessPlanStorageService!;
 }
 
 /**
  * Get the storage service for sections
  */
-export function getSectionStorageService(): StorageService<SectionData> {
+export function getSectionStorageService(): StorageService<Section> {
   if (!sectionStorageService) {
-    sectionStorageService = {
-      getItems: async (): Promise<ServiceResult<SectionData[]>> => {
-        return { success: true, data: [] };
-      },
-      getItem: async (id: string): Promise<ServiceResult<SectionData>> => {
-        // Log the id to ensure it's used
-        console.log(`Fetching section with id: ${id}`);
-        return { 
-          success: true, 
-          data: { 
-            id, 
-            businessPlanId: 'plan-1',
-            title: 'Example Section',
-            content: 'Content here',
-            order: 1
-          } 
-        };
-      },
-      createItem: async (item: SectionData): Promise<ServiceResult<SectionData>> => {
-        return { success: true, data: { ...item, id: 'new-section-id' } };
-      },
-      updateItem: async (id: string, updates: Partial<SectionData>): Promise<ServiceResult<SectionData>> => {
-        return { 
-          success: true, 
-          data: { 
-            id,
-            businessPlanId: updates.businessPlanId || 'plan-1',
-            title: updates.title || 'Updated Section',
-            content: updates.content || 'Updated content',
-            order: updates.order || 1
-          }
-        };
-      },
-      deleteItem: async (id: string): Promise<ServiceResult<boolean>> => {
-        return { success: true, data: true };
-      }
-    };
+    // Use proper storage service for sections
+    sectionStorageService = new LocalStorageService<Section>('devinde-tracker-sections');
   }
-  return sectionStorageService;
+  // Not null assertion is safe here because we just instantiated it if it was null
+  return sectionStorageService!;
 }
 
 /**
@@ -134,27 +58,11 @@ export function getSectionStorageService(): StorageService<SectionData> {
  */
 export function getUserStorageService(): StorageService<UserData> {
   if (!userStorageService) {
-    userStorageService = {
-      getItems: async (): Promise<ServiceResult<UserData[]>> => {
-        return { success: true, data: [] };
-      },
-      getItem: async (id: string): Promise<ServiceResult<UserData>> => {
-        // Log the id to ensure it's used
-        console.log(`Fetching user with id: ${id}`);
-        return { success: true, data: { id, username: 'user123' } };
-      },
-      createItem: async (item: UserData): Promise<ServiceResult<UserData>> => {
-        return { success: true, data: { ...item, id: 'new-user-id' } };
-      },
-      updateItem: async (id: string, updates: Partial<UserData>): Promise<ServiceResult<UserData>> => {
-        return { success: true, data: { ...updates, id, username: updates.username || 'user123' } };
-      },
-      deleteItem: async (id: string): Promise<ServiceResult<boolean>> => {
-        return { success: true, data: true };
-      }
-    };
+    // Use proper storage service for users
+    userStorageService = new LocalStorageService<UserData>('devinde-tracker-users');
   }
-  return userStorageService;
+  // Not null assertion is safe here because we just instantiated it if it was null
+  return userStorageService!;
 }
 
 /**
@@ -162,51 +70,8 @@ export function getUserStorageService(): StorageService<UserData> {
  */
 export function getBusinessPlanService(): BusinessPlanService {
   if (!businessPlanServiceInstance) {
-    const storage = getBusinessPlanStorageService();
-    businessPlanServiceInstance = {
-      ...storage,
-      getUserBusinessPlans: async (userId: string): Promise<ServiceResult<BusinessPlanData[]>> => {
-        console.log(`Fetching business plans for user: ${userId}`);
-        return { success: true, data: [] };
-      },
-      exportBusinessPlan: async (id: string, format?: string): Promise<ServiceResult<unknown>> => {
-        const result = await storage.getItem(id);
-        if (!result.success) {
-          return result;
-        }
-        return { 
-          success: true, 
-          data: {
-            format: format || 'json',
-            content: JSON.stringify(result.data)
-          }
-        };
-      },
-      importBusinessPlan: async (data: BusinessPlanData): Promise<ServiceResult<BusinessPlanData>> => {
-        return { 
-          success: true, 
-          data: { 
-            id: 'imported-plan',
-            name: data.name || 'Imported Plan' 
-          } 
-        };
-      },
-      duplicateBusinessPlan: async (id: string, newName?: string): Promise<ServiceResult<BusinessPlanData>> => {
-        const result = await storage.getItem(id);
-        if (!result.success) {
-          return result;
-        }
-        const planData = result.data;
-        return { 
-          success: true, 
-          data: { 
-            ...planData,
-            id: 'new-' + id,
-            name: newName || `Copy of ${planData.name}`
-          } 
-        };
-      }
-    };
+    // Instead of creating a new service, we should use the storage service we've already configured
+    businessPlanServiceInstance = getBusinessPlanStorageService();
   }
   return businessPlanServiceInstance;
 }
@@ -219,47 +84,77 @@ export function getSectionService(): SectionService {
     const storage = getSectionStorageService();
     sectionServiceInstance = {
       ...storage,
-      getSections: async (businessPlanId: string): Promise<ServiceResult<SectionData[]>> => {
+      getSections: async (businessPlanId: string): Promise<ServiceResult<Section[]>> => {
         return { 
           success: true, 
           data: [
             { 
               id: 'section-1', 
-              businessPlanId, 
-              title: 'Executive Summary', 
-              content: 'Executive summary content', 
-              order: 1 
+              businessPlanId,
+              key: 'pitch',
+              title: 'Pitch', 
+              icon: 'presentation',
+              color: 'blue',
+              completion: 0,
+              route: '/pitch'
             },
-            { 
-              id: 'section-2', 
-              businessPlanId, 
-              title: 'Market Analysis', 
-              content: 'Market analysis content', 
-              order: 2
+            {
+              id: 'section-2',
+              businessPlanId,
+              key: 'services',
+              title: 'Services',
+              icon: 'tools',
+              color: 'green',
+              completion: 0,
+              route: '/services'
             }
           ]
         };
       },
-      updateSectionCompletion: async (id: string, completion: number): Promise<ServiceResult<SectionData>> => {
+      updateSectionCompletion: async (id: string, completion: number): Promise<ServiceResult<Section>> => {
         const result = await storage.getItem(id);
-        if (!result.success) {
-          return result;
+        if (!result.success || !result.data) {
+          return {
+            success: false,
+            error: {
+              code: 'SECTION_NOT_FOUND',
+              message: `Section with ID ${id} not found`
+            }
+          };
         }
         
         // Ensure we have all required properties from the original section
         const sectionData = result.data;
         
+        // Make sure we have a valid ID
+        if (!sectionData.id) {
+          return {
+            success: false,
+            error: {
+              code: 'INVALID_ID',
+              message: 'Section ID is required'
+            }
+          };
+        }
+        
+        // Return updated section with required fields
         return { 
           success: true, 
           data: { 
-            ...sectionData,
-            completion 
+            id: sectionData.id,
+            businessPlanId: sectionData.businessPlanId || '',
+            key: sectionData.key || 'default',
+            title: sectionData.title || 'Untitled',
+            icon: sectionData.icon || 'document',
+            color: sectionData.color || 'gray',
+            route: sectionData.route || '/',
+            completion: completion,
           }
         };
       }
     };
   }
-  return sectionServiceInstance;
+  return sectionServiceInstance!;
 }
 
 /**
@@ -268,52 +163,55 @@ export function getSectionService(): SectionService {
 export function getAuthService(): AuthService {
   if (!authServiceInstance) {
     authServiceInstance = {
-      register: async (email: string, password: string, userData?: UserData): Promise<ServiceResult<UserData>> => {
+      register: async (email: string, password: string, userData?: Record<string, unknown>): Promise<ServiceResult<UserData>> => {
+        // Password is used for validation in a real implementation
         console.log(`Registering user with email: ${email} and password length: ${password.length}`);
         return { 
           success: true, 
           data: { 
-            id: 'new-user',
-            username: email,
+            id: 'new-user-id',
             email,
-            ...userData
+            name: userData?.name as string,
+            role: UserRole.USER,
+            createdAt: new Date().toISOString(),
           } 
         };
       },
-      login: async (email: string, password: string): Promise<ServiceResult<{ token: string; user: UserData }>> => {
-        console.log(`Logging in user with email: ${email} and password length: ${password.length}`);
+      login: async (email: string, password: string): Promise<ServiceResult<UserData>> => {
+        // Password is used for validation in a real implementation
+        console.log(`Login attempt for user: ${email} with password length: ${password.length}`);
         return { 
           success: true, 
           data: { 
-            token: 'mock-jwt-token',
-            user: {
-              id: 'user-1',
-              username: email,
-              email
-            }
+            id: 'user-123',
+            email,
+            role: UserRole.USER,
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
           } 
         };
       },
       logout: async (): Promise<ServiceResult<boolean>> => {
         return { success: true, data: true };
       },
-      getCurrentUser: async (): Promise<ServiceResult<UserData | null>> => {
+      getCurrentUser: async (): Promise<ServiceResult<UserData>> => {
         return { 
           success: true, 
-          data: {
-            id: 'user-1',
-            username: 'current-user@example.com',
-            email: 'current-user@example.com',
-            role: 'user'
-          }
+          data: { 
+            id: 'user-123',
+            email: 'user@example.com',
+            role: UserRole.USER,
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          } 
         };
       },
       isAuthenticated: async (): Promise<boolean> => {
-        return true; 
+        return true;
       }
     };
   }
-  return authServiceInstance;
+  return authServiceInstance!;
 }
 
 /**

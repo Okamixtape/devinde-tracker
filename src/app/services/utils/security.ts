@@ -11,10 +11,10 @@
  * - Suspicious activity monitoring
  */
 
-import { createValidationError, ErrorCategory, ErrorSeverity, AppError } from './error-handling';
+import { ErrorCategory, ErrorSeverity, AppError } from './error-handling';
 
-// Salt for encryption - in a real app, this would be dynamically generated and stored securely
-const ENCRYPTION_KEY = 'devinde-tracker-encryption-key-2025';
+// Préfixe utilisé pour marquer les données chiffrées
+const ENCRYPTION_PREFIX = 'DEVINDE_ENC_V1:';
 
 /**
  * Simple client-side encryption for localStorage data
@@ -23,23 +23,14 @@ const ENCRYPTION_KEY = 'devinde-tracker-encryption-key-2025';
  */
 export function encryptData(data: unknown): string {
   try {
+    // Version simplifiée et robuste : nous utilisons simplement Base64
+    // pour encoder les données, avec un marqueur pour indiquer qu'elles sont encodées
     const serialized = JSON.stringify(data);
-    
-    // In a real production app, use a proper encryption library
-    // This is a simple XOR-based obfuscation for demonstration purposes
-    const encrypted = Array.from(serialized)
-      .map(char => {
-        // XOR with encryption key characters
-        const key = ENCRYPTION_KEY[Math.floor(Math.random() * ENCRYPTION_KEY.length)];
-        return String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(0));
-      })
-      .join('');
-    
-    // Base64 encode the result
-    return btoa(encrypted);
+    const encoded = btoa(serialized);
+    return `${ENCRYPTION_PREFIX}${encoded}`;
   } catch (error) {
     console.error('Encryption error:', error);
-    throw new AppError('ENCRYPTION_ERROR', {
+    throw new AppError(1100, {
       message: 'Failed to encrypt data',
       category: ErrorCategory.SYSTEM,
       severity: ErrorSeverity.ERROR,
@@ -53,22 +44,19 @@ export function encryptData(data: unknown): string {
  */
 export function decryptData<T>(encryptedData: string): T {
   try {
-    // Base64 decode
-    const encrypted = atob(encryptedData);
+    // Vérifier si les données sont dans le nouveau format
+    if (encryptedData.startsWith(ENCRYPTION_PREFIX)) {
+      const encoded = encryptedData.slice(ENCRYPTION_PREFIX.length);
+      const decoded = atob(encoded);
+      return JSON.parse(decoded) as T;
+    }
     
-    // Decrypt with the same XOR approach
-    const decrypted = Array.from(encrypted)
-      .map((char, index) => {
-        // Use the same key position as during encryption
-        const key = ENCRYPTION_KEY[index % ENCRYPTION_KEY.length];
-        return String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(0));
-      })
-      .join('');
-    
-    return JSON.parse(decrypted) as T;
+    // Si pas au nouveau format, essayons simplement de parser directement
+    // (pour les données qui n'étaient peut-être pas du tout chiffrées)
+    return JSON.parse(encryptedData) as T;
   } catch (error) {
     console.error('Decryption error:', error);
-    throw new AppError('DECRYPTION_ERROR', {
+    throw new AppError(1101, {
       message: 'Failed to decrypt data',
       category: ErrorCategory.SYSTEM,
       severity: ErrorSeverity.ERROR,
@@ -83,22 +71,36 @@ export function decryptData<T>(encryptedData: string): T {
 export const secureLocalStorage = {
   setItem(key: string, value: unknown): void {
     try {
-      const encrypted = encryptData(value);
-      localStorage.setItem(key, encrypted);
+      const encryptedValue = encryptData(value);
+      localStorage.setItem(key, encryptedValue);
     } catch (error) {
-      console.error('secureLocalStorage.setItem error:', error);
+      console.error(`Failed to securely store item with key ${key}:`, 
+        error instanceof Error ? error.message : 'Unknown error');
+      // En cas d'erreur, essayer de nettoyer cette entrée
+      localStorage.removeItem(key);
       throw error;
     }
   },
   
   getItem<T>(key: string): T | null {
     try {
-      const encrypted = localStorage.getItem(key);
-      if (!encrypted) return null;
+      const encryptedValue = localStorage.getItem(key);
+      if (!encryptedValue) {
+        return null;
+      }
       
-      return decryptData<T>(encrypted);
+      try {
+        return decryptData<T>(encryptedValue);
+      } catch (error) {
+        console.error(`Failed to decrypt item with key ${key}, removing corrupted data:`, 
+          error instanceof Error ? error.message : 'Unknown error');
+        // Supprimer automatiquement les données corrompues
+        localStorage.removeItem(key);
+        return null;
+      }
     } catch (error) {
-      console.error('secureLocalStorage.getItem error:', error);
+      console.error(`Error accessing localStorage for key ${key}:`, 
+        error instanceof Error ? error.message : 'Unknown error');
       return null;
     }
   },
@@ -107,17 +109,23 @@ export const secureLocalStorage = {
     try {
       localStorage.removeItem(key);
     } catch (error) {
-      console.error('secureLocalStorage.removeItem error:', error);
-      throw error;
+      console.error(`Failed to remove item with key ${key}:`, 
+        error instanceof Error ? error.message : 'Unknown error');
     }
   },
   
   clear(): void {
     try {
-      localStorage.clear();
+      // Supprimer uniquement les clés liées à l'application
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('devinde-tracker')) {
+          localStorage.removeItem(key);
+        }
+      }
     } catch (error) {
-      console.error('secureLocalStorage.clear error:', error);
-      throw error;
+      console.error('Failed to clear secure localStorage:', 
+        error instanceof Error ? error.message : 'Unknown error');
     }
   }
 };
@@ -264,20 +272,20 @@ export function checkRateLimit(operation: RateLimitOperation): boolean {
 /**
  * Apply throttling to a function
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: Parameters<T>) => ReturnType<T>>(
   func: T,
   operation: RateLimitOperation
 ): (...args: Parameters<T>) => ReturnType<T> | Promise<ReturnType<T>> {
   return (...args: Parameters<T>): ReturnType<T> | Promise<ReturnType<T>> => {
     if (!checkRateLimit(operation)) {
-      throw new AppError('RATE_LIMIT_EXCEEDED', {
+      throw new AppError(1102, {
         message: 'Operation rate limit exceeded. Please try again later.',
         category: ErrorCategory.SYSTEM,
         severity: ErrorSeverity.WARNING
       });
     }
     
-    return func(...args);
+    return func(...args) as ReturnType<T>;
   };
 }
 

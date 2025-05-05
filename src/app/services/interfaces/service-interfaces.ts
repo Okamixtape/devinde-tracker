@@ -74,18 +74,41 @@ export interface SectionService extends StorageService<any> {
 }
 
 /**
+ * User Data - Type for user data
+ */
+export interface UserData {
+  id: string;
+  email: string;
+  name?: string;
+  role: string;
+  createdAt: string;
+  lastLogin?: string;
+}
+
+/**
+ * User Preferences - Type for user preferences
+ */
+export interface UserPreferences {
+  theme?: 'light' | 'dark';
+  notifications?: boolean;
+  language?: string;
+  dashboardLayout?: string;
+  [key: string]: string | boolean | undefined;
+}
+
+/**
  * Auth Service - Interface for authentication operations
  */
 export interface AuthService {
   /**
    * Create a new user
    */
-  register(email: string, password: string, userData?: any): Promise<ServiceResult<any>>;
+  register(email: string, password: string, userData?: Partial<UserData>): Promise<ServiceResult<UserData>>;
   
   /**
    * Login a user
    */
-  login(email: string, password: string): Promise<ServiceResult<any>>;
+  login(email: string, password: string): Promise<ServiceResult<UserData>>;
   
   /**
    * Logout the current user
@@ -95,10 +118,25 @@ export interface AuthService {
   /**
    * Get the current authenticated user
    */
-  getCurrentUser(): Promise<ServiceResult<any>>;
+  getCurrentUser(): Promise<ServiceResult<UserData>>;
   
   /**
    * Check if a user is authenticated
    */
   isAuthenticated(): Promise<boolean>;
+  
+  /**
+   * Update user profile information
+   */
+  updateUserProfile(userData: Partial<UserData>): Promise<ServiceResult<UserData>>;
+  
+  /**
+   * Change user password
+   */
+  changePassword(currentPassword: string, newPassword: string): Promise<ServiceResult<boolean>>;
+  
+  /**
+   * Update user preferences
+   */
+  updateUserPreferences(preferences: UserPreferences): Promise<ServiceResult<UserPreferences>>;
 }

@@ -125,10 +125,10 @@ export function PricingImpactVisualizer({
     });
     
     // Calcul des revenus mensuels potentiels basés sur les heures travaillées
-    const hourlyMonthlyRevenue = averageHourlyRate * workHoursPerWeek * 4; // 4 semaines par mois
+    const hourlyMonthlyRevenue = averageHourlyRate * workHoursPerWeek * 4 * (workHoursPerWeek / 20); // 4 semaines par mois
     
     // Revenus mensuels des forfaits basés sur le nombre de clients
-    const packageMonthlyRevenue = (averagePackagePrice * clientsPerMonth) / 3; // Répartition sur 3 mois
+    const packageMonthlyRevenue = (averagePackagePrice * clientsPerMonth) / 3 * (clientsPerMonth / 2); // Répartition sur 3 mois
     
     // Revenus mensuels totaux
     const monthlyRevenue = hourlyMonthlyRevenue + packageMonthlyRevenue + totalSubscriptionPrice;
@@ -173,8 +173,9 @@ export function PricingImpactVisualizer({
   
   // Calcul de l'impact de la tarification
   useEffect(() => {
+    console.log('Recalculating pricing impact:', workHoursPerWeek, clientsPerMonth);
     calculatePricingImpact();
-  }, [calculatePricingImpact]);
+  }, [calculatePricingImpact, workHoursPerWeek, clientsPerMonth]);
   
   // Format currency
   const formatCurrency = (value: number): string => {

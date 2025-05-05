@@ -125,7 +125,7 @@ export function DataDashboard({
               )}
             </div>
             <Link 
-              href={`/plans/${businessPlanId}`} 
+              href={`/plans/${businessPlanId}/edit`} 
               className="inline-flex items-center mt-3 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
             >
               Gérer les sections 
