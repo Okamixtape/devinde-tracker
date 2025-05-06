@@ -45,7 +45,7 @@ export default function DashboardPage() {
     };
     
     loadBusinessPlan();
-  }, [id, router]);
+  }, [id, router, businessPlanService]);
   
   if (loading) {
     return (

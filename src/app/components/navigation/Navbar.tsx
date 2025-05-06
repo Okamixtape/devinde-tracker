@@ -9,8 +9,9 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { useAuth } from '../../hooks/useAuth';
 import ProfileNavigation from './ProfileNavigation';
 import SectionNavigation from './SectionNavigation';
-import { FiSearch, FiChevronRight, FiHome } from 'react-icons/fi';
+import { FiSearch } from 'react-icons/fi';
 import LanguageSelector from '../common/LanguageSelector';
+import Breadcrumb from './Breadcrumb';
 
 /**
  * Navbar Component
@@ -83,148 +84,71 @@ export function Navbar() {
     return pathname.includes(path);
   };
 
-  // Générer le fil d'Ariane (breadcrumb)
-  const renderBreadcrumb = () => {
-    // Si nous sommes sur la page d'accueil, ne pas afficher de fil d'Ariane
-    if (pathname === '/') return null;
-
-    // Diviser le chemin en segments
-    const segments = pathname.split('/').filter(segment => segment);
-    
-    // Si nous sommes dans un plan d'affaires
-    if (planId && currentPlan) {
-      return (
-        <div className="flex items-center text-sm">
-          <Link href="/" className="text-blue-400 hover:text-blue-300 flex items-center">
-            <FiHome className="mr-1" />
-            <span className="sr-only sm:not-sr-only">Accueil</span>
-          </Link>
-          <FiChevronRight className="mx-2 text-blue-300" />
-          <Link href="/plans" className="text-blue-400 hover:text-blue-300">
-            Plans
-          </Link>
-          <FiChevronRight className="mx-2 text-blue-300" />
-          <span className="text-blue-100 font-medium truncate max-w-[150px]">
-            {currentPlan?.name}
-          </span>
-        </div>
-      );
-    }
-
-    // Pour les autres pages
-    return (
-      <div className="flex items-center text-sm">
-        <Link href="/" className="text-blue-400 hover:text-blue-300 flex items-center">
-          <FiHome className="mr-1" />
-          <span className="sr-only sm:not-sr-only">Accueil</span>
-        </Link>
-        {segments.map((segment, index) => (
-          <React.Fragment key={segment}>
-            <FiChevronRight className="mx-2 text-blue-300" />
-            {index === segments.length - 1 ? (
-              <span className="text-blue-100 font-medium capitalize">{segment}</span>
-            ) : (
-              <Link 
-                href={`/${segments.slice(0, index + 1).join('/')}`}
-                className="text-blue-400 hover:text-blue-300 capitalize"
-              >
-                {segment}
-              </Link>
-            )}
-          </React.Fragment>
-        ))}
-      </div>
-    );
-  };
-  
   // Si nous ne sommes pas dans un plan, affichons juste le menu basique
   if (!planId) {
     return (
-      <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-lg sticky top-0 z-50 w-full">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex-shrink-0 flex items-center text-lg sm:text-xl font-bold text-white">
-                DevIndé Tracker
-              </Link>
-              
-              {/* Fil d'Ariane (breadcrumb) */}
-              <div className="hidden sm:flex">
-                {renderBreadcrumb()}
-              </div>
-            </div>
-            
-            {/* Menu desktop */}
-            <div className="hidden sm:flex items-center space-x-2 sm:space-x-4">
-              <Link 
-                href="/plans" 
-                className={`text-gray-200 hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out ${isActive('/plans') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700/40'}`}
-              >
-                Plans
-              </Link>
-              <Link 
-                href="/calculator" 
-                className={`text-gray-200 hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out ${isActive('/calculator') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700/40'}`}
-              >
-                Calculateur
-              </Link>
-              <Link 
-                href="/resources" 
-                className={`text-gray-200 hover:text-white px-2 sm:px-3 py-2 rounded-md text-sm font-medium transition-colors duration-150 ease-in-out ${isActive('/resources') ? 'bg-blue-700 text-white' : 'hover:bg-blue-700/40'}`}
-              >
-                Ressources
-              </Link>
-              
-              {/* Séparateur */}
-              <div className="mx-2 h-6 w-px bg-blue-600"></div>
-              
-              {/* Sélecteur de langue */}
-              <div className="px-2">
-                <LanguageSelector />
+      <div className="sticky top-0 z-50 w-full">
+        {/* Barre principale avec le titre */}
+        <nav className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-md">
+          <div className="container mx-auto px-4">
+            {/* Barre de navigation supérieure */}
+            <div className="flex justify-between h-16">
+              <div className="flex items-center space-x-4">
+                <Link href="/" className="text-lg sm:text-xl font-bold text-white">
+                  DevIndé Tracker
+                </Link>
               </div>
               
-              {/* Recherche */}
-              <button 
-                className="text-gray-200 hover:text-white transition-colors duration-150 ease-in-out"
-                aria-label="Rechercher"
-              >
-                <FiSearch className="h-5 w-5" />
-              </button>
+              <div className="flex items-center space-x-4">
+                {/* Utilities in the top bar */}
+                <div className="px-2">
+                  <LanguageSelector />
+                </div>
+                
+                <button 
+                  className="text-gray-200 hover:text-white transition-colors duration-150 ease-in-out"
+                  aria-label="Rechercher"
+                >
+                  <FiSearch className="h-5 w-5" />
+                </button>
+                
+                <ProfileNavigation user={user} onLogout={logout} />
+              </div>
               
-              {/* Profil utilisateur */}
-              <ProfileNavigation user={user} onLogout={logout} />
-            </div>
-            
-            {/* Bouton menu mobile */}
-            <div className="sm:hidden flex items-center">
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-gray-200 hover:text-white hover:bg-blue-700 focus:outline-none transition-colors duration-150 ease-in-out"
-                aria-expanded={menuOpen}
-              >
-                <span className="sr-only">Ouvrir le menu principal</span>
-                {/* Icône hamburger */}
-                <svg className={`${menuOpen ? 'hidden' : 'block'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
-                </svg>
-                {/* Icône X */}
-                <svg className={`${menuOpen ? 'block' : 'hidden'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              {/* Bouton menu mobile */}
+              <div className="md:hidden flex items-center">
+                <button
+                  onClick={() => setMenuOpen(!menuOpen)}
+                  className="inline-flex items-center justify-center p-2 rounded-md text-gray-200 hover:text-white hover:bg-blue-700 focus:outline-none transition-colors duration-150 ease-in-out"
+                  aria-expanded={menuOpen}
+                >
+                  <span className="sr-only">Ouvrir le menu principal</span>
+                  {/* Icône hamburger */}
+                  <svg className={`${menuOpen ? 'hidden' : 'block'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
+                  {/* Icône X */}
+                  <svg className={`${menuOpen ? 'block' : 'hidden'} h-6 w-6`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-          
-          {/* Fil d'Ariane (breadcrumb) pour mobile */}
-          <div className="sm:hidden -mt-2 pb-2 text-xs">
-            {renderBreadcrumb()}
-          </div>
+        </nav>
+
+        {/* Fil d'Ariane */}
+        <Breadcrumb />
+        
+        {/* Version mobile de SectionNavigation si le menu n'est pas ouvert */}
+        <div className="md:hidden pb-2 bg-blue-800 border-t border-blue-700">
+          {!menuOpen && <SectionNavigation planId={planId} />}
         </div>
         
         {/* Menu mobile */}
         <div
           ref={menuRef}
-          className={`${menuOpen ? 'fixed' : 'hidden'} sm:hidden bg-blue-800 inset-0 top-16 pt-2 px-4 pb-3 shadow-lg overflow-y-auto`}
+          className={`${menuOpen ? 'fixed' : 'hidden'} md:hidden bg-blue-800 inset-0 top-16 pt-2 px-4 pb-3 shadow-lg overflow-y-auto`}
         >
           <div className="space-y-1 mb-3">
             <Link 
@@ -320,7 +244,7 @@ export function Navbar() {
             )}
           </div>
         </div>
-      </nav>
+      </div>
     );
   }
 
@@ -386,13 +310,16 @@ export function Navbar() {
               </button>
             </div>
           </div>
-          
-          {/* Version mobile de SectionNavigation si le menu n'est pas ouvert */}
-          <div className="md:hidden pb-2">
-            {!menuOpen && <SectionNavigation planId={planId} />}
-          </div>
         </div>
       </nav>
+
+      {/* Fil d'Ariane */}
+      <Breadcrumb currentPlanName={currentPlan?.name} />
+      
+      {/* Version mobile de SectionNavigation si le menu n'est pas ouvert */}
+      <div className="md:hidden pb-2 bg-blue-800 border-t border-blue-700">
+        {!menuOpen && <SectionNavigation planId={planId} />}
+      </div>
       
       {/* Menu mobile */}
       <div

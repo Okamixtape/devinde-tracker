@@ -196,14 +196,15 @@ const UserProfileForm: React.FC = () => {
 
   return (
     <Card title={t('profile.yourProfile')}>
-      <div className="mb-4 border-b">
-        <ul className="flex flex-wrap -mb-px text-sm font-medium text-center">
+      {/* Tabs */}
+      <div className="mb-6 border-b border-gray-600">
+        <ul className="flex flex-wrap -mb-px">
           <li className="mr-2">
             <button
-              className={`inline-block p-4 border-b-2 rounded-t-lg ${
+              className={`inline-block p-4 border-b-2 rounded-t-lg font-medium ${
                 activeTab === 'info'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent hover:text-gray-600 hover:border-gray-300'
+                  ? 'text-blue-400 border-blue-400'
+                  : 'text-gray-300 border-transparent hover:text-blue-300 hover:border-blue-300'
               }`}
               onClick={() => handleTabChange('info')}
             >
@@ -212,10 +213,10 @@ const UserProfileForm: React.FC = () => {
           </li>
           <li className="mr-2">
             <button
-              className={`inline-block p-4 border-b-2 rounded-t-lg ${
+              className={`inline-block p-4 border-b-2 rounded-t-lg font-medium ${
                 activeTab === 'password'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent hover:text-gray-600 hover:border-gray-300'
+                  ? 'text-blue-400 border-blue-400'
+                  : 'text-gray-300 border-transparent hover:text-blue-300 hover:border-blue-300'
               }`}
               onClick={() => handleTabChange('password')}
             >
@@ -224,10 +225,10 @@ const UserProfileForm: React.FC = () => {
           </li>
           <li>
             <button
-              className={`inline-block p-4 border-b-2 rounded-t-lg ${
+              className={`inline-block p-4 border-b-2 rounded-t-lg font-medium ${
                 activeTab === 'preferences'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent hover:text-gray-600 hover:border-gray-300'
+                  ? 'text-blue-400 border-blue-400'
+                  : 'text-gray-300 border-transparent hover:text-blue-300 hover:border-blue-300'
               }`}
               onClick={() => handleTabChange('preferences')}
             >
