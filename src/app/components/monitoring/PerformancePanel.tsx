@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { WebVitals, PerformanceMetricType } from '../../services/core/performance-service';
+import { WebVitals, PerformanceMetricType } from '@/app/services/core/performanceService';
 
 interface PerformancePanelProps {
   webVitals: WebVitals;

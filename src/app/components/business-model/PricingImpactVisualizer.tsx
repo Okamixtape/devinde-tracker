@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { BusinessPlanData } from '../../services/interfaces/data-models';
+import { BusinessPlanData } from "@/app/services/interfaces/dataModels";
 
 interface PricingImpactVisualizerProps {
   businessModel: BusinessPlanData['businessModel'];

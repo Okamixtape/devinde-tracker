@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ErrorType, ErrorStatus, ErrorData } from '../../services/core/error-tracking-service';
+import { ErrorType, ErrorStatus, ErrorData } from '@/app/services/core/errorTrackingService';
 
 // Définir l'enum ErrorSeverity ici aussi pour éviter les problèmes d'importation
 enum ErrorSeverity {

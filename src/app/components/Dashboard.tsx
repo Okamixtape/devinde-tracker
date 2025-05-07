@@ -216,7 +216,7 @@ const Dashboard: React.FC<DashboardProps> = ({ businessPlanData }) => {
       icon: <CircleDollarSign size={18} className="text-indigo-500 dark:text-indigo-400" />,
       color: "bg-indigo-500/10 dark:bg-indigo-500/20",
       completion: calculateSectionCompletion(businessPlanData.financials),
-      route: "/financials"
+      route: "/finances"
     },
     {
       key: "actionPlan",
@@ -294,10 +294,24 @@ const Dashboard: React.FC<DashboardProps> = ({ businessPlanData }) => {
     }
   ];
 
+  // Mappage entre les sections du modèle de données et les routes
+  const sectionRouteMap: Partial<Record<string, string>> = {
+    pitch: '/pitch',
+    services: '/services',
+    businessModel: '/business-model',
+    marketAnalysis: '/market-analysis',
+    financials: '/finances',
+    actionPlan: '/action-plan'
+  };
+
   // Fonction simulée pour naviguer vers une section (dans un vrai projet, utiliserait un router)
   const navigateToSection = (sectionKey: SectionKey) => {
     console.log(`Navigation vers ${sectionKey}`);
-    // Dans un vrai projet: router.push(`/${sectionKey}`);
+    const route = sectionRouteMap[sectionKey];
+    if (route) {
+      console.log(`Route: ${route}`);
+      // Dans un vrai projet: router.push(route);
+    }
   };
 
   return (
@@ -491,11 +505,18 @@ const Dashboard: React.FC<DashboardProps> = ({ businessPlanData }) => {
 };
 
 // Wrapper qui utilise le hook et passe les données au composant
-const DashboardContainer: React.FC = () => {
+interface DashboardContainerProps {
+  businessPlanData?: BusinessPlanData;
+}
+
+const DashboardContainer: React.FC<DashboardContainerProps> = ({ businessPlanData: propData }) => {
   const businessPlanHook = useBusinessPlanData();
   
-  // Vérifie si le hook est prêt
-  if (!businessPlanHook || !businessPlanHook.businessPlanData) {
+  // Utilise soit les données passées en prop, soit celles du hook
+  const data = propData || (businessPlanHook?.businessPlanData);
+  
+  // Vérifie si les données sont disponibles
+  if (!data) {
     return (
       <div className="flex justify-center items-center h-[60vh]">
         <div className="animate-pulse text-gray-500 dark:text-gray-400">
@@ -505,7 +526,7 @@ const DashboardContainer: React.FC = () => {
     );
   }
   
-  return <Dashboard businessPlanData={businessPlanHook.businessPlanData} />;
+  return <Dashboard businessPlanData={data} />;
 };
 
 export default DashboardContainer;

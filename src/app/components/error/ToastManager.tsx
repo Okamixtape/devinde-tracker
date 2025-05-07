@@ -2,8 +2,8 @@
 
 import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { ErrorResponse, ErrorSeverity } from "../services/utils/errorHandling";
 import Toast, { ToastProps, ToastPosition, getSeverityAsToastType } from './Toast';
-import { ErrorResponse, ErrorSeverity } from '../../services/utils/error-handling';
 
 // Interface pour un toast avec ID
 export interface ToastItem extends Omit<ToastProps, 'onClose'> {

@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { RevenueProjector } from '../../../components/revenue/RevenueProjector';
+import { BusinessPlanData } from "../services/interfaces/dataModels";
+import { RevenueProjector } from '@/app/components/revenue/RevenueProjector';
 import { 
   getBusinessPlanService, 
   getSectionService 
-} from '../../../services/service-factory';
-import { BusinessPlanData } from '../../../services/interfaces/data-models';
+} from '@/app/services/serviceFactory';
 
 /**
  * Revenue Projector Page

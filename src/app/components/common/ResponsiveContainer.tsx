@@ -1,7 +1,7 @@
 'use client';
 
 import React, { ReactNode } from 'react';
-import { useResponsive, ScreenSize } from '../../hooks/useResponsive';
+import { useResponsive, ScreenSize } from '@/app/hooks/useResponsive';
 
 export interface ResponsiveContainerProps {
   /**

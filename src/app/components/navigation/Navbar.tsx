@@ -3,15 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
-import { getBusinessPlanService } from '../../services/service-factory';
-import { BusinessPlanData } from '../../services/interfaces/data-models';
-import { useResponsive } from '../../hooks/useResponsive';
-import { useAuth } from '../../hooks/useAuth';
+import { FiSearch } from 'react-icons/fi';
+import { BusinessPlanData } from "../services/interfaces/dataModels";
+import LanguageSelector from '../common/LanguageSelector';
 import ProfileNavigation from './ProfileNavigation';
 import SectionNavigation from './SectionNavigation';
-import { FiSearch } from 'react-icons/fi';
-import LanguageSelector from '../common/LanguageSelector';
 import Breadcrumb from './Breadcrumb';
+import { getBusinessPlanService } from '@/app/services/serviceFactory';
+import { useResponsive } from '@/app/hooks/useResponsive';
+import { useAuth } from '@/app/hooks/useAuth';
 
 /**
  * Navbar Component

@@ -4,19 +4,22 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { 
   getBusinessPlanService, 
   getSectionService,
-  getAuthService
-} from '../services/service-factory';
+  getAuthService,
+  getSearchService
+} from '../services/serviceFactory';
 import { 
   BusinessPlanService,
   SectionService,
-  AuthService
-} from '../services/interfaces/service-interfaces';
+  AuthService,
+  SearchService
+} from "../services/interfaces/serviceInterfaces";
 
 // Définition de l'interface du contexte
 interface DataServiceContextType {
   businessPlanService: BusinessPlanService;
   sectionService: SectionService;
   authService: AuthService;
+  searchService: SearchService;
   // Ajouter d'autres services ici au besoin
 }
 
@@ -50,13 +53,14 @@ export const DataServiceProvider: React.FC<DataServiceProviderProps> = ({
   const businessPlanService = services?.businessPlanService || getBusinessPlanService();
   const sectionService = services?.sectionService || getSectionService();
   const authService = services?.authService || getAuthService();
+  const searchService = services?.searchService || getSearchService();
   
   // Valeur du contexte
-  const contextValue: DataServiceContextType = {
+  const contextValue = {
     businessPlanService,
     sectionService,
-    authService
-    // Ajouter d'autres services ici au besoin
+    authService,
+    searchService
   };
   
   return (

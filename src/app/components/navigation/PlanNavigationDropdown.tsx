@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FiChevronDown, FiGrid, FiDollarSign, FiPieChart, FiTrendingUp, FiClipboard } from 'react-icons/fi';
+import { FiChevronDown, FiGrid, FiDollarSign, FiPieChart, FiTrendingUp, FiClipboard, FiBookOpen, FiBriefcase } from 'react-icons/fi';
+import { useDataServiceContext } from '@/app/contexts/DataServiceContext';
 
 interface NavigationItem {
   name: string;
@@ -23,15 +24,57 @@ const PlanNavigationDropdown: React.FC<PlanNavigationDropdownProps> = ({ planId,
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
-  // Définir les éléments de navigation
-  const navigationItems: NavigationItem[] = [
-    { name: 'Tableau de Bord', path: `/plans/${planId}/dashboard`, icon: <FiGrid className="mr-2" /> },
-    { name: 'Modèle Économique', path: `/plans/${planId}/business-model`, icon: <FiDollarSign className="mr-2" /> },
-    { name: 'Analyse Marché', path: `/plans/${planId}/market-analysis`, icon: <FiPieChart className="mr-2" /> },
-    { name: 'Finances', path: `/plans/${planId}/finances`, icon: <FiTrendingUp className="mr-2" /> },
-    { name: 'Plan d\'Action', path: `/plans/${planId}/action-plan`, icon: <FiClipboard className="mr-2" /> },
-    { name: 'Projections', path: `/plans/${planId}/revenue`, icon: <FiTrendingUp className="mr-2" /> },
-  ];
+  // Mapping des icônes par clé de section
+  const iconMap: Record<string, React.ReactNode> = {
+    dashboard: <FiGrid className="mr-2" />,
+    pitch: <FiBookOpen className="mr-2" />,
+    services: <FiBriefcase className="mr-2" />,
+    'business-model': <FiDollarSign className="mr-2" />,
+    'market-analysis': <FiPieChart className="mr-2" />,
+    finances: <FiTrendingUp className="mr-2" />,
+    'action-plan': <FiClipboard className="mr-2" />,
+    revenue: <FiTrendingUp className="mr-2" />
+  };
+
+  // Utiliser le contexte pour accéder au service des sections
+  const { sectionService } = useDataServiceContext();
+  
+  // Créer les éléments de navigation à partir du service
+  const navigationItems: NavigationItem[] = [];
+  
+  // Récupérer les clés des sections disponibles
+  const allSectionKeys = Object.keys(iconMap);
+  
+  // Générer les items de navigation pour toutes les sections sauf le dashboard
+  allSectionKeys.forEach(key => {
+    if (key === 'dashboard') return; // Exclure le dashboard car il sera ajouté manuellement en premier
+    
+    const sectionConfig = sectionService.getSectionByKey(key);
+    if (sectionConfig) {
+      navigationItems.push({
+        name: sectionConfig.title,
+        path: `/plans/${planId}${sectionConfig.route}`,
+        icon: iconMap[sectionConfig.key] || <FiGrid className="mr-2" />
+      });
+    }
+  });
+  
+  // Trier les sections selon leur ordre défini dans la configuration
+  navigationItems.sort((a, b) => {
+    const sectionA = sectionService.getSectionByKey(a.name.toLowerCase());
+    const sectionB = sectionService.getSectionByKey(b.name.toLowerCase());
+    return (sectionA?.order || 0) - (sectionB?.order || 0);
+  });
+  
+  // Ajouter manuellement le Tableau de Bord comme premier élément
+  const dashboardSection = sectionService.getSectionByKey('dashboard');
+  if (dashboardSection) {
+    navigationItems.unshift({
+      name: "Tableau de Bord",
+      path: `/plans/${planId}/dashboard`,
+      icon: iconMap['dashboard']
+    });
+  }
 
   // Déterminer quel élément est actif
   const isActive = (path: string) => {

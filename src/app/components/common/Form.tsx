@@ -2,7 +2,7 @@
 
 import React, { FormHTMLAttributes, ReactNode } from 'react';
 import { twMerge } from 'tailwind-merge';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive } from '@/app/hooks/useResponsive';
 
 export interface FormProps extends FormHTMLAttributes<HTMLFormElement> {
   title?: string;

@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { FiSearch, FiX } from 'react-icons/fi';
-import { SearchServiceImpl } from '@/app/services/core/search-service';
 import { useRouter } from 'next/navigation';
 import { useDebounce } from '@/app/hooks/useDebounce';
+import { useDataServiceContext } from '@/app/contexts/DataServiceContext';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -27,7 +27,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
   const inputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
-  const searchService = new SearchServiceImpl();
+  const { searchService } = useDataServiceContext();
   const router = useRouter();
 
   // Effet pour gérer le focus automatique
@@ -63,7 +63,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     };
 
     fetchSuggestions();
-  }, [debouncedSearchTerm]);
+  }, [debouncedSearchTerm, searchService]);
 
   // Effet pour fermer les suggestions en cliquant à l'extérieur
   useEffect(() => {

@@ -12,7 +12,7 @@ import {
   recordSuspiciousActivity
 } from '../services/utils/security';
 import { useErrorHandling } from '../providers/ErrorHandlingProvider';
-import { AppError, ErrorCategory, ErrorSeverity } from '../services/utils/error-handling';
+import { AppError, ErrorCategory, ErrorSeverity } from "../services/utils/errorHandling";
 
 /**
  * Hook for using security features in React components

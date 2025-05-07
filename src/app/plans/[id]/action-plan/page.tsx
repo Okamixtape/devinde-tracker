@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ActionPlanManager } from '../../../components/action-plan/ActionPlanManager';
+import { BusinessPlanData, ActionPlanData } from "../services/interfaces/dataModels";
+import { ActionPlanManager } from '@/app/components/action-plan/ActionPlanManager';
 import { 
   getBusinessPlanService, 
   getSectionService 
-} from '../../../services/service-factory';
-import { BusinessPlanData, ActionPlanData } from '../../../services/interfaces/data-models';
+} from '@/app/services/serviceFactory';
 
 /**
  * Action Plan Page

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MarketAnalysisData, TargetClient, Competitor } from '../../services/interfaces/data-models';
+import { MarketAnalysisData, TargetClient, Competitor } from "../services/interfaces/dataModels";
 
 interface TargetAudienceAnalyzerProps {
   marketData?: MarketAnalysisData;

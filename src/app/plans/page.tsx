@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getBusinessPlanService } from '../services/service-factory';
-import { BusinessPlanData } from '../services/interfaces/data-models';
+import { getBusinessPlanService } from '../services/serviceFactory';
+import { BusinessPlanData } from "../services/interfaces/dataModels";
+import ProtectPage from '../components/auth/ProtectPage';
 
 /**
  * BusinessPlans Page
@@ -16,6 +17,9 @@ export default function BusinessPlansPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  
+  // Protection de la page - redirection si non authentifié
+  // Approche simple et directe, sans système complexe de redirection
   
   // Initialize service
   const businessPlanService = getBusinessPlanService();
@@ -39,7 +43,7 @@ export default function BusinessPlansPage() {
     };
     
     loadPlans();
-  }, []);
+  }, [businessPlanService]);
   
   // Handle plan creation
   const handleCreatePlan = () => {
@@ -113,8 +117,11 @@ export default function BusinessPlansPage() {
   
   return (
     <div className="container mx-auto p-6">
+      {/* Protection de la page - redirige vers /login si l'utilisateur n'est pas authentifié */}
+      <ProtectPage />
+      
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Mes Plans d&apos;Affaires</h1>
+        <h1 className="text-2xl font-bold">Mes Plans d&#39;Affaires</h1>
         <button
           onClick={handleCreatePlan}
           className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
@@ -152,7 +159,7 @@ export default function BusinessPlansPage() {
               >
                 <h3 className="text-lg font-semibold mb-2">{plan.name}</h3>
                 <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
-                  {plan.description || 'Aucune description'}
+                  {plan.pitch?.summary || 'Aucune description'}
                 </p>
                 <div className="text-sm text-gray-500 dark:text-gray-400">
                   Créé le: {new Date(plan.createdAt || Date.now()).toLocaleDateString('fr-FR')}

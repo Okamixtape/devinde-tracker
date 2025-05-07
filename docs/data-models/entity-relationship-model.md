@@ -45,25 +45,55 @@
 │ - competitors     │             │ - customerSegments │              │ - milestones      │
 │ - swotAnalysis    │             │ - channels         │              │ - tasks           │
 │ - targetMarket    │             │ - revenue          │              │ - assignments     │
+│                   │             │ - structure        │              │                   │
+└───────────────────┘             └────────────────────┘              └───────────────────┘
+
+
+┌───────────────────┐             ┌────────────────────┐              ┌───────────────────┐
+│                   │             │                    │              │                   │
+│  PitchDeck        │◄────────────┤  Financials        │◄─────────────┤  Resources        │
+│                   │1          1 │                    │1           1 │                   │
+│ - id              │             │ - id               │              │ - id              │
+│ - sectionDataId   │             │ - sectionDataId    │              │ - sectionDataId   │
+│ - slides          │             │ - startupCosts     │              │ - tools           │
+│ - structure       │             │ - projections      │              │ - services        │
+│ - theme           │             │ - pricing          │              │ - references      │
+│ - images          │             │ - revenue          │              │ - categories      │
 │                   │             │                    │              │                   │
 └───────────────────┘             └────────────────────┘              └───────────────────┘
-        ▲                                  ▲                                    ▲
-        │                                  │                                    │
-        │ 1                                │ 1                                  │ 1
-        │                                  │                                    │
-        │                                  │                                    │
-┌───────┴───────────┐             ┌────────┴───────────┐              ┌─────────┴─────────┐
+
+
+┌───────────────────┐             ┌────────────────────┐              ┌───────────────────┐
 │                   │             │                    │              │                   │
-│   Financials      │             │   PitchDeck        │              │ ResourceAllocation│
-│                   │             │                    │              │                   │
+│  TechStack        │◄────────────┤  LegalEntity       │◄─────────────┤  ResourceAllocation │
+│                   │1          1 │                    │1           * │                   │
 │ - id              │             │ - id               │              │ - id              │
 │ - sectionDataId   │             │ - sectionDataId    │              │ - actionPlanId    │
-│ - expenses        │             │ - slides           │              │ - resourceType    │
-│ - revenue         │             │ - pitchScript      │              │ - units           │
-│ - cashFlow        │             │ - audienceNotes    │              │ - cost            │
-│ - projections     │             │ - version          │              │ - startDate       │
-│ - pricing         │             │                    │              │ - endDate         │
+│ - frontend        │             │ - type             │              │ - resource        │
+│ - backend         │             │ - registrationDate │              │ - allocation      │
+│ - database        │             │ - address          │              │ - startDate       │
+│ - deployment      │             │ - taxId            │              │ - endDate         │
+│                   │             │                    │              │                   │
 └───────────────────┘             └────────────────────┘              └───────────────────┘
+
+
+┌───────────────────┐             ┌────────────────────┐              ┌───────────────────┐
+│                   │1          * │                    │              │                   │
+│  User             ├─────────────┤  FinancialProject  │1           * │ FinancialTransaction │
+│                   │             │                    ├──────────────┤                   │
+│ - id              │             │ - id               │              │ - id              │
+│ - email           │             │ - name             │              │ - projectId       │
+│ - name            │             │ - description      │              │ - amount          │
+│ - role            │             │ - budget           │              │ - type            │
+│ - createdAt       │             │ - startDate        │              │ - description     │
+│ - updatedAt       │             │ - endDate          │              │ - date            │
+│                   │             │ - status           │              │ - category        │
+│                   │             │ - client           │              │ - paymentMethod   │
+│                   │             │ - category         │              │ - reference       │
+│                   │             │ - createdAt        │              │ - createdAt       │
+│                   │             │ - updatedAt        │              │                   │
+└───────────────────┘             └────────────────────┘              └───────────────────┘
+
 ```
 
 ## 2. Entity Descriptions
@@ -215,6 +245,39 @@ User information (for future authentication implementation).
 | email | String | User's email | Required, Valid email |
 | avatarUrl | String | Profile image URL | Optional |
 
+#### FinancialProject
+Financial project information.
+
+| Attribute | Type | Description | Constraints |
+|-----------|------|-------------|------------|
+| id | String | Unique identifier | Primary Key, UUID |
+| name | String | Project name | Required |
+| description | String | Project description | Optional |
+| budget | Number | Total project budget | Required |
+| startDate | Date | Project start date | Required, ISO format |
+| endDate | Date | Project end date | Optional, ISO format |
+| status | String | Project status | Enum: 'pending', 'in-progress', 'completed', 'cancelled' |
+| client | String | Client name or identifier | Optional |
+| category | String | Project category | Optional |
+| createdAt | Date | Creation timestamp | Auto-generated, ISO format |
+| updatedAt | Date | Last update timestamp | Auto-updated, ISO format |
+
+#### FinancialTransaction
+Financial transaction information.
+
+| Attribute | Type | Description | Constraints |
+|-----------|------|-------------|------------|
+| id | String | Unique identifier | Primary Key, UUID |
+| projectId | String | Reference to parent project | Foreign Key |
+| amount | Number | Transaction amount | Required, positive for income, negative for expense |
+| type | String | Transaction type | Enum: 'income', 'expense' |
+| description | String | Transaction description | Required |
+| date | Date | Transaction date | Required, ISO format |
+| category | String | Transaction category | Optional |
+| paymentMethod | String | Payment method used | Optional |
+| reference | String | External reference | Optional |
+| createdAt | Date | Creation timestamp | Auto-generated, ISO format |
+
 ## 3. Relationships and Cardinality
 
 | Relationship | Entities | Cardinality | Description |
@@ -230,6 +293,8 @@ User information (for future authentication implementation).
 | specializes | SectionData to Financials | 1:1 | Section data specializes into financials |
 | specializes | SectionData to PitchDeck | 1:1 | Section data specializes into pitch deck |
 | allocates | ActionPlan to ResourceAllocation | 1:* | Action plan can have multiple resource allocations |
+| owns | User to FinancialProject | 1:* | A user can have multiple financial projects |
+| contains | FinancialProject to FinancialTransaction | 1:* | A financial project can have multiple transactions |
 
 ## 4. Data Type Definitions
 
@@ -314,6 +379,39 @@ User information (for future authentication implementation).
 }
 ```
 
+#### FinancialStatistics (JSON)
+```json
+{
+  "totalProjects": 5,
+  "activeProjects": 3,
+  "completedProjects": 2,
+  "totalBudget": 15000,
+  "totalIncome": 12000,
+  "totalExpenses": 8000,
+  "netBalance": 4000,
+  "monthlySummary": [
+    {
+      "month": "2025-03",
+      "income": 3000,
+      "expenses": 2000,
+      "balance": 1000
+    },
+    {
+      "month": "2025-04",
+      "income": 4000,
+      "expenses": 2500,
+      "balance": 1500
+    },
+    {
+      "month": "2025-05",
+      "income": 5000,
+      "expenses": 3500,
+      "balance": 1500
+    }
+  ]
+}
+```
+
 ## 5. Data Validation Rules
 
 ### General Validation Rules
@@ -351,6 +449,14 @@ User information (for future authentication implementation).
 6. **ResourceAllocation**:
    - Cost must be a positive number
    - Units must be a positive integer
+
+7. **FinancialProject**:
+   - Budget must be a positive number
+   - Start date must be before end date
+
+8. **FinancialTransaction**:
+   - Amount must be a numeric value
+   - Date must be a valid date
 
 ## 6. Future Extensions
 

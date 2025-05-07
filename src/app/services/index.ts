@@ -3,27 +3,27 @@
  */
 
 // Service Interfaces
-export * from './interfaces/service-interfaces';
-export * from './interfaces/data-models';
+export * from "../services/interfaces/serviceInterfaces";
+export * from "../services/interfaces/dataModels";
 
 // Core Services
-export { LocalStorageService } from './core/local-storage-service';
-export { BusinessPlanServiceImpl } from './core/business-plan-service';
-export { SectionServiceImpl, Section } from './core/section-service';
-export { AuthServiceImpl } from './core/auth-service';
+export { LocalStorageService } from './core/localStorageService';
+export { BusinessPlanServiceImpl } from './core/businessPlanService';
+export { SectionServiceImpl } from './core/sectionService';
+export { authService } from './core/authService';
 
 // Utility Helpers
 export * from './utils/helpers';
 
 // Service Instances (Singletons)
-import { BusinessPlanServiceImpl } from './core/business-plan-service';
-import { SectionServiceImpl } from './core/section-service';
-import { AuthServiceImpl } from './core/auth-service';
+import { BusinessPlanServiceImpl } from './core/businessPlanService';
+import { SectionServiceImpl } from './core/sectionService';
+import { authService } from './core/authService';
 
 // Create singleton instances
 export const businessPlanService = new BusinessPlanServiceImpl();
 export const sectionService = new SectionServiceImpl();
-export const authService = new AuthServiceImpl();
+// L'instance authService est déjà exportée depuis authService.ts
 
 /**
  * Service Factory - Get instances of services

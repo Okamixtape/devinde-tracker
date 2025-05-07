@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { BusinessPlanEditor } from '../../components/business-plan/BusinessPlanEditor';
+import { BusinessPlanEditor } from '@/app/components/business-plan/BusinessPlanEditor';
 
 /**
  * BusinessPlan Edit/Create Page
@@ -19,8 +19,8 @@ export default function BusinessPlanPage() {
   
   // Handle save completion
   const handleSave = (planId: string) => {
-    // Navigate to the dashboard or plan detail view
-    router.push(`/plans/${planId}`);
+    // Rediriger vers le tableau de bord du plan nouvellement créé
+    router.push(`/plans/${planId}/dashboard`);
   };
   
   // Handle cancellation

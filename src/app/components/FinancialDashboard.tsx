@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { CircleDollarSign, TrendingUp, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
-import type { BusinessPlanData, SectionKey } from "./types";
 import { UI_CLASSES } from "../styles/ui-classes";
+import type { BusinessPlanData, SectionKey } from "./types";
 
 // Types pour les projets
 type Project = {

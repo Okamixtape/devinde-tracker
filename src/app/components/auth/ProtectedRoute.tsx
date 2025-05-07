@@ -2,8 +2,8 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../../hooks/useAuth';
-import { UserRole } from '../../services/core/auth-service';
+import { useAuth } from '@/app/hooks/useAuth';
+import { UserRole } from '@/app/services/core/authService';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FinancialsData, HourlyRate, ServicePackage, Subscription, Expense, FinancialProject } from '../../services/interfaces/data-models';
+import { FinancialsData, HourlyRate, ServicePackage, Subscription, Expense, FinancialProject } from "../services/interfaces/dataModels";
 import { FinancialProjectsManager } from './FinancialProjectsManager';
 
 interface FinancialCalculatorProps {

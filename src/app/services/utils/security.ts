@@ -11,7 +11,7 @@
  * - Suspicious activity monitoring
  */
 
-import { ErrorCategory, ErrorSeverity, AppError } from './error-handling';
+import { ErrorCategory, ErrorSeverity, AppError } from './errorHandling';
 
 // Préfixe utilisé pour marquer les données chiffrées
 const ENCRYPTION_PREFIX = 'DEVINDE_ENC_V1:';
@@ -40,20 +40,61 @@ export function encryptData(data: unknown): string {
 }
 
 /**
+ * Clés qui ne nécessitent pas de déchiffrement (données non sensibles ou métadonnées)
+ */
+const UNENCRYPTED_KEYS = [
+  'devinde-tracker-data-version-plain',
+  'devinde-tracker-theme-preference'
+];
+
+/**
+ * Vérifie si une clé doit être déchiffrée
+ */
+export function shouldDecrypt(key: string): boolean {
+  return !UNENCRYPTED_KEYS.includes(key);
+}
+
+/**
  * Decrypt data from localStorage
  */
-export function decryptData<T>(encryptedData: string): T {
+export function decryptData<T>(encryptedData: string, skipDecryption = false): T {
   try {
+    // Si le déchiffrement est désactivé, parser directement
+    if (skipDecryption) {
+      try {
+        return JSON.parse(encryptedData) as T;
+      } catch (parseError) {
+        // Si ce n'est pas du JSON valide, retourner la chaîne telle quelle si c'est une chaîne
+        if (typeof encryptedData === 'string' && !encryptedData.includes('{') && !encryptedData.includes('[')) {
+          return encryptedData as unknown as T;
+        }
+        throw parseError;
+      }
+    }
+    
     // Vérifier si les données sont dans le nouveau format
     if (encryptedData.startsWith(ENCRYPTION_PREFIX)) {
-      const encoded = encryptedData.slice(ENCRYPTION_PREFIX.length);
-      const decoded = atob(encoded);
-      return JSON.parse(decoded) as T;
+      try {
+        const encoded = encryptedData.slice(ENCRYPTION_PREFIX.length);
+        const decoded = atob(encoded);
+        return JSON.parse(decoded) as T;
+      } catch (formatError) {
+        console.error('Error parsing encrypted format:', formatError);
+        throw formatError;
+      }
     }
     
     // Si pas au nouveau format, essayons simplement de parser directement
     // (pour les données qui n'étaient peut-être pas du tout chiffrées)
-    return JSON.parse(encryptedData) as T;
+    try {
+      return JSON.parse(encryptedData) as T;
+    } catch (jsonError) {
+      // Si ce n'est pas du JSON valide, retourner la chaîne telle quelle si applicable
+      if (typeof encryptedData === 'string' && !encryptedData.includes('{') && !encryptedData.includes('[')) {
+        return encryptedData as unknown as T;
+      }
+      throw jsonError;
+    }
   } catch (error) {
     console.error('Decryption error:', error);
     throw new AppError(1101, {
@@ -71,8 +112,15 @@ export function decryptData<T>(encryptedData: string): T {
 export const secureLocalStorage = {
   setItem(key: string, value: unknown): void {
     try {
-      const encryptedValue = encryptData(value);
-      localStorage.setItem(key, encryptedValue);
+      // Vérifier si la clé doit être chiffrée
+      if (shouldDecrypt(key)) {
+        const encryptedValue = encryptData(value);
+        localStorage.setItem(key, encryptedValue);
+      } else {
+        // Stocker sans chiffrement pour les clés non sensibles
+        console.log(`Storing unencrypted item: ${key}`);
+        localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+      }
     } catch (error) {
       console.error(`Failed to securely store item with key ${key}:`, 
         error instanceof Error ? error.message : 'Unknown error');
@@ -84,13 +132,20 @@ export const secureLocalStorage = {
   
   getItem<T>(key: string): T | null {
     try {
-      const encryptedValue = localStorage.getItem(key);
-      if (!encryptedValue) {
+      const value = localStorage.getItem(key);
+      if (!value) {
         return null;
       }
       
       try {
-        return decryptData<T>(encryptedValue);
+        // Vérifier si la clé nécessite un déchiffrement
+        const skipDecryption = !shouldDecrypt(key);
+        
+        if (skipDecryption) {
+          console.log(`Retrieving unencrypted item: ${key}`);
+        }
+        
+        return decryptData<T>(value, skipDecryption);
       } catch (error) {
         console.error(`Failed to decrypt item with key ${key}, removing corrupted data:`, 
           error instanceof Error ? error.message : 'Unknown error');

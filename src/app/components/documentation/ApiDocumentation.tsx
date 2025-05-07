@@ -1,15 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import serviceDocumentation from '../../services/utils/documentation';
+import { Tab } from '@headlessui/react';
 import ServiceDocViewer from './ServiceDocViewer';
 import ServicePlayground from './ServicePlayground';
-import { Tab } from '@headlessui/react';
+import serviceDocumentation from '@/app/services/utils/documentation';
 import {
   getBusinessPlanService,
   getSectionService,
   getAuthService
-} from '../../services/service-factory';
+} from '@/app/services/serviceFactory';
 
 /**
  * Main API documentation component that displays all service documentation
@@ -190,7 +190,7 @@ export const ApiDocumentation: React.FC = () => {
   getBusinessPlanService, 
   getSectionService, 
   getAuthService 
-} from '../services/service-factory';
+} from '../services/serviceFactory';
 
 // Get service instances
 const businessPlanService = getBusinessPlanService();

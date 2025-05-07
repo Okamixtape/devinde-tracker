@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { DataDashboard } from '../../../components/dashboard/DataDashboard';
-import { getBusinessPlanService } from '../../../services/service-factory';
-import { BusinessPlanData } from '../../../services/interfaces/data-models';
+import { BusinessPlanData } from "../services/interfaces/dataModels";
+import { DataDashboard } from '@/app/components/dashboard/DataDashboard';
+import { getBusinessPlanService } from '@/app/services/serviceFactory';
 
 /**
  * Dashboard Page
@@ -71,7 +71,7 @@ export default function DashboardPage() {
   
   return (
     <div className="container mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Tableau de Bord</h1>
+      <h1 className="text-2xl font-bold mb-6">Tableau de Bord : {businessPlan.name}</h1>
       
       {error && (
         <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">

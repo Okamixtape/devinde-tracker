@@ -5,7 +5,7 @@
  * generating examples, and creating interactive documentation.
  */
 
-import { ServiceResult } from '../interfaces/data-models';
+import { ServiceResult } from "../services/interfaces/dataModels";
 
 /**
  * Parameter documentation
@@ -92,8 +92,8 @@ export const businessPlanServiceDoc: ServiceDoc = {
   name: 'BusinessPlanService',
   description: 'Service for managing business plans in the DevIndé Tracker',
   usage: `
-import { BusinessPlanService } from '../services/interfaces/service-interfaces';
-import { getBusinessPlanService } from '../services/service-factory';
+import { BusinessPlanService } from "../services/interfaces/serviceInterfaces";
+import { getBusinessPlanService } from '../services/serviceFactory';
 
 // Get the business plan service instance
 const businessPlanService = getBusinessPlanService();
@@ -297,8 +297,8 @@ export const sectionServiceDoc: ServiceDoc = {
   name: 'SectionService',
   description: 'Service for managing sections in a business plan',
   usage: `
-import { SectionService } from '../services/interfaces/service-interfaces';
-import { getSectionService } from '../services/service-factory';
+import { SectionService } from "../services/interfaces/serviceInterfaces";
+import { getSectionService } from '../services/serviceFactory';
 
 // Get the section service instance
 const sectionService = getSectionService();
@@ -574,8 +574,8 @@ export const authServiceDoc: ServiceDoc = {
   name: 'AuthService',
   description: 'Service for user authentication and authorization',
   usage: `
-import { AuthService } from '../services/interfaces/service-interfaces';
-import { getAuthService } from '../services/service-factory';
+import { AuthService } from "../services/interfaces/serviceInterfaces";
+import { getAuthService } from '../services/serviceFactory';
 
 // Get the auth service instance
 const authService = getAuthService();

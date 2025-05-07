@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { StorageService } from '../services/interfaces/service-interfaces';
-import { ServiceResult } from '../services/interfaces/data-models';
-import { errorTrackingService } from '../services/core/error-tracking-service';
-import { ErrorType, ErrorSeverity } from '../services/utils/error-handling';
+import { StorageService } from '../services/interfaces/serviceInterfaces';
+import { ServiceResult } from '../services/interfaces/dataModels';
+import { errorTrackingService } from '../services/core/errorTrackingService';
+import { ErrorType, ErrorSeverity } from "../services/utils/errorHandling";
 
 // Options pour le hook
 export interface UseDataServiceOptions<T> {

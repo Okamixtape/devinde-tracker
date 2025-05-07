@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { FinancialCalculator } from '../../../components/financial/FinancialCalculator';
+import { BusinessPlanData, FinancialsData } from "../services/interfaces/dataModels";
+import { FinancialCalculator } from '@/app/components/financial/FinancialCalculator';
 import { 
   getBusinessPlanService, 
   getSectionService 
-} from '../../../services/service-factory';
-import { BusinessPlanData, FinancialsData } from '../../../services/interfaces/data-models';
+} from '@/app/services/serviceFactory';
 
 /**
  * Finances Page Component

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ActionPlanData, Milestone, Task } from '../../services/interfaces/data-models';
+import { ActionPlanData, Milestone, Task } from "@/app/services/interfaces/dataModels";
 
 interface ActionPlanManagerProps {
   actionPlanData?: ActionPlanData;

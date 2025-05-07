@@ -9,6 +9,9 @@ import { DataServiceProvider } from "./contexts/DataServiceContext";
 import { ErrorProvider } from "./context/ErrorContext";
 import { ToastProvider } from "./components/error/ToastManager";
 import { I18nProvider } from "./context/I18nContext";
+import { MigrationProvider } from "./providers/MigrationProvider";
+// Import du composant de débogage
+import AuthDebugger from "./components/debug/AuthDebugger";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,12 +43,16 @@ export default function RootLayout({
             <ErrorProvider>
               <ToastProvider>
                 <I18nProvider>
-                  <AuthProvider>
-                    <Navbar />
-                    <main className="min-h-screen">
-                      {children}
-                    </main>
-                  </AuthProvider>
+                  <MigrationProvider>
+                    <AuthProvider>
+                      <Navbar />
+                      <main className="min-h-screen">
+                        {children}
+                      </main>
+                      {/* Composant de débogage pour identifier les problèmes d'authentification */}
+                      <AuthDebugger />
+                    </AuthProvider>
+                  </MigrationProvider>
                 </I18nProvider>
               </ToastProvider>
             </ErrorProvider>

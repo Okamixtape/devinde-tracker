@@ -1,8 +1,8 @@
 import React from 'react';
 import { FiChevronDown, FiUser, FiLogOut, FiLogIn, FiUserPlus } from 'react-icons/fi';
-import { UserData } from '../../services/core/auth-service';
 import Dropdown from '../common/Dropdown';
-import { useI18n } from '../../hooks/useI18n';
+import { UserData } from '@/app/services/core/authService';
+import { useI18n } from '@/app/hooks/useI18n';
 
 interface ProfileNavigationProps {
   user: UserData | null;

@@ -2,7 +2,7 @@
 
 import React, { ReactNode } from 'react';
 import { twMerge } from 'tailwind-merge';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive } from '@/app/hooks/useResponsive';
 
 export interface ResponsiveLayoutProps {
   children: ReactNode;

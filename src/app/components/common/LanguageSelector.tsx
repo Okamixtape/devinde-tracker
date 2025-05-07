@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from 'react';
-import { useI18n } from '../../hooks/useI18n';
-import { useToast } from '../../components/error/ToastManager';
 import Dropdown from './Dropdown';
+import { useI18n } from '@/app/hooks/useI18n';
+import { useToast } from '@/app/components/error/ToastManager';
 
 /**
  * Composant de sélection de langue permettant aux utilisateurs de changer la langue de l'application

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { AnalyticsEventType } from '../../services/core/analytics-service';
+import { AnalyticsEventType } from '@/app/services/core/analyticsService';
 
 interface AnalyticsEvent {
   id: string;

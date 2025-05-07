@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ErrorResponse, ErrorSeverity } from '../../services/utils/error-handling';
+import { ErrorResponse, ErrorSeverity } from "@/app/services/utils/errorHandling";
 
 interface ErrorNotificationProps {
   error: ErrorResponse | null;

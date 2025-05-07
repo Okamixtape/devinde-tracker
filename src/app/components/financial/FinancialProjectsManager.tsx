@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FinancialProject, FinancialTransaction } from '../../services/interfaces/data-models';
+import { FinancialProject, FinancialTransaction } from "../services/interfaces/dataModels";
 
 interface FinancialProjectsManagerProps {
   businessPlanId: string;

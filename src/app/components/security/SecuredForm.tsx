@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, FormEvent } from 'react';
-import { useSecurity } from '../../hooks/useSecurity';
-import { RateLimitOperation } from '../../services/utils/security';
-import { useErrorHandling } from '../../providers/ErrorHandlingProvider';
+import { useErrorHandling } from '@/app/providers/ErrorHandlingProvider';
+import { useSecurity } from '@/app/hooks/useSecurity';
+import { RateLimitOperation } from '@/app/services/utils/security';
 
 interface SecuredFormProps {
   onSubmit?: (data: Record<string, string>) => void;

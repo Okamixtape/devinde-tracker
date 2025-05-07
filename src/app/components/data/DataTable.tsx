@@ -5,8 +5,8 @@ import {
   FilterParams, 
   SortingParams,
   PaginationParams
-} from '../../services/utils/data-operations';
-import { useDataOperation } from '../../hooks/useDataOperation';
+} from "@/app/services/utils/dataOperations";
+import { useDataOperation } from '@/app/hooks/useDataOperation';
 
 interface Column<T> {
   key: keyof T;

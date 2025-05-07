@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { TargetAudienceAnalyzer } from '../../../components/market-analysis/TargetAudienceAnalyzer';
+import { BusinessPlanData, MarketAnalysisData } from "../services/interfaces/dataModels";
+import { TargetAudienceAnalyzer } from '@/app/components/market-analysis/TargetAudienceAnalyzer';
 import { 
   getBusinessPlanService, 
   getSectionService 
-} from '../../../services/service-factory';
-import { BusinessPlanData, MarketAnalysisData } from '../../../services/interfaces/data-models';
+} from '@/app/services/serviceFactory';
 
 /**
  * Market Analysis Page

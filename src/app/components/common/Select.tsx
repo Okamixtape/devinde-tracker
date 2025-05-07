@@ -48,7 +48,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   fullWidth = false,
   size = 'md',
   variant = 'outlined',
-  className,
   containerClassName,
   labelClassName,
   selectClassName,
@@ -61,9 +60,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   const selectId = id || `select-${Math.random().toString(36).substring(2, 9)}`;
   
   const variantStyles = {
-    outlined: 'border border-gray-300 rounded-md bg-white',
-    filled: 'border border-transparent bg-gray-100 rounded-md',
-    underlined: 'border-b-2 border-gray-300 rounded-none bg-transparent px-0',
+    outlined: 'border border-gray-500 rounded-md bg-gray-800',
+    filled: 'border border-transparent bg-gray-700 rounded-md',
+    underlined: 'border-b-2 border-gray-500 rounded-none bg-transparent px-0',
   };
   
   const sizeStyles = {
@@ -81,6 +80,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
     variantStyles[variant],
     sizeStyles[size],
     errorStateStyles,
+    'text-white',
     selectClassName
   );
   
@@ -91,7 +91,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   );
   
   const labelClassNames = twMerge(
-    'block mb-1 font-medium text-gray-700',
+    'block mb-1 font-medium text-gray-200',
     size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-lg' : 'text-base',
     labelClassName
   );

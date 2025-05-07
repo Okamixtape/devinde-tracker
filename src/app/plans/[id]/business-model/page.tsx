@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { getBusinessPlanService } from '@/app/services/service-factory';
-import { BusinessPlanData } from '@/app/services/interfaces/data-models';
+import { BusinessPlanData } from "../services/interfaces/dataModels";
+import { getBusinessPlanService } from '@/app/services/serviceFactory';
 import { PricingImpactVisualizer } from '@/app/components/business-model/PricingImpactVisualizer';
 
 // Extension de l'interface BusinessModelData pour les champs additionnels

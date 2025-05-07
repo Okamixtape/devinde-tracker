@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ServiceDoc, MethodDoc } from '../../services/utils/documentation';
 import ServicePlayground from './ServicePlayground';
+import { ServiceDoc } from '@/app/services/utils/documentation';
 
 interface ServiceDocViewerProps {
   serviceDoc: ServiceDoc;
@@ -126,19 +126,17 @@ export const ServiceDocViewer: React.FC<ServiceDocViewerProps> = ({ serviceDoc }
                 </div>
               </div>
               
-              {/* Example */}
               {currentMethod.example && (
                 <div className="mt-6">
                   <h4 className="text-lg font-medium text-gray-800 mb-2">Example</h4>
                   <div className="bg-gray-900 rounded-md p-4 overflow-x-auto">
                     <pre className="text-sm text-gray-200 whitespace-pre-wrap font-mono">
-                      {currentMethod.example as string}
+                      {typeof currentMethod.example === 'string' ? currentMethod.example : JSON.stringify(currentMethod.example, null, 2)}
                     </pre>
                   </div>
                 </div>
               )}
               
-              {/* Notes */}
               {currentMethod.notes && currentMethod.notes.length > 0 && (
                 <div className="mt-6">
                   <h4 className="text-lg font-medium text-gray-800 mb-2">Notes</h4>
@@ -162,8 +160,7 @@ export const ServiceDocViewer: React.FC<ServiceDocViewerProps> = ({ serviceDoc }
                 </div>
               )}
               
-              {/* Interactive Playground */}
-              <ServicePlayground serviceName={serviceDoc.name} methodDoc={currentMethod as MethodDoc} />
+              <ServicePlayground service={null} serviceDoc={serviceDoc} />
             </div>
           ) : (
             <div className="text-center text-gray-500 py-12">

@@ -1,21 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/app/hooks/useAuth';
 import Button from '../common/Button';
 import Card from '../common/Card';
 import Input from '../common/Input';
 import Select from '../common/Select';
-import { AuthServiceImpl, UserData, UserPreferences } from '@/app/services/core/auth-service';
 import { useToast } from '../error/ToastManager';
+import { UserData, UserPreferences } from '@/app/services/core/authService';
+import { useAuth } from '@/app/hooks/useAuth';
 import { useAsyncHandler } from '@/app/hooks/useAsyncHandler';
 import { useI18n } from '@/app/hooks/useI18n';
+import { useDataServiceContext } from '@/app/contexts/DataServiceContext';
 
 type ProfileTab = 'info' | 'password' | 'preferences';
 
 const UserProfileForm: React.FC = () => {
   const { user } = useAuth();
-  const authService = new AuthServiceImpl();
+  const { authService } = useDataServiceContext();
   const [activeTab, setActiveTab] = useState<ProfileTab>('info');
   const [success, setSuccess] = useState<string | null>(null);
   const { showError } = useToast();

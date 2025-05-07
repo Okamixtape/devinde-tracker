@@ -1,4 +1,9 @@
 "use client";
+/**
+ * @deprecated Cette page utilise l'ancienne structure de route.
+ * Utiliser plutôt la route moderne: /plans/[id]/business-model
+ * Cette page sera supprimée dans une future version.
+ */
 import React from "react";
 import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
 import PricingSection from "../components/PricingSection";

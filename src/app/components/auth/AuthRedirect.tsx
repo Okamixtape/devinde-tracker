@@ -2,11 +2,12 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '@/app/hooks/useAuth';
+import { RedirectService } from '@/app/services/core/redirectService';
 
 /**
  * Composant pour rediriger les utilisateurs non authentifiés vers la page de connexion
- * Stocke l'URL demandée dans localStorage pour rediriger l'utilisateur après connexion
+ * Utilise le RedirectService pour gérer la redirection après connexion
  */
 export default function AuthRedirect({
   children,
@@ -23,10 +24,11 @@ export default function AuthRedirect({
     // Attendre que le chargement de l'authentification soit terminé
     if (!isLoading && !isAuthenticated) {
       // Stocker l'URL actuelle pour rediriger l'utilisateur après connexion
-      localStorage.setItem('redirectAfterLogin', pathname);
+      RedirectService.saveRedirectUrl(pathname);
       
-      // Rediriger vers la page de connexion
-      router.push(`/login?message=${encodeURIComponent(message)}`);
+      // Rediriger vers la page de connexion avec message
+      const loginUrl = RedirectService.createLoginUrl(pathname, message);
+      router.push(loginUrl);
     }
   }, [isAuthenticated, isLoading, router, pathname, message]);
 

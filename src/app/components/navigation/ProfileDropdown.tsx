@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { FiChevronDown, FiUser, FiLogOut } from 'react-icons/fi';
-import { UserData } from '../../services/core/auth-service';
+import { UserData } from '@/app/services/core/authService';
 
 interface ProfileDropdownProps {
   user: UserData | null;

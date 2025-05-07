@@ -8,4 +8,4 @@ export { default as ToastContext, ToastProvider, useToast } from './ToastManager
 export { default as withLoading, LoadingIndicator, type WithLoadingOptions } from './WithLoading';
 
 // Hook pour les opérations asynchrones
-export { useAsyncHandler } from '../../hooks/useAsyncHandler';
+export { useAsyncHandler } from '@/app/hooks/useAsyncHandler';

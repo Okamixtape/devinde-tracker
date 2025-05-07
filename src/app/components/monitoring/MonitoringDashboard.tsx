@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { analyticsService, AnalyticsEventType } from '../../services/core/analytics-service';
-import { performanceService, PerformanceMetricType, WebVitals } from '../../services/core/performance-service';
-import { errorTrackingService, ErrorType, ErrorStatus } from '../../services/core/error-tracking-service';
 import PerformancePanel from './PerformancePanel';
 import ErrorsPanel from './ErrorsPanel';
 import AnalyticsPanel from './AnalyticsPanel';
+import { analyticsService, AnalyticsEventType } from '@/app/services/core/analyticsService';
+import { performanceService, PerformanceMetricType, WebVitals } from '@/app/services/core/performanceService';
+import { errorTrackingService, ErrorType, ErrorStatus } from '@/app/services/core/errorTrackingService';
 
 // Définir l'enum ErrorSeverity ici aussi pour éviter les problèmes d'importation
 enum ErrorSeverity {

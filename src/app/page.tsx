@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { getBusinessPlanService } from './services/service-factory';
-import { BusinessPlanData } from './services/interfaces/data-models';
+import { getBusinessPlanService } from './services/serviceFactory';
+import { BusinessPlanData } from './services/interfaces/dataModels';
 
 export default function HomePage() {
   const [plans, setPlans] = useState<BusinessPlanData[]>([]);

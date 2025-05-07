@@ -1,7 +1,7 @@
 'use client';
 
 import React, { ComponentType, useState } from 'react';
-import { useError } from '../../context/ErrorContext';
+import { useError } from '@/app/context/ErrorContext';
 
 // Types d'options pour le HOC WithLoading
 export interface WithLoadingOptions {

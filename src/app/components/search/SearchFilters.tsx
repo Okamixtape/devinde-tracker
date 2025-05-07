@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FilterOption } from '@/app/services/core/search-service';
 import { FiChevronDown, FiChevronUp, FiFilter } from 'react-icons/fi';
+import { FilterOption } from '@/app/services/core/searchService';
 
 interface SearchFiltersProps {
   filterOptions: FilterOption[];

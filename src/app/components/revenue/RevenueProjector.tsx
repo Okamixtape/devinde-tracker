@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { HourlyRate, ServicePackage, Subscription } from '../../services/interfaces/data-models';
+import { HourlyRate, ServicePackage, Subscription } from "../services/interfaces/dataModels";
 
 interface RevenueProjectorProps {
   businessPlanId: string;

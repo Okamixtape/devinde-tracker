@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { BusinessPlanData, Section } from '../../services/interfaces/data-models';
+import { BusinessPlanData, Section } from "@/app/services/interfaces/dataModels";
+import { useDataServiceContext } from '@/app/contexts/DataServiceContext';
 
 interface DataDashboardProps {
   businessPlanId: string;
@@ -19,9 +20,12 @@ export function DataDashboard({
   businessPlanId,
   businessPlanData
 }: DataDashboardProps) {
-  // Extract key data points
-  const planName = businessPlanData.name || 'Plan sans nom';
-  const sections = businessPlanData.sections || [];
+  // Utiliser le contexte pour accéder au service des sections
+  const { sectionService } = useDataServiceContext();
+  
+  // Utiliser le service pour enrichir les sections du plan d'affaires
+  const existingSections = businessPlanData.sections || [];
+  const sections = sectionService.enrichSections(businessPlanId, existingSections);
   const totalSections = sections.length;
   const completedSections = sections.filter(section => section.completion === 100).length;
   const partialSections = sections.filter(section => section.completion > 0 && section.completion < 100).length;
@@ -48,33 +52,6 @@ export function DataDashboard({
   const tasks = businessPlanData.actionPlan?.tasks || [];
   const completedMilestones = milestones.filter(milestone => milestone.isCompleted).length;
   const completedTasks = tasks.filter(task => task.status === 'done').length;
-  const inProgressTasks = tasks.filter(task => task.status === 'in-progress').length;
-  
-  // Calculate next closest milestone
-  const upcomingMilestones = milestones
-    .filter(milestone => !milestone.isCompleted)
-    .sort((a, b) => new Date(a.targetDate).getTime() - new Date(b.targetDate).getTime());
-  const nextMilestone = upcomingMilestones.length > 0 ? upcomingMilestones[0] : null;
-  
-  // Format date for display
-  const formatDate = (dateString?: string): string => {
-    if (!dateString) return 'Non définie';
-    
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-  
-  // Format currency
-  const formatCurrency = (value: number): string => {
-    return value.toLocaleString('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-      maximumFractionDigits: 0
-    });
-  };
   
   // Group sections by completion status
   const groupSectionsByStatus = (): {
@@ -91,10 +68,38 @@ export function DataDashboard({
   
   const sectionStatus = groupSectionsByStatus();
   
+  // Récupérer les informations du pitch (si disponible)
+  const pitchExists = businessPlanData.pitch && (
+    businessPlanData.pitch.title || 
+    businessPlanData.pitch.summary || 
+    businessPlanData.pitch.vision
+  );
+  
+  // Récupérer les informations sur les services (si disponibles)
+  const serviceOfferings = businessPlanData.services?.offerings || [];
+  const serviceTechnologies = businessPlanData.services?.technologies || [];
+  const serviceCount = serviceOfferings.length + serviceTechnologies.length;
+  
+  // Format currency
+  const formatCurrency = (value: number): string => {
+    return value.toLocaleString('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0
+    });
+  };
+
+  // Fonction pour déterminer le statut d'achèvement
+  const getCompletionStatus = (completion: number) => {
+    if (completion >= 100) return "Completed";
+    if (completion > 0) return "In Progress";
+    return "Not Started";
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md">
       <div className="p-6">
-        <h2 className="text-xl font-semibold mb-6">Tableau de Bord: {planName}</h2>
+        <h2 className="text-xl font-semibold mb-6">Progression et Métriques</h2>
         
         {/* Progress Overview */}
         <div className="mb-8">
@@ -208,64 +213,154 @@ export function DataDashboard({
           </div>
         </div>
         
-        {/* Section Status */}
+        {/* Sections Status */}
         <div className="mb-8">
           <h3 className="text-lg font-medium mb-4">État des Sections</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Not Started */}
-            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-              <h4 className="font-medium mb-2 text-gray-700 dark:text-gray-300">Non Commencées</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Non Commencées</h4>
               {sectionStatus.notStarted.length === 0 ? (
-                <p className="text-sm italic text-gray-500 dark:text-gray-400">Aucune section</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Aucune section dans cette catégorie</p>
               ) : (
-                <ul className="space-y-1">
-                  {sectionStatus.notStarted.map((section, index) => (
-                    <li key={index} className="text-sm flex items-center space-x-2">
+                <ul className="space-y-2">
+                  {sectionStatus.notStarted.map((section) => (
+                    <li key={section.id} className="flex items-center">
                       <span 
-                        className="inline-block w-3 h-3 rounded-full"
-                        style={{ backgroundColor: section.color || '#9CA3AF' }}
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{ backgroundColor: section.color || '#3B82F6' }}
                       ></span>
-                      <span>{section.title}</span>
+                      <Link 
+                        href={`/plans/${businessPlanId}${section.route}`}
+                        className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-sm"
+                      >
+                        {section.title}
+                      </Link>
+                      <div className="ml-2 text-sm text-blue-500 dark:text-blue-400">
+                        {getCompletionStatus(section.completion) === "Completed" ? (
+                          <span className="text-green-500 dark:text-green-400">✓ Terminé</span>
+                        ) : getCompletionStatus(section.completion) === "In Progress" ? (
+                          <span className="text-orange-500 dark:text-orange-400">⌛ En cours</span>
+                        ) : (
+                          <span className="text-gray-500 dark:text-gray-400">◯ À compléter</span>
+                        )}
+                      </div>
+                      <p className="ml-6 mb-0 text-sm text-gray-500 dark:text-gray-400">
+                        { section.key === "pitch" && "Présentez votre projet en quelques phrases et définissez votre vision" }
+                        { section.key === "services" && "Décrivez les services ou produits que vous proposez" }
+                        { section.key === "business-model" && "Définissez comment votre business génère de la valeur" }
+                        { section.key === "market-analysis" && "Analysez votre marché et votre positionnement" }
+                        { section.key === "finances" && "Gérez vos revenus, dépenses et projections financières" }
+                        { section.key === "action-plan" && "Planifiez les actions concrètes pour votre développement" }
+                        { section.key === "revenue" && "Visualisez et projetez vos revenus sur le long terme" }
+                      </p>
+                      <div className="ml-6 mt-2">
+                        <Link 
+                          href={`/plans/${businessPlanId}${section.route}`}
+                          className="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          Gérer cette section <span className="ml-1">→</span>
+                        </Link>
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
             
-            {/* In Progress */}
-            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
-              <h4 className="font-medium mb-2 text-yellow-700 dark:text-yellow-300">En Cours</h4>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3">En Cours</h4>
               {sectionStatus.inProgress.length === 0 ? (
-                <p className="text-sm italic text-gray-500 dark:text-gray-400">Aucune section</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Aucune section dans cette catégorie</p>
               ) : (
-                <ul className="space-y-1">
-                  {sectionStatus.inProgress.map((section, index) => (
-                    <li key={index} className="text-sm flex items-center space-x-2">
+                <ul className="space-y-2">
+                  {sectionStatus.inProgress.map((section) => (
+                    <li key={section.id} className="flex items-center">
                       <span 
-                        className="inline-block w-3 h-3 rounded-full"
-                        style={{ backgroundColor: section.color || '#FBBF24' }}
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{ backgroundColor: section.color || '#3B82F6' }}
                       ></span>
-                      <span>{section.title} ({section.completion}%)</span>
+                      <Link 
+                        href={`/plans/${businessPlanId}${section.route}`}
+                        className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-sm"
+                      >
+                        {section.title}
+                      </Link>
+                      <div className="ml-2 text-sm text-blue-500 dark:text-blue-400">
+                        {getCompletionStatus(section.completion) === "Completed" ? (
+                          <span className="text-green-500 dark:text-green-400">✓ Terminé</span>
+                        ) : getCompletionStatus(section.completion) === "In Progress" ? (
+                          <span className="text-orange-500 dark:text-orange-400">⌛ En cours</span>
+                        ) : (
+                          <span className="text-gray-500 dark:text-gray-400">◯ À compléter</span>
+                        )}
+                      </div>
+                      <p className="ml-6 mb-0 text-sm text-gray-500 dark:text-gray-400">
+                        { section.key === "pitch" && "Présentez votre projet en quelques phrases et définissez votre vision" }
+                        { section.key === "services" && "Décrivez les services ou produits que vous proposez" }
+                        { section.key === "business-model" && "Définissez comment votre business génère de la valeur" }
+                        { section.key === "market-analysis" && "Analysez votre marché et votre positionnement" }
+                        { section.key === "finances" && "Gérez vos revenus, dépenses et projections financières" }
+                        { section.key === "action-plan" && "Planifiez les actions concrètes pour votre développement" }
+                        { section.key === "revenue" && "Visualisez et projetez vos revenus sur le long terme" }
+                      </p>
+                      <div className="ml-6 mt-2">
+                        <Link 
+                          href={`/plans/${businessPlanId}${section.route}`}
+                          className="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          Gérer cette section <span className="ml-1">→</span>
+                        </Link>
+                      </div>
                     </li>
                   ))}
                 </ul>
               )}
             </div>
             
-            {/* Completed */}
-            <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-              <h4 className="font-medium mb-2 text-green-700 dark:text-green-300">Terminées</h4>
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+              <h4 className="font-medium text-gray-700 dark:text-gray-300 mb-3">Terminées</h4>
               {sectionStatus.complete.length === 0 ? (
-                <p className="text-sm italic text-gray-500 dark:text-gray-400">Aucune section</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Aucune section dans cette catégorie</p>
               ) : (
-                <ul className="space-y-1">
-                  {sectionStatus.complete.map((section, index) => (
-                    <li key={index} className="text-sm flex items-center space-x-2">
+                <ul className="space-y-2">
+                  {sectionStatus.complete.map((section) => (
+                    <li key={section.id} className="flex items-center">
                       <span 
-                        className="inline-block w-3 h-3 rounded-full"
-                        style={{ backgroundColor: section.color || '#10B981' }}
+                        className="w-3 h-3 rounded-full mr-2"
+                        style={{ backgroundColor: section.color || '#3B82F6' }}
                       ></span>
-                      <span>{section.title}</span>
+                      <Link 
+                        href={`/plans/${businessPlanId}${section.route}`}
+                        className="text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 text-sm"
+                      >
+                        {section.title}
+                      </Link>
+                      <div className="ml-2 text-sm text-blue-500 dark:text-blue-400">
+                        {getCompletionStatus(section.completion) === "Completed" ? (
+                          <span className="text-green-500 dark:text-green-400">✓ Terminé</span>
+                        ) : getCompletionStatus(section.completion) === "In Progress" ? (
+                          <span className="text-orange-500 dark:text-orange-400">⌛ En cours</span>
+                        ) : (
+                          <span className="text-gray-500 dark:text-gray-400">◯ À compléter</span>
+                        )}
+                      </div>
+                      <p className="ml-6 mb-0 text-sm text-gray-500 dark:text-gray-400">
+                        { section.key === "pitch" && "Présentez votre projet en quelques phrases et définissez votre vision" }
+                        { section.key === "services" && "Décrivez les services ou produits que vous proposez" }
+                        { section.key === "business-model" && "Définissez comment votre business génère de la valeur" }
+                        { section.key === "market-analysis" && "Analysez votre marché et votre positionnement" }
+                        { section.key === "finances" && "Gérez vos revenus, dépenses et projections financières" }
+                        { section.key === "action-plan" && "Planifiez les actions concrètes pour votre développement" }
+                        { section.key === "revenue" && "Visualisez et projetez vos revenus sur le long terme" }
+                      </p>
+                      <div className="ml-6 mt-2">
+                        <Link 
+                          href={`/plans/${businessPlanId}${section.route}`}
+                          className="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                        >
+                          Gérer cette section <span className="ml-1">→</span>
+                        </Link>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -274,84 +369,66 @@ export function DataDashboard({
           </div>
         </div>
         
-        {/* Next Steps */}
-        <div className="mb-8">
-          <h3 className="text-lg font-medium mb-4">Prochaines Étapes</h3>
-          
-          {/* Next Milestone */}
-          {nextMilestone && (
-            <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-lg mb-4">
-              <h4 className="font-medium mb-1 text-indigo-700 dark:text-indigo-300">Prochain Jalon</h4>
-              <p className="text-lg font-semibold">{nextMilestone.title}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Date cible: {formatDate(nextMilestone.targetDate)}
-              </p>
-              {nextMilestone.description && (
-                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                  {nextMilestone.description}
-                </p>
-              )}
-              
-              {/* Tasks for this milestone */}
-              {tasks.filter(task => task.milestoneId === nextMilestone.id).length > 0 && (
-                <div className="mt-2">
-                  <h5 className="text-sm font-medium mb-1">Tâches associées:</h5>
-                  <ul className="pl-4 list-disc text-sm">
-                    {tasks
-                      .filter(task => task.milestoneId === nextMilestone.id)
-                      .map((task, index) => (
-                        <li key={index} className={task.status === 'done' ? 'line-through text-gray-500' : ''}>
-                          {task.title}
-                          {task.status === 'in-progress' && (
-                            <span className="ml-2 text-yellow-600 dark:text-yellow-400">(En cours)</span>
-                          )}
-                        </li>
-                      ))}
-                  </ul>
-                  {inProgressTasks > 0 && (
-                    <p className="mt-2 text-xs text-gray-500">
-                      {inProgressTasks} tâche(s) en cours sur l&apos;ensemble du plan
-                    </p>
-                  )}
-                </div>
-              )}
+        {/* Quick Access Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          {/* Pitch Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mr-3">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z"></path>
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Pitch de Présentation</h3>
             </div>
-          )}
+            
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {pitchExists 
+                ? "Votre pitch est en cours de développement."
+                : "Vous n&apos;avez pas encore développé votre pitch de présentation. C&apos;est la première étape pour clarifier votre offre et convaincre vos clients potentiels."}
+            </p>
+            
+            <Link
+              href={`/plans/${businessPlanId}/pitch`}
+              className="inline-flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium"
+            >
+              {pitchExists ? "Continuer le pitch" : "Créer votre pitch"}
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
           
-          {/* Incomplete Sections Requiring Attention */}
-          {sectionStatus.notStarted.length > 0 && (
-            <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg">
-              <h4 className="font-medium mb-2 text-orange-700 dark:text-orange-300">
-                Sections à compléter en priorité
-              </h4>
-              <ul className="space-y-2">
-                {sectionStatus.notStarted.slice(0, 3).map((section, index) => (
-                  <li key={index} className="text-sm">
-                    <div className="font-medium">{section.title}</div>
-                    <div className="text-gray-600 dark:text-gray-400">
-                      {section.route ? (
-                        <Link 
-                          href={`/plans/${businessPlanId}${section.route}`}
-                          className="text-orange-600 hover:underline"
-                        >
-                          Accéder à cette section
-                        </Link>
-                      ) : (
-                        <span>Section non encore configurée</span>
-                      )}
-                    </div>
-                  </li>
-                ))}
-                {sectionStatus.notStarted.length > 3 && (
-                  <li className="text-sm italic">
-                    + {sectionStatus.notStarted.length - 3} autres sections
-                  </li>
-                )}
-              </ul>
+          {/* Services Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-5">
+            <div className="flex items-center mb-4">
+              <div className="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mr-3">
+                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd"></path>
+                  <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z"></path>
+                </svg>
+              </div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white">Services</h3>
             </div>
-          )}
+            
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {serviceCount > 0
+                ? `Vous proposez ${serviceCount} service${serviceCount > 1 ? 's' : ''}.`
+                : "Vous n&apos;avez pas encore défini vos services. Définissez les services que vous proposez à vos clients."}
+            </p>
+            
+            <Link
+              href={`/plans/${businessPlanId}/services`}
+              className="inline-flex items-center text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 text-sm font-medium"
+            >
+              {serviceCount > 0 ? "Gérer vos services" : "Définir vos services"}
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
         </div>
-        
+
         {/* Revenue Streams Overview */}
         {revenueStreams.length > 0 && (
           <div className="mb-8">

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { getBusinessPlanService } from '../../services/service-factory';
-import { BusinessPlanData } from '../../services/interfaces/data-models';
+import { getBusinessPlanService } from '@/app/services/serviceFactory';
+import { BusinessPlanData } from '@/app/services/interfaces/dataModels';
 
 interface BusinessPlanEditorProps {
   businessPlanId?: string;
@@ -24,6 +24,7 @@ export function BusinessPlanEditor({
   // State management
   const [plan, setPlan] = useState<Partial<BusinessPlanData>>({
     name: '',
+    description: '',
     pitch: { title: '', summary: '', vision: '', values: [] },
     services: { offerings: [], technologies: [], process: [] },
     businessModel: { hourlyRates: [], packages: [], subscriptions: [] },

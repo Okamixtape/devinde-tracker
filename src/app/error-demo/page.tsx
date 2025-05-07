@@ -3,7 +3,7 @@
 import React from 'react';
 import { useToast } from '../components/error/ToastManager';
 import { useError } from '../context/ErrorContext';
-import { AppError, ErrorCategory, ErrorSeverity } from '../services/utils/error-handling';
+import { AppError, ErrorCategory, ErrorSeverity } from "../services/utils/errorHandling";
 import { useAsyncHandler } from '../hooks/useAsyncHandler';
 import { withLoading, LoadingIndicator } from '../components/error/WithLoading';
 

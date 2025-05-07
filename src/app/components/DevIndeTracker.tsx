@@ -4,6 +4,9 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Home } from "lucide-react";
 
 // Composants
+import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
+import { useTheme } from "../context/ThemeContext";
+import { webFreelanceData } from "../data/demo-data";
 import Dashboard from "./Dashboard";
 import PricingSection from "./PricingSection";
 import FinancialDashboard from "./FinancialDashboard";
@@ -16,9 +19,6 @@ import { ExtendedSectionKey, NavSection } from "./Sidebar";
 
 // Types et hooks
 import type { SectionKey } from "./types";
-import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
-import { useTheme } from "../context/ThemeContext";
-import { webFreelanceData } from "../data/demo-data";
 
 /**
  * Mapping des clés de section aux libellés affichés
@@ -122,10 +122,14 @@ const DevIndeTracker: React.FC = () => {
         );
       
       case "services":
+        // Créer une fonction d'adaptation pour la section services
+        const handleServicesAddListItem = (field: string) => {
+          handleAddListItem("services", field);
+        };
         return (
           <ServicesSection
             data={businessPlanData.services}
-            addListItem={handleAddListItem}
+            addListItem={handleServicesAddListItem}
             removeListItem={removeListItem}
           />
         );

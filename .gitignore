@@ -67,7 +67,37 @@ tasks/
 .roo/
 .roomodes
 .windsurfrules
+.taskmasterconfig
+
+# Rapports et fichiers générés dynamiquement
+reports/
+reports/import-analysis.json
 scripts/task-complexity-report.json
 scripts/example_prd.txt
 scripts/prd.txt
-.taskmasterconfig
+
+# Fichiers temporaires et de cache
+.cache/
+.eslintcache
+.stylelintcache
+
+# Builds locaux et fichiers de déploiement
+.netlify/
+public/dist/
+dist/
+
+# Fichiers de sauvegarde
+*.bak
+*.backup
+*~
+
+# Tests et couverture
+.nyc_output/
+.jest-cache/
+
+# Fichiers temporaires macOS
+._*
+.AppleDouble
+.LSOverride
+Icon
+Thumbs.db

@@ -7,10 +7,10 @@ import {
   handleError,
   ErrorCategory,
   ErrorSeverity 
-} from '../services/utils/error-handling';
+} from "../services/utils/errorHandling";
 import ErrorNotification from '../components/error/ErrorNotification';
 import ErrorBoundary from '../components/error/ErrorBoundary';
-import { ServiceResult } from '../services/interfaces/data-models';
+import { ServiceResult } from "../services/interfaces/dataModels";
 
 // Define the context shape
 interface ErrorHandlingContextType {

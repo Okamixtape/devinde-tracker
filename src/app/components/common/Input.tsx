@@ -3,7 +3,10 @@
 import React, { InputHTMLAttributes, forwardRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+// Exclure la propriété 'size' des InputHTMLAttributes pour éviter le conflit de type
+type InputHTMLAttributesWithoutSize = Omit<InputHTMLAttributes<HTMLInputElement>, 'size'>;
+
+export interface InputProps extends InputHTMLAttributesWithoutSize {
   label?: string;
   helperText?: string;
   error?: string;
@@ -44,7 +47,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   fullWidth = false,
   variant = 'outlined',
   size = 'md',
-  className,
   containerClassName,
   labelClassName,
   inputClassName,
@@ -57,9 +59,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   const inputId = id || `input-${Math.random().toString(36).substring(2, 9)}`;
   
   const variantStyles = {
-    outlined: 'border border-gray-300 rounded-md bg-white',
-    filled: 'border border-transparent bg-gray-100 rounded-md',
-    underlined: 'border-b-2 border-gray-300 rounded-none bg-transparent px-0',
+    outlined: 'border border-gray-500 rounded-md bg-gray-800',
+    filled: 'border border-transparent bg-gray-700 rounded-md',
+    underlined: 'border-b-2 border-gray-500 rounded-none bg-transparent px-0',
   };
   
   const sizeStyles = {
@@ -77,6 +79,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     variantStyles[variant],
     sizeStyles[size],
     errorStateStyles,
+    'text-white', // Changé de text-gray-900 à text-white pour améliorer la lisibilité
     leftIcon ? 'pl-10' : '',
     rightIcon ? 'pr-10' : '',
     inputClassName
@@ -89,7 +92,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   );
   
   const labelClassNames = twMerge(
-    'block mb-1 font-medium text-gray-700',
+    'block mb-1 font-medium text-gray-200',
     size === 'sm' ? 'text-sm' : size === 'lg' ? 'text-lg' : 'text-base',
     labelClassName
   );

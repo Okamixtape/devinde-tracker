@@ -10,7 +10,7 @@ import {
   createValidationError,
   createAuthError,
   createNotFoundError
-} from '../services/utils/error-handling';
+} from "../services/utils/errorHandling";
 
 interface UseErrorHandlerOptions {
   defaultMessage?: string;

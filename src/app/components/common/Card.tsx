@@ -2,7 +2,7 @@
 
 import React, { HTMLAttributes } from 'react';
 import { twMerge } from 'tailwind-merge';
-import { useResponsive } from '../../hooks/useResponsive';
+import { useResponsive } from '@/app/hooks/useResponsive';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'bordered' | 'flat';

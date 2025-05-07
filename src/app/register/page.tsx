@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import AuthForm from '@/app/components/auth/AuthForm';
 import { useAuth } from '@/app/hooks/useAuth';
-import { useRouter } from 'next/navigation';
 import { useI18n } from '@/app/hooks/useI18n';
 
 export default function RegisterPage() {

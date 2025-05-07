@@ -10,7 +10,7 @@ import {
   SearchQuery,
   SearchResults as SearchResultsType,
   FilterOption
-} from '@/app/services/core/search-service';
+} from '@/app/services/core/searchService';
 import { useDebounce } from '@/app/hooks/useDebounce';
 
 const SearchPage: React.FC = () => {

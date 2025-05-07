@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ErrorSeverity } from '../../services/utils/error-handling';
+import { ErrorSeverity } from "@/app/services/utils/errorHandling";
 
 export type ToastType = 'success' | 'info' | 'warning' | 'error';
 export type ToastPosition = 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top' | 'bottom';

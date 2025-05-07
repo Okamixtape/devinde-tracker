@@ -1,9 +1,9 @@
 'use client';
 
 import React from 'react';
-import { SearchResultItem } from '@/app/services/core/search-service';
 import { FiFolder, FiCheckCircle, FiClock, FiUser, FiFileText, FiTag } from 'react-icons/fi';
 import Link from 'next/link';
+import { SearchResultItem } from '@/app/services/core/searchService';
 
 interface SearchResultsProps {
   results: SearchResultItem[];

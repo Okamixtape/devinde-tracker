@@ -1,7 +1,17 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { FiChevronDown, FiGrid, FiDollarSign, FiPieChart, FiTrendingUp, FiClipboard } from 'react-icons/fi';
+import { FiChevronDown, FiGrid, FiDollarSign, FiPieChart, FiTrendingUp, FiClipboard, FiBookOpen, FiBriefcase } from 'react-icons/fi';
 import Dropdown from '../common/Dropdown';
+import { useDataServiceContext } from '@/app/contexts/DataServiceContext';
+
+// Interface pour les éléments de navigation
+interface NavigationItem {
+  id: string;
+  label: React.ReactNode;
+  path: string;
+  icon: React.ReactNode;
+  isActive?: boolean;
+}
 
 interface SectionNavigationProps {
   planId?: string;
@@ -9,10 +19,13 @@ interface SectionNavigationProps {
 
 /**
  * Composant de navigation pour les sections d'un plan d'affaires
- * Utilise le composant Dropdown réutilisable
+ * Utilise le composant Dropdown réutilisable et le SectionService pour la gestion des sections
  */
 const SectionNavigation: React.FC<SectionNavigationProps> = ({ planId }) => {
   const pathname = usePathname();
+  
+  // Utiliser le contexte pour accéder au service des sections (toujours au niveau supérieur)
+  const { sectionService } = useDataServiceContext();
 
   // Ne pas afficher le dropdown si aucun planId n'est présent
   if (!planId) {
@@ -23,48 +36,53 @@ const SectionNavigation: React.FC<SectionNavigationProps> = ({ planId }) => {
     );
   }
 
-  // Définition des sections disponibles dans un plan
+  // Mapping des icônes par clé de section
+  const iconMap: Record<string, React.ReactNode> = {
+    dashboard: <FiGrid />,
+    pitch: <FiBookOpen />,
+    services: <FiBriefcase />,
+    'business-model': <FiDollarSign />,
+    'market-analysis': <FiPieChart />,
+    finances: <FiTrendingUp />,
+    'action-plan': <FiClipboard />,
+    revenue: <FiTrendingUp />
+  };
+  
+  // Obtenir toutes les sections via le service
+  const allSectionKeys = Object.keys(iconMap);
+  
+  // Créer les éléments de navigation à partir des sections disponibles
+  const mainSections: NavigationItem[] = [];
+  
+  // Remplir les sections à partir des clés disponibles
+  allSectionKeys.forEach(key => {
+    const sectionConfig = sectionService.getSectionByKey(key);
+    if (sectionConfig) {
+      mainSections.push({
+        id: sectionConfig.key,
+        label: sectionConfig.title,
+        path: `/plans/${planId}${sectionConfig.route}`,
+        icon: iconMap[sectionConfig.key] || <FiGrid />
+      });
+    }
+  });
+    
+  // Trier les sections selon leur ordre défini dans la configuration
+  mainSections.sort((a, b) => {
+    const sectionA = sectionService.getSectionByKey(a.id);
+    const sectionB = sectionService.getSectionByKey(b.id);
+    return (sectionA?.order || 0) - (sectionB?.order || 0);
+  });
+  
+  // Ajouter des sections spéciales (séparateur, tous les plans)
   const sections = [
-    { 
-      id: 'dashboard', 
-      label: 'Tableau de Bord', 
-      path: `/plans/${planId}/dashboard`, 
-      icon: <FiGrid />
-    },
-    { 
-      id: 'business-model', 
-      label: 'Modèle Économique', 
-      path: `/plans/${planId}/business-model`, 
-      icon: <FiDollarSign />
-    },
-    { 
-      id: 'market-analysis', 
-      label: 'Analyse Marché', 
-      path: `/plans/${planId}/market-analysis`, 
-      icon: <FiPieChart />
-    },
-    { 
-      id: 'finances', 
-      label: 'Finances', 
-      path: `/plans/${planId}/finances`, 
-      icon: <FiTrendingUp />
-    },
-    { 
-      id: 'action-plan', 
-      label: 'Plan d\'Action', 
-      path: `/plans/${planId}/action-plan`, 
-      icon: <FiClipboard />
-    },
-    { 
-      id: 'revenue', 
-      label: 'Projections', 
-      path: `/plans/${planId}/revenue`, 
-      icon: <FiTrendingUp />
-    },
+    ...mainSections,
     // Séparateur
     { 
       id: 'separator',
       label: <div className="border-t border-gray-200 dark:border-gray-700 my-1"></div>,
+      path: '',
+      icon: null as unknown as React.ReactNode
     },
     // Lien vers tous les plans
     { 

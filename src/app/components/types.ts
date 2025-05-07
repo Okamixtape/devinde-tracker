@@ -5,10 +5,18 @@
 
 // Types pour la section Pitch
 export interface PitchSection {
+  // Champs originaux
   title: string;
   summary: string;
   vision: string;
   values: string[];
+  
+  // Champs additionnels de la vue détaillée
+  problem?: string;
+  solution?: string;
+  uniqueValueProposition?: string;
+  targetAudience?: string;
+  competitiveAdvantage?: string;
 }
 
 // Types pour la section Services
