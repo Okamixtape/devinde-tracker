@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
-import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
-import MarketAnalysisSection from "../components/MarketAnalysisSection";
-import Layout from "../components/Layout";
-import { useSectionsData } from "../hooks/useSectionsData";
+import { useBusinessPlanData } from "@/app/hooks/useBusinessPlanData";
+import MarketAnalysisSection from "@/app/components/MarketAnalysisSection";
+import Layout from "@/app/components/Layout";
+import { useSectionsData } from "@/app/hooks/useSectionsData";
 
 export default function MarketAnalysisPage() {
   const { businessPlanData, addListItem, removeListItem, exportData, importData } = useBusinessPlanData();

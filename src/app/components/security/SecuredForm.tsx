@@ -3,7 +3,7 @@
 import React, { useState, FormEvent } from 'react';
 import { useErrorHandling } from '@/app/providers/ErrorHandlingProvider';
 import { useSecurity } from '@/app/hooks/useSecurity';
-import { RateLimitOperation } from '@/app/services/utils/security';
+import { RateLimitOperation } from "@/app/services/utils/security";
 
 interface SecuredFormProps {
   onSubmit?: (data: Record<string, string>) => void;

@@ -77,7 +77,7 @@ export default function ErrorsPanel({ errors }: ErrorsPanelProps) {
     switch (status) {
       case ErrorStatus.NEW:
         return 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30';
-      case ErrorStatus.ACKNOWLEDGED:
+      case ErrorStatus.IN_PROGRESS:
         return 'text-blue-600 bg-blue-100 dark:text-blue-400 dark:bg-blue-900/30';
       case ErrorStatus.RESOLVED:
         return 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30';
@@ -108,8 +108,8 @@ export default function ErrorsPanel({ errors }: ErrorsPanelProps) {
                         backgroundColor: type === ErrorType.JAVASCRIPT ? '#3b82f6' :
                                         type === ErrorType.API ? '#8b5cf6' :
                                         type === ErrorType.NETWORK ? '#ef4444' :
-                                        type === ErrorType.RESOURCE ? '#f59e0b' :
-                                        type === ErrorType.PROMISE ? '#10b981' :
+                                        type === ErrorType.SECURITY ? '#f59e0b' :
+                                        type === ErrorType.PERFORMANCE ? '#10b981' :
                                         '#6b7280'
                       }}></div>
                       <span className="text-sm text-gray-700 dark:text-gray-300">{type}</span>

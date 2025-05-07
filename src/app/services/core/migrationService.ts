@@ -1,9 +1,9 @@
 /**
  * Migration Service Implementation - Handles data schema migrations
  */
-import { ServiceResult, ServiceError } from "../interfaces/dataModels";
+import { ServiceResult } from "../interfaces/dataModels";
 import { Migration, MigrationService } from '../interfaces/migrationService';
-import { migrations } from "../migrations/index";
+import { migrations } from "@/app/services/migrations/index";
 import { LocalStorageService } from './localStorageService';
 
 // Constants for storage keys

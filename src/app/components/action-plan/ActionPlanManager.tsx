@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ActionPlanData, Milestone, Task } from "@/app/services/interfaces/dataModels";
 
 interface ActionPlanManagerProps {
@@ -48,8 +48,8 @@ export function ActionPlanManager({
     setEditingMilestone(newMilestone);
   };
   
-  // Update a milestone
-  const handleUpdateMilestone = (index: number, field: keyof Milestone, value: any) => {
+  // Update a milestone with proper type safety
+  const handleUpdateMilestone = (index: number, field: keyof Milestone, value: Milestone[keyof Milestone]) => {
     const updatedMilestones = [...actionPlan.milestones];
     updatedMilestones[index] = {
       ...updatedMilestones[index],
@@ -107,8 +107,8 @@ export function ActionPlanManager({
     setEditingTask(newTask);
   };
   
-  // Update a task
-  const handleUpdateTask = (index: number, field: keyof Task, value: any) => {
+  // Update a task with proper type safety
+  const handleUpdateTask = (index: number, field: keyof Task, value: Task[keyof Task]) => {
     const updatedTasks = [...actionPlan.tasks];
     updatedTasks[index] = {
       ...updatedTasks[index],

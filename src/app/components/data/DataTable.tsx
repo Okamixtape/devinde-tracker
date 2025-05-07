@@ -2,9 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import { 
-  FilterParams, 
-  SortingParams,
-  PaginationParams
+  FilterParams
 } from "@/app/services/utils/dataOperations";
 import { useDataOperation } from '@/app/hooks/useDataOperation';
 
@@ -12,7 +10,7 @@ interface Column<T> {
   key: keyof T;
   header: string;
   width?: string;
-  render?: (value: any, item: T) => React.ReactNode;
+  render?: (value: T[keyof T], item: T) => React.ReactNode;
   sortable?: boolean;
   filterable?: boolean;
 }
@@ -28,7 +26,7 @@ interface DataTableProps<T> {
   onRowClick?: (item: T) => void;
 }
 
-export function DataTable<T extends Record<string, any>>({
+export function DataTable<T extends Record<string, unknown>>({
   columns,
   fetchData,
   initialData = [],
@@ -105,7 +103,12 @@ export function DataTable<T extends Record<string, any>>({
   const applyFilter = () => {
     if (!activeFilter) return;
     
-    if (activeFilter.value.trim()) {
+    // Check if value is a string and not empty after trimming
+    const valueIsNonEmptyString = typeof activeFilter.value === 'string' && activeFilter.value.trim() !== '';
+    // Check if value is a non-string and truthy
+    const valueIsValid = typeof activeFilter.value !== 'string' ? !!activeFilter.value : valueIsNonEmptyString;
+    
+    if (valueIsValid) {
       addFilter({
         field: activeFilter.field,
         operator: activeFilter.operator,

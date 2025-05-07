@@ -1,19 +1,10 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { AnalyticsEventType } from '@/app/services/core/analyticsService';
-
-interface AnalyticsEvent {
-  id: string;
-  timestamp: number;
-  type: string;
-  path?: string;
-  sessionId: string;
-  properties?: Record<string, unknown>;
-}
+import { AnalyticsEventType, AnalyticsEvent } from '@/app/services/core/analyticsService';
 
 interface AnalyticsPanelProps {
-  analytics: AnalyticsEvent[];
+  events: AnalyticsEvent[];
 }
 
 /**
@@ -22,15 +13,15 @@ interface AnalyticsPanelProps {
  * Affiche les données d'analytique utilisateur collectées par l'application.
  * Permet de visualiser les tendances d'interaction, les pages les plus vues, et les actions des utilisateurs.
  */
-export default function AnalyticsPanel({ analytics }: AnalyticsPanelProps) {
+export default function AnalyticsPanel({ events }: AnalyticsPanelProps) {
   const [timeFrame, setTimeFrame] = useState<'day' | 'week' | 'month'>('day');
   const [selectedEventType, setSelectedEventType] = useState<string>('');
   
   // Filtrer les événements par type sélectionné
   const filteredEvents = useMemo(() => {
-    if (!selectedEventType) return analytics;
-    return analytics.filter(event => event.type === selectedEventType);
-  }, [analytics, selectedEventType]);
+    if (!selectedEventType) return events;
+    return events.filter(event => event.type === selectedEventType);
+  }, [events, selectedEventType]);
   
   // Filtrer les événements par période
   const timeFilteredEvents = useMemo(() => {
@@ -55,7 +46,8 @@ export default function AnalyticsPanel({ analytics }: AnalyticsPanelProps) {
     const pageViews = timeFilteredEvents
       .filter(event => event.type === AnalyticsEventType.PAGE_VIEW)
       .reduce((acc, event) => {
-        const path = event.path || 'unknown';
+        // Obtenir le chemin depuis les propriétés ou utiliser une valeur par défaut
+        const path = (event.properties?.path as string) || 'unknown';
         acc[path] = (acc[path] || 0) + 1;
         return acc;
       }, {} as Record<string, number>);
@@ -279,7 +271,7 @@ export default function AnalyticsPanel({ analytics }: AnalyticsPanelProps) {
                     </span>
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
-                    {event.path || 'N/A'}
+                    {(event.properties?.path as string) || 'N/A'}
                   </td>
                   <td className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300">
                     {formatDate(event.timestamp)}

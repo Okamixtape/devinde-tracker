@@ -3,8 +3,8 @@
  */
 import { StorageService } from '../interfaces/serviceInterfaces';
 import { ServiceResult, ServiceError } from '../interfaces/dataModels';
-import { generateUUID, getCurrentTimestamp } from '../utils/helpers';
-import { secureLocalStorage, RateLimitOperation, throttle, recordSuspiciousActivity } from '../utils/security';
+import { generateUUID, getCurrentTimestamp } from "../utils/helpers";
+import { secureLocalStorage, RateLimitOperation, throttle, recordSuspiciousActivity } from "../utils/security";
 
 /**
  * Generic LocalStorageService that can be used for any type of data

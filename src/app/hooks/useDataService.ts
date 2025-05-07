@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { StorageService } from '../services/interfaces/serviceInterfaces';
-import { ServiceResult } from '../services/interfaces/dataModels';
-import { errorTrackingService } from '../services/core/errorTrackingService';
-import { ErrorType, ErrorSeverity } from "../services/utils/errorHandling";
+import { StorageService } from "@/app/services/interfaces/serviceInterfaces";
+import { ServiceResult } from "@/app/services/interfaces/dataModels";
+import { errorTrackingService, ErrorType } from "@/app/services/core/errorTrackingService";
 
 // Options pour le hook
 export interface UseDataServiceOptions<T> {
@@ -86,8 +85,18 @@ export function useDataService<T>(
   }, []);
 
   // Fonction pour gérer les erreurs
-  const handleError = useCallback((error: any) => {
-    const errorMessage = error?.message || error?.error || "Une erreur est survenue";
+  const handleError = useCallback((error: unknown) => {
+    let errorMessage = "Une erreur est survenue";
+    
+    if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
+    } else if (error && typeof error === 'object') {
+      // Handle object with optional message or error properties
+      const errorObj = error as { message?: string; error?: string };
+      errorMessage = errorObj.message || errorObj.error || errorMessage;
+    }
     
     updateState({
       isLoading: false,
@@ -132,7 +141,7 @@ export function useDataService<T>(
           onSuccess(result.data);
         }
       } else {
-        throw new Error(result.error || "Échec de récupération des données");
+        throw new Error(result.error?.message || "Échec de récupération des données");
       }
     } catch (error) {
       handleError(error);
@@ -165,7 +174,7 @@ export function useDataService<T>(
           onSuccess(result.data);
         }
       } else {
-        throw new Error(result.error || "Échec de création de l'élément");
+        throw new Error(result.error?.message || "Échec de création de l'élément");
       }
       
       return result;
@@ -173,8 +182,11 @@ export function useDataService<T>(
       handleError(error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Erreur inconnue",
-        data: null
+        error: {
+          code: 'OPERATION_ERROR',
+          message: error instanceof Error ? error.message : "Erreur inconnue"
+        },
+        data: undefined
       };
     }
   }, [service, state.data, updateState, onSuccess, handleError]);
@@ -190,16 +202,18 @@ export function useDataService<T>(
         // Mise à jour de l'état en fonction du type de données
         if (Array.isArray(state.data)) {
           // Si c'est un tableau, mettre à jour l'élément correspondant
-          const updatedData = (state.data as T[]).map((d: any) => 
-            d.id === id ? { ...d, ...result.data } : d
-          );
+          // Use type assertion to ensure each item has an id property
+          const updatedData = (state.data as T[]).map((d) => {
+            const itemWithId = d as T & { id: string };
+            return itemWithId.id === id ? { ...itemWithId, ...result.data } : itemWithId;
+          });
           
           updateState({
             data: updatedData,
             isLoading: false,
             success: true
           });
-        } else if (state.data && (state.data as any).id === id) {
+        } else if (state.data && typeof state.data === 'object' && 'id' in state.data && (state.data as { id: string }).id === id) {
           // Si c'est un objet unique et que son ID correspond, le mettre à jour
           updateState({
             data: { ...(state.data as T), ...result.data },
@@ -212,7 +226,7 @@ export function useDataService<T>(
           onSuccess(result.data);
         }
       } else {
-        throw new Error(result.error || "Échec de mise à jour de l'élément");
+        throw new Error(result.error?.message || "Échec de mise à jour de l'élément");
       }
       
       return result;
@@ -220,8 +234,11 @@ export function useDataService<T>(
       handleError(error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Erreur inconnue",
-        data: null
+        error: {
+          code: 'OPERATION_ERROR',
+          message: error instanceof Error ? error.message : "Erreur inconnue"
+        },
+        data: undefined
       };
     }
   }, [service, state.data, updateState, onSuccess, handleError]);
@@ -236,17 +253,21 @@ export function useDataService<T>(
       if (result.success) {
         // Si les données sont un tableau, filtrer l'élément supprimé
         if (Array.isArray(state.data)) {
-          const filteredData = (state.data as any[]).filter(item => item.id !== id);
+          // Type assertion to ensure all items have id property
+          const filteredData = (state.data as Array<T>).filter(item => {
+            const itemWithId = item as T & { id: string };
+            return itemWithId.id !== id;
+          });
           
           updateState({
             data: filteredData,
             isLoading: false,
             success: true
           });
-        } else if (state.data && (state.data as any).id === id) {
+        } else if (state.data && typeof state.data === 'object' && 'id' in state.data && (state.data as { id: string }).id === id) {
           // Si c'est un objet unique et que son ID correspond, le supprimer
           updateState({
-            data: null,
+            data: undefined,
             isLoading: false,
             success: true
           });
@@ -256,7 +277,7 @@ export function useDataService<T>(
           onSuccess(state.data as T | T[]);
         }
       } else {
-        throw new Error(result.error || "Échec de suppression de l'élément");
+        throw new Error(result.error?.message || "Échec de suppression de l'élément");
       }
       
       return result;
@@ -264,7 +285,10 @@ export function useDataService<T>(
       handleError(error);
       return {
         success: false,
-        error: error instanceof Error ? error.message : "Erreur inconnue",
+        error: {
+          code: 'OPERATION_ERROR',
+          message: error instanceof Error ? error.message : "Erreur inconnue"
+        },
         data: false
       };
     }

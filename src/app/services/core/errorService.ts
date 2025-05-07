@@ -4,10 +4,9 @@ import {
   ErrorSeverity, 
   ErrorResponse, 
   handleError as utilsHandleError,
-  ErrorCodes,
-  toAppError
-} from "../services/utils/errorHandling";
-import { ServiceResult } from "../services/interfaces/dataModels";
+  ErrorCodes
+} from "../utils/errorHandling";
+import { ServiceResult } from "../interfaces/dataModels";
 
 // Interface pour le gestionnaire d'erreurs
 export interface ErrorHandler {
@@ -251,7 +250,7 @@ class ErrorService {
       
       // Si un message d'erreur personnalisé est fourni, utiliser ce message
       if (errorMessage) {
-        const appError = toAppError(error);
+        const appError = error instanceof AppError ? error : new AppError('UNKNOWN_ERROR', { message: String(error), category: ErrorCategory.SYSTEM, severity: ErrorSeverity.ERROR });
         appError.userMessage = errorMessage;
         return this.createErrorResult<T>(appError, { context });
       }

@@ -5,9 +5,8 @@
  * Permet de basculer facilement entre le stockage local et les API externes.
  */
 
-import { StorageService } from "../services/interfaces/serviceInterfaces";
+import { StorageService, BusinessPlanService, SectionService } from "../interfaces/serviceInterfaces";
 import { getBusinessPlanService, getSectionService } from '../serviceFactory';
-import { BusinessPlanData, Section } from "../services/interfaces/dataModels";
 import { createApiService, ApiServiceConfig } from './apiServiceAdapter';
 
 // Configuration de l'environnement
@@ -39,53 +38,27 @@ export function getServiceByEnvironment<T>(
 /**
  * Retourne le service BusinessPlan approprié selon l'environnement
  */
-export function getBusinessPlanApiService(): StorageService<BusinessPlanData> {
-  const localService = getBusinessPlanService();
+export function getBusinessPlanApiService(): BusinessPlanService {
+  // Pour le moment, nous retournons simplement le service local
+  // car BusinessPlanService a des méthodes spécifiques non présentes dans StorageService<BusinessPlanData>
+  // comme getUserBusinessPlans, exportBusinessPlan, importBusinessPlan, duplicateBusinessPlan
+  return getBusinessPlanService();
   
-  const apiConfig: ApiServiceConfig<BusinessPlanData> = {
-    baseUrl: API_BASE_URL,
-    resourcePath: 'business-plans',
-    transformers: {
-      // Ces transformateurs peuvent être étendus pour adapter les données
-      // entre le format d'API et le format local si nécessaire
-      toApi: (data: BusinessPlanData) => ({
-        ...data,
-        // Convertir les champs si nécessaire
-      }),
-      fromApi: (apiData: any) => ({
-        ...apiData,
-        // Convertir les champs si nécessaire
-      })
-    }
-  };
-  
-  return getServiceByEnvironment<BusinessPlanData>(localService, apiConfig);
+  // Note: Si à l'avenir nous implémentons une API complète pour les business plans,
+  // il faudra adapter cette fonction pour supporter toutes les méthodes spécifiques
 }
 
 /**
  * Retourne le service Section approprié selon l'environnement
  */
-export function getSectionApiService(): StorageService<Section> {
-  const localService = getSectionService();
+export function getSectionApiService(): SectionService {
+  // Pour le moment, nous retournons simplement le service local
+  // car SectionService n'implémente pas StorageService<Section>
+  return getSectionService();
   
-  const apiConfig: ApiServiceConfig<Section> = {
-    baseUrl: API_BASE_URL,
-    resourcePath: 'sections',
-    transformers: {
-      // Ces transformateurs peuvent être étendus pour adapter les données
-      // entre le format d'API et le format local si nécessaire
-      toApi: (data: Section) => ({
-        ...data,
-        // Convertir les champs si nécessaire
-      }),
-      fromApi: (apiData: any) => ({
-        ...apiData,
-        // Convertir les champs si nécessaire
-      })
-    }
-  };
-  
-  return getServiceByEnvironment<Section>(localService, apiConfig);
+  // Note: Si à l'avenir nous implémentons une API pour les sections,
+  // il faudra adapter cette fonction et s'assurer que l'implémentation
+  // de SectionService inclut les méthodes de StorageService<Section>
 }
 
 // Export d'autres fonctions de création de services API au besoin

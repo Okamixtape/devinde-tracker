@@ -6,13 +6,13 @@ import {
   getSectionService,
   getAuthService,
   getSearchService
-} from '../services/serviceFactory';
+} from "@/app/services/serviceFactory";
 import { 
   BusinessPlanService,
   SectionService,
   AuthService,
   SearchService
-} from "../services/interfaces/serviceInterfaces";
+} from "@/app/services/interfaces/serviceInterfaces";
 
 // Définition de l'interface du contexte
 interface DataServiceContextType {

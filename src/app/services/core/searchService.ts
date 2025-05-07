@@ -1,9 +1,9 @@
-import { ServiceResult } from "../services/interfaces/serviceInterfaces";
+import { ServiceResult } from "../interfaces/dataModels";
 
 // Types associés à la recherche
 export interface SearchQuery {
   term: string;
-  filters?: Record<string, any>;
+  filters?: Record<string, string | number | boolean | string[]>;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -18,7 +18,7 @@ export interface SearchResultItem {
   tags?: string[];
   createdAt?: string;
   updatedAt?: string;
-  [key: string]: any;
+  [key: string]: string | number | boolean | string[] | Date | undefined;
 }
 
 export interface SearchResults {
@@ -236,31 +236,43 @@ export class SearchServiceImpl implements SearchService {
 
       // Appliquer les filtres supplémentaires s'ils sont spécifiés
       if (query.filters) {
-        if (query.filters.type && query.filters.type.length > 0) {
+        if (query.filters.type && 
+            (typeof query.filters.type === 'string' || Array.isArray(query.filters.type)) && 
+            (typeof query.filters.type === 'string' ? query.filters.type.length > 0 : query.filters.type.length > 0)) {
           results = results.filter(item => 
             Array.isArray(query.filters?.type) 
-              ? query.filters?.type.includes(item.type)
-              : item.type === query.filters?.type
+              ? item.type && query.filters?.type.includes(item.type)
+              : item.type && item.type === query.filters?.type
           );
         }
 
-        if (query.filters.status && query.filters.status.length > 0) {
-          results = results.filter(item => 
-            Array.isArray(query.filters?.status) 
-              ? query.filters?.status.includes(item.status)
-              : item.status === query.filters?.status
-          );
+        if (query.filters.status && 
+            (typeof query.filters.status === 'string' || Array.isArray(query.filters.status)) && 
+            (typeof query.filters.status === 'string' ? query.filters.status.length > 0 : query.filters.status.length > 0)) {
+          results = results.filter(item => {
+            // Vérifier si item.status existe
+            if (!('status' in item)) return false;
+            
+            return Array.isArray(query.filters?.status) 
+              ? query.filters?.status.includes(String(item.status))
+              : String(item.status) === query.filters?.status;
+          });
         }
 
         // Filtrage par date
-        if (query.filters.dateFrom) {
+        if (query.filters.dateFrom && (typeof query.filters.dateFrom === 'string' || typeof query.filters.dateFrom === 'number')) {
           const dateFrom = new Date(query.filters.dateFrom);
-          results = results.filter(item => new Date(item.createdAt || '') >= dateFrom);
+          
+          results = results.filter(item => 
+            item.createdAt && new Date(item.createdAt) >= dateFrom
+          );
         }
 
-        if (query.filters.dateTo) {
+        if (query.filters.dateTo && (typeof query.filters.dateTo === 'string' || typeof query.filters.dateTo === 'number')) {
           const dateTo = new Date(query.filters.dateTo);
-          results = results.filter(item => new Date(item.createdAt || '') <= dateTo);
+          results = results.filter(item => 
+            item.createdAt && new Date(item.createdAt) <= dateTo
+          );
         }
       }
 
@@ -277,6 +289,12 @@ export class SearchServiceImpl implements SearchService {
             return sortOrder * valueA.localeCompare(valueB);
           }
           
+          // Gérer les cas où l'une des valeurs ou les deux sont indéfinies
+          if (valueA === undefined && valueB === undefined) return 0;
+          if (valueA === undefined) return 1 * sortOrder; // Placer les indéfinis à la fin
+          if (valueB === undefined) return -1 * sortOrder; // Placer les indéfinis à la fin
+          
+          // Maintenant on peut comparer car on est sûr que les deux valeurs sont définies
           if (valueA < valueB) return -1 * sortOrder;
           if (valueA > valueB) return 1 * sortOrder;
           return 0;

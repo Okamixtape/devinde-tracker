@@ -1,8 +1,8 @@
 'use client';
 
 import React from 'react';
-import AuthRedirect from '../components/auth/AuthRedirect';
-import { useI18n } from '../hooks/useI18n';
+import AuthRedirect from "@/app/components/auth/AuthRedirect";
+import { useI18n } from "@/app/hooks/useI18n";
 
 export default function CalculatorPage() {
   const { t } = useI18n();

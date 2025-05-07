@@ -4,9 +4,9 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { Home } from "lucide-react";
 
 // Composants
-import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
-import { useTheme } from "../context/ThemeContext";
-import { webFreelanceData } from "../data/demo-data";
+import { useBusinessPlanData } from "@/app/hooks/useBusinessPlanData";
+import { useTheme } from "@/app/context/ThemeContext";
+import { webFreelanceData } from "@/app/data/demo-data";
 import Dashboard from "./Dashboard";
 import PricingSection from "./PricingSection";
 import FinancialDashboard from "./FinancialDashboard";

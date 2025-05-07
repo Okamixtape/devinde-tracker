@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useI18n } from '../hooks/useI18n';
+import { useI18n } from "@/app/hooks/useI18n";
 
 // Interface pour le contexte d'internationalisation
 interface I18nContextType {

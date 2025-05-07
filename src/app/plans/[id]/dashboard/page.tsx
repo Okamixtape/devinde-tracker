@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { BusinessPlanData } from "../services/interfaces/dataModels";
+import { BusinessPlanData } from "@/app/services/interfaces/dataModels";
 import { DataDashboard } from '@/app/components/dashboard/DataDashboard';
 import { getBusinessPlanService } from '@/app/services/serviceFactory';
 

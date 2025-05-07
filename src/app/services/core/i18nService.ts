@@ -1,6 +1,6 @@
 import { I18nService } from '../interfaces/i18nService';
-import { ServiceResult } from "../services/interfaces/dataModels";
-import { StorageService } from "../services/interfaces/serviceInterfaces";
+import { ServiceResult } from "../interfaces/dataModels";
+import { StorageService } from "../interfaces/serviceInterfaces";
 // Import des fichiers de traduction directement
 import frTranslations from '@/app/i18n/locales/fr.json';
 import enTranslations from '@/app/i18n/locales/en.json';
@@ -18,14 +18,6 @@ const translations = {
 
 // Type pour les traductions
 type TranslationObject = Record<string, unknown>;
-
-/**
- * Interface pour les objets de stockage de chaînes de caractères
- */
-interface StringStorageItem {
-  id: string;
-  value: string;
-}
 
 /**
  * Implémentation du service d'internationalisation basée sur next-intl
@@ -155,8 +147,8 @@ export class I18nServiceImpl implements I18nService {
         if (existingResult.success && existingResult.data) {
           await this.storageService.updateItem(LOCALE_STORAGE_KEY, locale);
         } else {
-          // Créer l'item avec un objet conforme à l'interface attendue
-          await this.storageService.createItem({ id: LOCALE_STORAGE_KEY, value: locale } as StringStorageItem);
+          // Créer l'item avec la valeur de la locale
+          await this.storageService.createItem(locale);
         }
       } catch (storageError) {
         console.error("Failed to save locale preference", storageError);
@@ -164,7 +156,7 @@ export class I18nServiceImpl implements I18nService {
       }
       
       return { success: true };
-    } catch (_error) {
+    } catch {
       // On capture l'erreur mais on ne l'utilise pas directement dans la réponse
       return {
         success: false,

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FiChevronDown, FiUser, FiLogOut, FiLogIn, FiUserPlus } from 'react-icons/fi';
-import Dropdown from '../common/Dropdown';
+import Dropdown from "@/app/components/common/Dropdown";
 import { UserData } from '@/app/services/core/authService';
 import { useI18n } from '@/app/hooks/useI18n';
 

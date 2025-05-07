@@ -10,9 +10,9 @@ import {
   setupCsrfProtection,
   validateCsrfToken,
   recordSuspiciousActivity
-} from '../services/utils/security';
-import { useErrorHandling } from '../providers/ErrorHandlingProvider';
-import { AppError, ErrorCategory, ErrorSeverity } from "../services/utils/errorHandling";
+} from "@/app/services/utils/security";
+import { useErrorHandling } from "@/app/providers/ErrorHandlingProvider";
+import { AppError, ErrorCategory, ErrorSeverity } from "@/app/services/utils/errorHandling";
 
 /**
  * Hook for using security features in React components
@@ -44,10 +44,11 @@ export function useSecurity() {
       const result = checkSuspiciousPatterns();
       if (result.hasSuspiciousActivity) {
         // Show a warning to the user
-        setError(new AppError('SUSPICIOUS_ACTIVITY', {
+        // Remplacer par un code d'erreur existant
+        setError(new AppError('PERMISSION_DENIED', {
           message: 'Suspicious activity detected on your account',
           severity: ErrorSeverity.WARNING,
-          category: ErrorCategory.SECURITY,
+          category: ErrorCategory.AUTHENTICATION, // Correction de la catégorie inexistante
           details: result.details
         }));
       }
@@ -115,9 +116,10 @@ export function useSecurity() {
     }));
     
     if (!isAllowed && throwError) {
-      throw new AppError('RATE_LIMIT_EXCEEDED', {
+      // Utiliser un code d'erreur existant
+      throw new AppError('SERVICE_UNAVAILABLE', {
         message: 'You are performing this action too frequently. Please try again later.',
-        category: ErrorCategory.SECURITY,
+        category: ErrorCategory.AUTHENTICATION, // Correction de la catégorie inexistante
         severity: ErrorSeverity.WARNING
       });
     }

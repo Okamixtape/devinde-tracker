@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
-import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
-import FinancialDashboard from "../components/FinancialDashboard";
-import Layout from "../components/Layout";
-import { useSectionsData } from "../hooks/useSectionsData";
+import { useBusinessPlanData } from "@/app/hooks/useBusinessPlanData";
+import FinancialDashboard from "@/app/components/FinancialDashboard";
+import Layout from "@/app/components/Layout";
+import { useSectionsData } from "@/app/hooks/useSectionsData";
 
 export default function FinancialsPage() {
   const { businessPlanData, updateData, exportData, importData } = useBusinessPlanData();

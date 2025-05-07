@@ -7,7 +7,16 @@ import { ServiceResult } from "../interfaces/dataModels";
  * Migration Function Type - Function signature for migration operations
  * Takes the current data state and transforms it to the new version
  */
-export type MigrationFunction = (data: any) => Promise<ServiceResult<any>>;
+/**
+ * Generic type for application data storage
+ */
+export type ApplicationDataState = Record<string, unknown>;
+
+/**
+ * Migration Function Type - Function signature for migration operations
+ * Takes the current data state and transforms it to the new version
+ */
+export type MigrationFunction = (data: ApplicationDataState) => Promise<ServiceResult<ApplicationDataState>>;
 
 /**
  * Migration Definition - Represents a single migration step

@@ -11,8 +11,8 @@ import {
   Filter,
   ChevronDown
 } from "lucide-react";
-import { UI_CLASSES } from "../styles/ui-classes";
-import { useI18n } from "../hooks/useI18n";
+import { UI_CLASSES } from "@/app/styles/ui-classes";
+import { useI18n } from "@/app/hooks/useI18n";
 import type { BusinessPlanData } from "./types";
 
 // Types pour les jalons

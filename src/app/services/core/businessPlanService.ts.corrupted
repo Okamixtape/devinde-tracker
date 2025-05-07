@@ -1,0 +1,555 @@
+/**
+ * BusinessPlanService - Implementation of business plan data operations
+ */
+import { BusinessPlanService, BusinessPlan } from "../interfaces/serviceInterfaces";
+import { 
+  BusinessPlanData, 
+  ServiceResult,
+  Section
+} from "../interfaces/dataModels";
+import { generateUUID, getCurrentISOTimestamp, validateObject } from "../utils/helpers";
+import { secureLocalStorage } from "../utils/security";
+import { LocalStorageService } from './localStorageService';
+
+/**
+ * Storage key for business plans
+ */
+export const BUSINESS_PLANS_STORAGE_KEY = 'devinde-tracker-business-plans';
+
+/**
+ * Version de la structure de données - permet de gérer les migrations
+ * Note: Cette clé utilise le stockage non-chiffré car elle ne contient pas de données sensibles
+ */
+export const CURRENT_DATA_VERSION = 1.1; // Convertir en nombre pour correspondre au type BusinessPlanMetaData.version
+export const DATA_VERSION_STORAGE_KEY = 'devinde-tracker-data-version';
+
+/**
+ * Function to convert from BusinessPlanData to BusinessPlan
+ */
+function convertToBusinessPlan(data: BusinessPlanData): BusinessPlan {
+  return {
+    id: data.id || generateUUID(),
+    name: data.name,
+    userId: data.userId || 'default-user',
+    sections: data.sections || [],
+    createdAt: data.createdAt || getCurrentISOTimestamp(),
+    updatedAt: data.updatedAt || getCurrentISOTimestamp(),
+    // Inclure d'autres propriétés en utilisant l'index signature de BusinessPlan
+    description: data.description,
+    pitch: data.pitch,
+    services: data.services,
+    businessModel: data.businessModel,
+    marketAnalysis: data.marketAnalysis,
+    financials: data.financials,
+    actionPlan: data.actionPlan,
+    meta: data.meta,
+    settings: data.settings
+  };
+}
+
+/**
+ * Function to convert from BusinessPlan to BusinessPlanData
+ */
+function convertToBusinessPlanData(plan: BusinessPlan): BusinessPlanData {
+  // Cast to BusinessPlanData car BusinessPlan contient toutes les propriétés nécessaires
+  // Nous devons créer un nouvel objet pour ne pas modifier l'original
+  return {
+    id: plan.id,
+    userId: plan.userId,
+    name: plan.name,
+    sections: plan.sections as Section[],
+    createdAt: plan.createdAt,
+    updatedAt: plan.updatedAt,
+    // Ici, nous devons extraire les propriétés spécifiques qui sont dans plan[key]
+    pitch: plan.pitch as any || {},
+    services: plan.services as any || {},
+    businessModel: plan.businessModel as any || {},
+    marketAnalysis: plan.marketAnalysis as any || {},
+    financials: plan.financials as any || {},
+    actionPlan: plan.actionPlan as any || {},
+    meta: plan.meta as any,
+    settings: plan.settings as any
+  };
+}
+
+/**
+ * Default empty data for a new business plan
+ */
+export const getDefaultBusinessPlanData = (): Omit<BusinessPlanData, 'name'> => ({
+  pitch: {
+    title: "",
+    summary: "",
+    vision: "",
+    values: []
+  },
+  services: {
+    offerings: [],
+    technologies: [],
+    process: []
+  },
+  businessModel: {
+    hourlyRates: [],
+    packages: [],
+    subscriptions: []
+  },
+  marketAnalysis: {
+    competitors: [],
+    targetClients: [],
+    trends: []
+  },
+  financials: {
+    initialInvestment: 0,
+    quarterlyGoals: [0, 0, 0, 0],
+    expenses: []
+  },
+  actionPlan: {
+    milestones: [],
+    tasks: []
+  },
+  sections: []
+});
+
+/**
+ * BusinessPlanServiceImpl - Concrete implementation using localStorage
+ */
+export class BusinessPlanServiceImpl 
+  extends LocalStorageService<BusinessPlanData> 
+  implements BusinessPlanService {
+  
+  private storageService: LocalStorageService<BusinessPlanData>;
+  
+  constructor() {
+    super(BUSINESS_PLANS_STORAGE_KEY);
+    this.storageService = new LocalStorageService<BusinessPlanData>(BUSINESS_PLANS_STORAGE_KEY);
+    // Reset corrupted storage on init
+    this.resetStorageIfCorrupted();
+    // Exécuter les migrations si nécessaire au démarrage
+    this.runDataMigrations();
+  }
+  
+  /**
+   * Exécute les migrations de données nécessaires
+   * Une approche robuste et propre pour gérer les évolutions du modèle de données
+   */
+  private async runDataMigrations(): Promise<void> {
+    // Ne s'exécute que côté client
+    if (typeof window === 'undefined') {
+      console.log('runDataMigrations appelé côté serveur - ignoré');
+      return;
+    }
+    
+    try {
+      // Vérifier la version actuelle des données (stockage non-chiffré)
+      const currentVersion = localStorage.getItem(DATA_VERSION_KEY) || '1.0.0';
+      
+      console.log(`Vérification de migration des données: version actuelle ${currentVersion}, version cible ${CURRENT_DATA_VERSION}`);
+      
+      // Si déjà à jour, ne rien faire
+      if (currentVersion === CURRENT_DATA_VERSION) {
+        console.log('Données déjà à jour, aucune migration nécessaire');
+        return;
+      }
+      
+      console.log(`Migration des données: ${currentVersion} -> ${CURRENT_DATA_VERSION}`);
+      
+      // Obtenir tous les plans d'affaires
+      const result = await this.getItems();
+      if (!result.success || !result.data) return;
+      
+      const plans = result.data;
+      let modified = false;
+      
+      // Appliquer les migrations nécessaires selon la version
+      if (this.compareVersions(currentVersion, '1.1.0') < 0) {
+        // Migration: Corriger les routes incohérentes
+        console.log('Migration: Standardisation des routes');
+        plans.forEach((plan: BusinessPlanData) => {
+          if (plan.sections && Array.isArray(plan.sections)) {
+            plan.sections.forEach((section: Section) => {
+              // Correction des routes
+              if (section.route === '/financials') {
+                section.route = '/finances';
+                modified = true;
+                console.log(`Plan ${plan.id}: Route corrigée: /financials -> /finances`);
+              } else if (section.route === '/market') {
+                section.route = '/market-analysis';
+                // Corriger aussi la clé si nécessaire
+                if (section.key === 'market') {
+                  section.key = 'market-analysis';
+                }
+                modified = true;
+                console.log(`Plan ${plan.id}: Route corrigée: /market -> /market-analysis`);
+              }
+            });
+          }
+        });
+      }
+      
+      // Sauvegarder les données migrées si des modifications ont été effectuées
+      if (modified) {
+        // Utiliser secureLocalStorage directement pour cette opération
+        try {
+          secureLocalStorage.setItem(BUSINESS_PLANS_STORAGE_KEY, plans);
+          console.log('Migration des données terminée avec succès');
+        } catch (error) {
+          console.error('Erreur lors de la sauvegarde des données migrées:', error);
+        }
+      }
+      
+      // Mettre à jour la version des données (stockage non-chiffré)
+      localStorage.setItem(DATA_VERSION_KEY, CURRENT_DATA_VERSION);
+      console.log(`Version des données mise à jour vers ${CURRENT_DATA_VERSION}`);
+      
+    } catch (error) {
+      console.error('Erreur lors de la migration des données:', error);
+    }
+  }
+  
+  /**
+   * Compare deux versions sémantiques
+   * @returns -1 si v1 < v2, 0 si v1 = v2, 1 si v1 > v2
+   */
+  private compareVersions(v1: string, v2: string): number {
+    const parts1 = v1.split('.').map(Number);
+    const parts2 = v2.split('.').map(Number);
+    
+    for (let i = 0; i < 3; i++) {
+      const part1 = parts1[i] || 0;
+      const part2 = parts2[i] || 0;
+      
+      if (part1 < part2) return -1;
+      if (part1 > part2) return 1;
+    }
+    
+    return 0;
+  }
+  
+  /**
+   * Reset storage if it contains corrupted data
+   */
+  private resetStorageIfCorrupted(): void {
+    // Vérifier si l'on est côté client (navigateur) avant d'utiliser localStorage
+    if (typeof window === 'undefined') {
+      // On est côté serveur, localStorage n'est pas disponible
+      console.log('resetStorageIfCorrupted appelé côté serveur - ignoré');
+      return;
+    }
+    
+    try {
+      // Approche plus agressive : vérifier et nettoyer toutes les clés de localStorage
+      // liées aux plans d'affaires
+      const keysToCheck = [
+        BUSINESS_PLANS_STORAGE_KEY,
+        'devinde-tracker-sections',
+        'devinde-tracker-user',
+        'devinde-tracker-auth'
+      ];
+      
+      for (const key of keysToCheck) {
+        try {
+          // Essayer de récupérer et décrypter les données
+          const rawData = localStorage.getItem(key);
+          if (rawData) {
+            try {
+              // Si la déchiffrement échoue, supprimer cette clé
+              secureLocalStorage.getItem(key);
+            } catch (error) {
+              console.log(`Détection de données corrompues pour ${key}, nettoyage:`, 
+                error instanceof Error ? error.message : 'Erreur inconnue');
+              localStorage.removeItem(key);
+            }
+          }
+        } catch (error) {
+          console.log(`Erreur lors de l'accès à ${key}, suppression:`, 
+            error instanceof Error ? error.message : 'Erreur inconnue');
+          localStorage.removeItem(key);
+        }
+      }
+      
+      // Vérifier s'il existe des clés orphelines ou corrompues qui commencent par devinde-tracker
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('devinde-tracker')) {
+          if (!keysToCheck.includes(key)) {
+            try {
+              // Essayer de déchiffrer, sinon supprimer
+              secureLocalStorage.getItem(key);
+            } catch (error) {
+              console.log(`Détection d'une clé orpheline ou corrompue ${key}, nettoyage:`, 
+                error instanceof Error ? error.message : 'Erreur inconnue');
+              localStorage.removeItem(key);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      // En cas d'erreur grave, réinitialiser complètement le stockage lié à l'application
+      console.log('Erreur critique lors du nettoyage du stockage, réinitialisation complète:', 
+        error instanceof Error ? error.message : 'Erreur inconnue');
+      
+      // Supprimer toutes les clés liées à l'application
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('devinde-tracker')) {
+          localStorage.removeItem(key);
+        }
+      }
+    }
+  }
+
+  /**
+   * Create a new business plan with validation
+   */
+  override async createItem(item: BusinessPlan): Promise<ServiceResult<BusinessPlan>> {
+    // Convertir BusinessPlan en BusinessPlanData
+    const businessPlanData = convertToBusinessPlanData(item);
+    // Validate required fields
+    const validation = validateObject(item, ['name']);
+    
+    if (!validation.valid) {
+      return {
+        success: false,
+        error: {
+          code: 'VALIDATION_ERROR',
+          message: `Missing required fields: ${validation.missingFields.join(', ')}`
+        }
+      };
+    }
+    
+    // Set default values for new business plan
+    const now = getCurrentISOTimestamp();
+    const defaultData = getDefaultBusinessPlanData();
+    
+    const newItem: BusinessPlanData = {
+      ...defaultData,
+      ...businessPlanData,
+      id: generateUUID(),
+      createdAt: now,
+      updatedAt: now,
+      meta: {
+        version: 1,
+        exportCount: 0,
+        lastUpdated: now,
+        ...(item.meta || {})
+      },
+      settings: {
+        theme: 'light',
+        language: 'en',
+        notifications: false,
+        ...(item.settings || {})
+      },
+      sections: item.sections || []
+    };
+    
+    return super.createItem(newItem);
+  }
+
+  /**
+   * Update a business plan with proper metadata updates
+   */
+  async updateItem(id: string, item: Partial<BusinessPlan>): Promise<ServiceResult<BusinessPlan>> {
+    // Convertir l'entrée partielle en propriétés compatibles avec BusinessPlanData
+    const businessPlanDataUpdate: Partial<BusinessPlanData> = {};
+    
+    // Copier les propriétés disponibles
+    if (item.name) businessPlanDataUpdate.name = item.name;
+    if (item.userId) businessPlanDataUpdate.userId = item.userId;
+    if (item.sections) businessPlanDataUpdate.sections = item.sections as Section[];
+    if (item.description) businessPlanDataUpdate.description = item.description as string;
+    
+    // Copier les propriétés spécifiques si elles existent
+    if ((item as any).pitch) businessPlanDataUpdate.pitch = (item as any).pitch;
+    if ((item as any).services) businessPlanDataUpdate.services = (item as any).services;
+    if ((item as any).businessModel) businessPlanDataUpdate.businessModel = (item as any).businessModel;
+    if ((item as any).marketAnalysis) businessPlanDataUpdate.marketAnalysis = (item as any).marketAnalysis;
+    if ((item as any).financials) businessPlanDataUpdate.financials = (item as any).financials;
+    if ((item as any).actionPlan) businessPlanDataUpdate.actionPlan = (item as any).actionPlan;
+    if ((item as any).meta) businessPlanDataUpdate.meta = (item as any).meta;
+    if ((item as any).settings) businessPlanDataUpdate.settings = (item as any).settings;
+    
+    // Get the current item first
+    const currentResult = await this.getItem(id);
+    
+    if (!currentResult.success || !currentResult.data) {
+      return currentResult;
+    }
+    
+    const currentItem = currentResult.data;
+    const now = getCurrentISOTimestamp();
+    
+    // Update metadata while preserving other fields
+    const updatedItem: Partial<BusinessPlanData> = {
+      ...businessPlanDataUpdate,
+      updatedAt: now,
+      meta: {
+        ...(currentItem.meta || { version: 1, exportCount: 0 }),
+        ...(item.meta || {}),
+        lastUpdated: now,
+        version: ((currentItem.meta?.version || 1) + 0.1)
+      }
+    };
+    if (!result.success) {
+      return {
+        success: false,
+        error: result.error
+      };
+    }
+    
+    // Filter plans by user ID and convert to BusinessPlan
+    const userPlans = result.data
+      .filter(plan => plan.userId === userId)
+      .map(plan => convertToBusinessPlan(plan));
+    
+    return {
+      success: true,
+      data: userPlans
+    };
+  } catch (e) {
+        success: true,
+        data: {
+          content: JSON.stringify(convertToBusinessPlan(plan), null, 2),
+          filename: `${plan.name.replace(/\s+/g, '-').toLowerCase()}-${getCurrentISOTimestamp().split('T')[0]}.json`,
+          contentType: 'application/json'
+        }
+      };
+    }
+    
+    // Support for other export formats could be added here
+    
+    return {
+      success: false,
+      error: {
+        code: 'UNSUPPORTED_FORMAT',
+        message: `Export format '${format}' is not supported`
+      }
+    };
+  }
+
+  /**
+   * Import a business plan from JSON data
+   */
+  override async importBusinessPlan(data: Record<string, unknown>): Promise<ServiceResult<BusinessPlan>> {
+    try {
+      let planData: Partial<BusinessPlanData>;
+      
+      if (typeof data === 'string') {
+        try {
+          // Parse JSON string
+          planData = JSON.parse(data);
+        } catch (e) {
+          return {
+            success: false,
+            error: {
+              code: 'INVALID_JSON',
+              message: 'Invalid JSON format for business plan import'
+            }
+          };
+        }
+      } else {
+        // Use object directly
+        planData = data as Partial<BusinessPlanData>;
+      }
+      
+      // Validate required fields
+      if (!planData.name) {
+        return {
+          success: false,
+          error: {
+            code: 'MISSING_REQUIRED_FIELDS',
+            message: 'Business plan name is required'
+          }
+        };
+      }
+      
+      // Create a new business plan with required fields
+      const newBusinessPlan: BusinessPlanData = {
+        id: generateUUID(),
+        userId: planData.userId || 'default-user',
+        name: planData.name || 'Nouveau Plan',
+        description: planData.description || '',
+        createdAt: getCurrentISOTimestamp(),
+        updatedAt: getCurrentISOTimestamp(),
+        pitch: planData.pitch || { ...getDefaultBusinessPlanData().pitch },
+        services: planData.services || { ...getDefaultBusinessPlanData().services },
+        businessModel: planData.businessModel || { ...getDefaultBusinessPlanData().businessModel },
+        marketAnalysis: planData.marketAnalysis || { ...getDefaultBusinessPlanData().marketAnalysis },
+        financials: planData.financials || { ...getDefaultBusinessPlanData().financials },
+        actionPlan: planData.actionPlan || { ...getDefaultBusinessPlanData().actionPlan },
+        meta: {
+          version: CURRENT_DATA_VERSION,
+          lastUpdated: getCurrentISOTimestamp(),
+          exportCount: 0
+        },
+        settings: planData.settings || {
+          theme: 'light',
+          language: 'fr',
+          notifications: true
+        },
+        sections: planData.sections || []
+      };
+      
+      // Créer l'élément et convertir en BusinessPlan
+      const result = await super.createItem(newBusinessPlan) as ServiceResult<BusinessPlanData>;
+      
+      if (!result.success) {
+        return result;
+      }
+      
+      return {
+        success: true,
+        data: convertToBusinessPlan(result.data)
+      };
+    } catch (e) {
+      return {
+        success: false,
+        error: {
+          code: 'IMPORT_ERROR',
+          message: 'Failed to import business plan',
+          details: e instanceof Error ? e.message : String(e)
+        }
+      };
+    }
+  }
+
+  /**
+   * Duplicate a business plan
+   */
+  async duplicateBusinessPlan(id: string, newName?: string): Promise<ServiceResult<BusinessPlan>> {
+    const result = await this.getItem(id);
+    
+    if (!result.success || !result.data) {
+      return {
+        success: false,
+        error: result.error || {
+          code: 'NOT_FOUND',
+          message: 'Business plan not found'
+        }
+      };
+    }
+    
+    const originalPlan = result.data;
+    
+    // Create a new plan based on the original
+    const duplicatedPlan: BusinessPlanData = {
+      ...JSON.parse(JSON.stringify(originalPlan)),
+      id: generateUUID(),
+      name: newName || `${originalPlan.name} (copie)`,
+      createdAt: getCurrentISOTimestamp(),
+      updatedAt: getCurrentISOTimestamp(),
+      meta: {
+        version: 1,
+        exportCount: 0,
+        lastUpdated: getCurrentISOTimestamp()
+      },
+      // Assurez-vous que toutes les propriétés requises sont présentes
+      pitch: originalPlan.pitch || getDefaultBusinessPlanData().pitch,
+      services: originalPlan.services || getDefaultBusinessPlanData().services,
+      businessModel: originalPlan.businessModel || getDefaultBusinessPlanData().businessModel,
+      marketAnalysis: originalPlan.marketAnalysis || getDefaultBusinessPlanData().marketAnalysis,
+      financials: originalPlan.financials || getDefaultBusinessPlanData().financials,
+      actionPlan: originalPlan.actionPlan || getDefaultBusinessPlanData().actionPlan
+    };
+    
+    return this.createItem(duplicatedPlan);
+  }
+}

@@ -3,8 +3,8 @@
  */
 import { AuthService } from '../interfaces/serviceInterfaces';
 import { ServiceResult } from '../interfaces/dataModels';
-import { generateUUID, getCurrentTimestamp } from '../utils/helpers';
-import { generateToken, verifyToken } from "../utils/jwtHelper";
+import { generateUUID, getCurrentTimestamp } from "@/app/services/utils/helpers";
+import { generateToken, verifyToken } from "@/app/services/utils/jwtHelper";
 import { LocalStorageService } from './localStorageService';
 
 // Define user interface
@@ -357,7 +357,7 @@ class AuthServiceImpl implements AuthService {
       }
 
       // Get user from storage
-      const userResult = await this.userStorage.getItem(decodedToken.sub);
+      const userResult = await this.userStorage.getItem(decodedToken.payload?.sub as string);
       
       if (!userResult.success || !userResult.data) {
         return {
@@ -544,7 +544,7 @@ class AuthServiceImpl implements AuthService {
       }
 
       // Get user from storage to ensure they still exist
-      const userResult = await this.userStorage.getItem(decodedToken.sub);
+      const userResult = await this.userStorage.getItem(decodedToken.payload?.sub as string);
       
       if (!userResult.success || !userResult.data) {
         return false;
@@ -554,9 +554,9 @@ class AuthServiceImpl implements AuthService {
       const now = getCurrentTimestamp();
       const expiresAt = now + TOKEN_EXPIRATION_TIME;
       const newToken = generateToken({
-        sub: decodedToken.sub,
-        email: decodedToken.email,
-        role: decodedToken.role,
+        sub: decodedToken.payload?.sub as string,
+        email: decodedToken.payload?.email as string,
+        role: decodedToken.payload?.role as UserRole,
         exp: Math.floor(expiresAt / 1000) // JWT uses seconds, not milliseconds
       });
 
@@ -601,6 +601,8 @@ class AuthServiceImpl implements AuthService {
    * @returns User data without password
    */
   removePasswordFromUser(user: User): UserData {
+    // On utilise la syntaxe de destructuration pour éliminer les champs sensibles
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, failedLoginAttempts, lockedUntil, ...userData } = user;
     return userData;
   }

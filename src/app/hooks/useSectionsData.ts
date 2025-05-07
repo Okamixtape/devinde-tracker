@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { Home, Edit, Users, PieChart, TrendingUp, FileText, Calendar } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { useTheme } from "../context/ThemeContext";
-import type { ExtendedSectionKey, NavSection } from "../components/Sidebar";
+import { useTheme } from "@/app/context/ThemeContext";
+import type { ExtendedSectionKey, NavSection } from "@/app/components/Sidebar";
 
 /**
  * Type du résultat retourné par le hook useSectionsData

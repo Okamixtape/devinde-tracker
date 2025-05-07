@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useToast } from '../components/error/ToastManager';
-import { ServiceResult } from "../services/interfaces/dataModels";
-import { AppError, ErrorCategory, ErrorSeverity } from "../services/utils/errorHandling";
+import { useToast } from "@/app/components/error/ToastManager";
+import { ServiceResult } from "@/app/services/interfaces/dataModels";
+import { AppError, ErrorCategory, ErrorSeverity } from "@/app/services/utils/errorHandling";
 
 // Options pour l'operation asynchrone
 export interface AsyncOperationOptions<T> {

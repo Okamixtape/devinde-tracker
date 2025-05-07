@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Tab } from '@headlessui/react';
 import ServiceDocViewer from './ServiceDocViewer';
 import ServicePlayground from './ServicePlayground';
-import serviceDocumentation from '@/app/services/utils/documentation';
+import serviceDocumentation from "@/app/services/utils/documentation";
 import {
   getBusinessPlanService,
   getSectionService,
@@ -190,7 +190,7 @@ export const ApiDocumentation: React.FC = () => {
   getBusinessPlanService, 
   getSectionService, 
   getAuthService 
-} from '../services/serviceFactory';
+} from "@/app/services/serviceFactory";
 
 // Get service instances
 const businessPlanService = getBusinessPlanService();

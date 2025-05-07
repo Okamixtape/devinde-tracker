@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { Code, Menu, Moon, Sun } from "lucide-react";
-import { useTheme } from "../context/ThemeContext";
+import { useTheme } from "@/app/context/ThemeContext";
 
 /**
  * Props du composant Header

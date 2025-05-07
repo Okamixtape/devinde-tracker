@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { BusinessPlanData, ServicesData } from "../services/interfaces/dataModels";
+import { BusinessPlanData, ServicesData } from "@/app/services/interfaces/dataModels";
 import { getBusinessPlanService } from '@/app/services/serviceFactory';
 
 // Interface pour le service avec typages plus précis

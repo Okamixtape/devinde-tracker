@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { migrationSystem } from "../services/migrations/migrationInit";
+import { migrationSystem } from "@/app/services/migrations/migrationInit";
 
 interface MigrationProviderProps {
   children: React.ReactNode;

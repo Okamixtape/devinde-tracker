@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Button from '../common/Button';
-import Card from '../common/Card';
-import Input from '../common/Input';
-import Select from '../common/Select';
-import { useToast } from '../error/ToastManager';
+import Button from "@/app/components/common/Button";
+import Card from "@/app/components/common/Card";
+import Input from "@/app/components/common/Input";
+import Select from "@/app/components/common/Select";
+import { useToast } from "@/app/components/error/ToastManager";
 import { UserData, UserPreferences } from '@/app/services/core/authService';
 import { useAuth } from '@/app/hooks/useAuth';
 import { useAsyncHandler } from '@/app/hooks/useAsyncHandler';

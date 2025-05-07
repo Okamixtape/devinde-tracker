@@ -5,10 +5,10 @@
  * et des échecs d'API. S'intègre avec les services d'analytique et de performance.
  */
 
-import { secureLocalStorage } from '../utils/security';
-import { getCurrentTimestamp, generateUUID } from '../utils/helpers';
+import { secureLocalStorage } from "@/app/services/utils/security";
+import { getCurrentTimestamp, generateUUID } from "@/app/services/utils/helpers";
 import { AppError, ErrorSeverity as AppErrorSeverity } from "@/app/services/utils/errorHandling";
-import { analyticsService } from './analyticsService';
+import { analyticsService, AnalyticsEventType } from './analyticsService';
 
 // Définir l'enum ErrorSeverity directement ici
 export enum ErrorSeverity {
@@ -165,7 +165,7 @@ class ErrorTrackingService {
     this.initialized = true;
 
     // Analytique pour l'initialisation du service
-    analyticsService.trackEvent('error_tracking_initialized', {
+    analyticsService.trackEvent(AnalyticsEventType.FEATURE_USE, {
       sessionId: this.sessionId,
       userAgent: navigator.userAgent
     });
@@ -188,6 +188,7 @@ class ErrorTrackingService {
           const error = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
           this.captureException(error, ErrorType.JAVASCRIPT, { unhandledRejection: true });
         };
+
         window.addEventListener('unhandledrejection', this.originalOnUnhandledRejection);
       }
 
@@ -215,7 +216,7 @@ class ErrorTrackingService {
   }
 
   // Configurer le nouveau gestionnaire d'erreurs
-  private onerror(message: any, source?: string, lineno?: number, colno?: number, error?: Error): boolean {
+  private onerror(message: string | Event, source?: string, lineno?: number, colno?: number, error?: Error): boolean {
     if (this.config.enabled && !this.shouldIgnoreError(message?.toString())) {
       const errorData: Partial<ErrorData> = {
         type: ErrorType.JAVASCRIPT,
@@ -286,7 +287,7 @@ class ErrorTrackingService {
       timestamp: getCurrentTimestamp(),
       ...data
     };
-    
+
     // Limiter le nombre de breadcrumbs
     this.breadcrumbs.push(breadcrumb);
     if (this.breadcrumbs.length > this.config.breadcrumbsLimit) {
@@ -312,9 +313,14 @@ class ErrorTrackingService {
     let severity: ErrorSeverity;
     
     if (error instanceof AppError) {
-      code = error.code;
+      // Conversion du code d'erreur en chaîne pour assurer la compatibilité de types
+      code = String(error.code);
       severity = convertSeverity(error.severity);
-      additionalData = { ...additionalData, ...error.metadata };
+      
+      // Add any available details from AppError to additionalData
+      if (error.details) {
+        additionalData = { ...additionalData, details: error.details };
+      }
     } else {
       severity = ErrorSeverity.ERROR;
     }
@@ -334,7 +340,7 @@ class ErrorTrackingService {
       status: ErrorStatus.NEW,
       metadata: safeAdditionalData
     };
-    
+
     // Ajouter un breadcrumb pour cette exception
     this.addBreadcrumb({
       type: 'custom',
@@ -347,7 +353,7 @@ class ErrorTrackingService {
     });
     
     // Enregistrer l'analytique de cette erreur
-    analyticsService.trackEvent('error_occurred', {
+    analyticsService.trackEvent(AnalyticsEventType.ERROR, {
       errorType: type,
       errorMessage: error.message,
       errorCode: code,
@@ -401,7 +407,7 @@ class ErrorTrackingService {
       metadata: errorData.metadata || {},
       retryCount: 0
     };
-    
+
     // Ajouter l'erreur à la liste
     this.errors.push(fullErrorData);
     
@@ -420,7 +426,8 @@ class ErrorTrackingService {
         try {
           const regex = new RegExp(pattern.slice(1, -1));
           return regex.test(message);
-        } catch (e) {
+        } catch {
+          // Ignorer les erreurs de parsing
           return false;
         }
       }
@@ -438,7 +445,7 @@ class ErrorTrackingService {
     if (!obj || typeof obj !== 'object') return obj;
     
     const result: Record<string, unknown> = {};
-    
+
     for (const key in obj) {
       const currentPath = path ? `${path}.${key}` : key;
       
@@ -512,20 +519,22 @@ class ErrorTrackingService {
     let memoryInfo = 'unknown';
     
     try {
-      if ('connection' in navigator && (navigator as any).connection) {
-        const connection = (navigator as any).connection;
+      if ('connection' in navigator) {
+        const connection = navigator['connection'] as { effectiveType?: string, type?: string };
+
         connectionType = connection.effectiveType || connection.type || 'unknown';
       }
-    } catch (e) {
+    } catch {
       // Ignorer les erreurs, certains navigateurs ne supportent pas cette API
     }
     
     try {
       if ('memory' in performance) {
-        const memory = (performance as any).memory;
+        const memory = performance['memory'] as { usedJSHeapSize: number, jsHeapSizeLimit: number };
+
         memoryInfo = `${Math.round(memory.usedJSHeapSize / 1048576)}MB / ${Math.round(memory.jsHeapSizeLimit / 1048576)}MB`;
       }
-    } catch (e) {
+    } catch {
       // Ignorer les erreurs, certains navigateurs ne supportent pas cette API
     }
     
@@ -540,20 +549,6 @@ class ErrorTrackingService {
     };
   }
 
-  // Nettoyer les anciennes erreurs
-  private cleanOldErrors(): void {
-    if (this.errors.length > this.config.maxErrors) {
-      // Trier par timestamp croissant (plus ancien en premier)
-      this.errors.sort((a, b) => a.timestamp - b.timestamp);
-      
-      // Garder seulement les plus récentes
-      this.errors = this.errors.slice(this.errors.length - this.config.maxErrors);
-      
-      // Sauvegarder les erreurs
-      this.saveErrors();
-    }
-  }
-
   // Capturer une erreur API
   public captureApiError(
     endpoint: string,
@@ -564,23 +559,37 @@ class ErrorTrackingService {
     const severity = statusCode >= 500 ? ErrorSeverity.ERROR : ErrorSeverity.WARNING;
     
     let message = `API Error: ${statusCode} on ${endpoint}`;
-    const errorData: any = {};
+    const errorData: Record<string, unknown> = {};
     
     if (responseBody) {
       try {
-        // Si le corps de la réponse est un objet, extraire des informations utiles
-        if (typeof responseBody === 'object' && responseBody !== null) {
-          const body = responseBody as any;
-          
-          if (body.message) {
-            message = `API Error: ${body.message}`;
-          }
-          
-          if (body.error || body.code) {
-            errorData.errorCode = body.error || body.code;
-          }
+        // Définir un type pour le corps de la réponse pour éviter les erreurs de type 'unknown'
+        interface ApiErrorResponse {
+          message?: string;
+          error?: string;
+          code?: string;
         }
-      } catch (e) {
+        
+        let parsedBody: ApiErrorResponse = {};
+        
+        if (typeof responseBody === 'string') {
+          try {
+            parsedBody = JSON.parse(responseBody) as ApiErrorResponse;
+          } catch {
+            // Si ce n'est pas du JSON, on continue
+          }
+        } else if (responseBody && typeof responseBody === 'object') {
+          parsedBody = responseBody as ApiErrorResponse;
+        }
+        
+        if (parsedBody.message) {
+          message = `API Error: ${parsedBody.message}`;
+        }
+        
+        if (parsedBody.error || parsedBody.code) {
+          errorData.errorCode = parsedBody.error || parsedBody.code;
+        }
+      } catch {
         // Ignorer les erreurs de parsing
       }
     }
@@ -600,20 +609,32 @@ class ErrorTrackingService {
     });
   }
 
+  // Nettoyer les anciennes erreurs
+  private cleanOldErrors(): void {
+    if (this.errors.length > this.config.maxErrors) {
+      // Trier par timestamp croissant (plus ancien en premier)
+      this.errors.sort((a, b) => a.timestamp - b.timestamp);
+      
+      // Garder seulement les plus récentes
+      this.errors = this.errors.slice(this.errors.length - this.config.maxErrors);
+      
+      // Sauvegarder les erreurs
+      this.saveErrors();
+    }
+  }
+
   // Charger la configuration
   private loadConfig(): ErrorTrackingConfig {
     try {
-      const storedConfig = secureLocalStorage.getItem('devinde-tracker-error-config');
+      const storedConfig = secureLocalStorage.getItem('error-tracking-config');
       
       if (storedConfig) {
-        const parsedConfig = JSON.parse(storedConfig);
-        return {
-          ...this.getDefaultConfig(),
-          ...parsedConfig
-        };
+        // Check if storedConfig is already an object or a string that needs to be parsed
+        return typeof storedConfig === 'string' ? JSON.parse(storedConfig) as ErrorTrackingConfig : storedConfig as ErrorTrackingConfig;
       }
-    } catch (e) {
-      console.warn('Failed to load error tracking config:', e);
+    } catch {
+      // Impossible de charger la configuration du tracking d'erreur
+      console.warn('Failed to load error tracking config');
     }
     
     return this.getDefaultConfig();
@@ -655,9 +676,10 @@ class ErrorTrackingService {
   // Sauvegarder la configuration
   private saveConfig(): void {
     try {
-      secureLocalStorage.setItem('devinde-tracker-error-config', JSON.stringify(this.config));
-    } catch (e) {
-      console.warn('Failed to save error tracking config:', e);
+      secureLocalStorage.setItem('error-tracking-config', JSON.stringify(this.config));
+    } catch {
+      // Impossible de sauvegarder la configuration du tracking d'erreur
+      console.warn('Failed to save error tracking config');
     }
   }
 
@@ -666,11 +688,15 @@ class ErrorTrackingService {
     try {
       const storedErrors = secureLocalStorage.getItem(ERROR_TRACKING_STORAGE_KEY);
       
-      if (storedErrors) {
-        return JSON.parse(storedErrors);
-      }
-    } catch (e) {
-      console.warn('Failed to load stored errors:', e);
+      // Check if storedErrors is already an object or a string that needs to be parsed
+      return storedErrors 
+        ? (typeof storedErrors === 'string' 
+            ? JSON.parse(storedErrors) as ErrorData[] 
+            : storedErrors as ErrorData[]) 
+        : [] as ErrorData[];
+    } catch {
+      // Impossible de charger les erreurs stockées
+      console.warn('Failed to load stored errors');
     }
     
     return [];
@@ -680,8 +706,9 @@ class ErrorTrackingService {
   private saveErrors(): void {
     try {
       secureLocalStorage.setItem(ERROR_TRACKING_STORAGE_KEY, JSON.stringify(this.errors));
-    } catch (e) {
-      console.warn('Failed to save errors:', e);
+    } catch {
+      // Impossible de sauvegarder les erreurs
+      console.warn('Failed to save errors');
     }
   }
 
@@ -715,9 +742,15 @@ class ErrorTrackingService {
     const errorIndex = this.errors.findIndex(error => error.id === id);
     
     if (errorIndex !== -1) {
-      this.errors[errorIndex].status = status;
-      this.saveErrors();
-      return true;
+      try {
+        this.errors[errorIndex].status = status;
+        this.saveErrors();
+        return true;
+      } catch {
+        // Impossible de mettre à jour le statut de l'erreur
+        console.error('Failed to update error status');
+        return false;
+      }
     }
     
     return false;

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import frTranslations from '../i18n/locales/fr.json';
-import enTranslations from '../i18n/locales/en.json';
+import frTranslations from "@/app/i18n/locales/fr.json";
+import enTranslations from "@/app/i18n/locales/en.json";
 
 // Constantes pour l'internationalisation
 export const DEFAULT_LOCALE = 'fr';

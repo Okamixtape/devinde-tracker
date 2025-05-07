@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MarketAnalysisData, TargetClient, Competitor } from "../services/interfaces/dataModels";
+import { MarketAnalysisData, TargetClient, Competitor } from "@/app/services/interfaces/dataModels";
 
 interface TargetAudienceAnalyzerProps {
   marketData?: MarketAnalysisData;
@@ -44,8 +44,8 @@ export function TargetAudienceAnalyzer({
     }));
   };
   
-  // Update a target client segment
-  const handleUpdateTargetClient = (index: number, field: keyof TargetClient, value: any) => {
+  // Update a target client segment with proper type safety
+  const handleUpdateTargetClient = (index: number, field: keyof TargetClient, value: string | number | string[]) => {
     const updatedClients = [...analysisData.targetClients];
     
     if (field === 'needs' && typeof value === 'string') {
@@ -94,8 +94,8 @@ export function TargetAudienceAnalyzer({
     }));
   };
   
-  // Update a competitor
-  const handleUpdateCompetitor = (index: number, field: keyof Competitor, value: any) => {
+  // Update a competitor with proper type safety
+  const handleUpdateCompetitor = (index: number, field: keyof Competitor, value: string | number | string[]) => {
     const updatedCompetitors = [...analysisData.competitors];
     
     if ((field === 'strengths' || field === 'weaknesses') && typeof value === 'string') {

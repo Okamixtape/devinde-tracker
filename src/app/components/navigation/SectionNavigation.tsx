@@ -1,7 +1,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { FiChevronDown, FiGrid, FiDollarSign, FiPieChart, FiTrendingUp, FiClipboard, FiBookOpen, FiBriefcase } from 'react-icons/fi';
-import Dropdown from '../common/Dropdown';
+import Dropdown from "@/app/components/common/Dropdown";
 import { useDataServiceContext } from '@/app/contexts/DataServiceContext';
 
 // Interface pour les éléments de navigation

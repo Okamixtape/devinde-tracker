@@ -1,9 +1,9 @@
 "use client";
 import React from "react";
-import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
-import ActionPlanTimeline from "../components/ActionPlanTimeline";
-import Layout from "../components/Layout";
-import { useSectionsData } from "../hooks/useSectionsData";
+import { useBusinessPlanData } from "@/app/hooks/useBusinessPlanData";
+import ActionPlanTimeline from "@/app/components/ActionPlanTimeline";
+import Layout from "@/app/components/Layout";
+import { useSectionsData } from "@/app/hooks/useSectionsData";
 
 export default function ActionPlanPage() {
   const { businessPlanData, updateData, exportData, importData } = useBusinessPlanData();

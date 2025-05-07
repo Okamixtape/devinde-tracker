@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent, useCallback } from "react";
-import type { BusinessPlanData } from "../components/types";
+import type { BusinessPlanData } from "@/app/components/types";
 
 // Type pour les valeurs de champs génériques
 type FieldValue = string | number | string[] | number[];

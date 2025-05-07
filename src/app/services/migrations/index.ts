@@ -50,14 +50,16 @@ migrations.push({
       
       return {
         success: true,
-        data,
-        message: 'Migration 1.1.0 appliquée avec succès'
+        data
       };
     } catch (error) {
       return {
         success: false,
-        message: `Échec de la migration 1.1.0: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
-        error: error instanceof Error ? error : new Error('Erreur inconnue')
+        error: {
+          code: 'MIGRATION_ERROR',
+          message: `Échec de la migration 1.1.0: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+          details: error
+        }
       };
     }
   }
@@ -101,14 +103,16 @@ migrations.push({
       
       return {
         success: true,
-        data,
-        message: 'Migration 1.2.0 appliquée avec succès'
+        data
       };
     } catch (error) {
       return {
         success: false,
-        message: `Échec de la migration 1.2.0: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
-        error: error instanceof Error ? error : new Error('Erreur inconnue')
+        error: {
+          code: 'MIGRATION_ERROR',
+          message: `Échec de la migration 1.2.0: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+          details: error
+        }
       };
     }
   }
@@ -152,14 +156,16 @@ migrations.push({
       
       return {
         success: true,
-        data,
-        message: 'Migration 1.3.0 appliquée avec succès'
+        data
       };
     } catch (error) {
       return {
         success: false,
-        message: `Échec de la migration 1.3.0: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
-        error: error instanceof Error ? error : new Error('Erreur inconnue')
+        error: {
+          code: 'MIGRATION_ERROR',
+          message: `Échec de la migration 1.3.0: ${error instanceof Error ? error.message : 'Erreur inconnue'}`,
+          details: error
+        }
       };
     }
   }

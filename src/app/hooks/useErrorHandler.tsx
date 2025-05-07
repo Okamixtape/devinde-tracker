@@ -1,116 +1,60 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { 
-  AppError, 
-  ErrorResponse,
-  handleError,
-  ErrorCategory,
-  ErrorSeverity,
-  createValidationError,
-  createAuthError,
-  createNotFoundError
-} from "../services/utils/errorHandling";
-
-interface UseErrorHandlerOptions {
-  defaultMessage?: string;
-  includeDebugInfo?: boolean;
-  logErrors?: boolean;
-}
-
-interface UseErrorHandlerResult {
-  // Error state
-  error: ErrorResponse | null;
-  hasError: boolean;
-  clearError: () => void;
-  
-  // Error handling functions
-  handleError: (error: unknown) => ErrorResponse;
-  handlePromise: <T>(promise: Promise<T>) => Promise<T>;
-  
-  // Error creation helpers
-  createError: (code: string | number, message?: string, details?: unknown) => AppError;
-  createValidationError: (message: string, details?: unknown) => AppError;
-  createAuthError: (
-    code: 'AUTH_REQUIRED' | 'INVALID_CREDENTIALS' | 'SESSION_EXPIRED' | 'ACCOUNT_LOCKED',
-    message?: string, 
-    details?: unknown
-  ) => AppError;
-  createNotFoundError: (resourceType: string, resourceId?: string) => AppError;
-}
+import { AppError } from "../services/utils/errorHandling";
 
 /**
- * Hook for handling errors in components
+ * Hook pour gérer les erreurs d'application de manière cohérente
  */
-export function useErrorHandler(options: UseErrorHandlerOptions = {}): UseErrorHandlerResult {
-  const {
-    defaultMessage = 'An unexpected error occurred',
-    includeDebugInfo = process.env.NODE_ENV === 'development',
-    logErrors = true
-  } = options;
-  
-  const [error, setError] = useState<ErrorResponse | null>(null);
-  
-  // Clear current error
+export const useErrorHandler = () => {
+  // État de l'erreur
+  const [error, setError] = useState<AppError | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Effacer l'erreur actuelle
   const clearError = useCallback(() => {
     setError(null);
   }, []);
-  
-  // Handle any error and update error state
-  const handleErrorWithState = useCallback((err: unknown): ErrorResponse => {
-    const errorResponse = handleError(err, {
-      includeDebugInfo,
-      logError: logErrors
-    });
-    
-    setError(errorResponse);
-    return errorResponse;
-  }, [includeDebugInfo, logErrors]);
-  
-  // Wrap a promise and handle errors
-  const handlePromise = useCallback(async <T>(promise: Promise<T>): Promise<T> => {
-    try {
-      clearError();
-      return await promise;
-    } catch (err) {
-      handleErrorWithState(err);
-      throw err; // Re-throw to allow further handling if needed
-    }
-  }, [clearError, handleErrorWithState]);
-  
-  // Create a new AppError
-  const createError = useCallback((
-    code: string | number, 
-    message?: string, 
-    details?: unknown
-  ): AppError => {
-    return new AppError(code, {
-      message: message || defaultMessage,
-      details
-    });
-  }, [defaultMessage]);
-  
-  return {
-    // Error state
-    error,
-    hasError: error !== null,
-    clearError,
-    
-    // Error handling functions
-    handleError: handleErrorWithState,
-    handlePromise,
-    
-    // Error creation helpers
-    createError,
-    createValidationError,
-    createAuthError,
-    createNotFoundError
-  };
-}
 
-export { 
-  AppError,
-  ErrorResponse,
-  ErrorCategory,
-  ErrorSeverity
+  // Gérer une erreur avec mise à jour d'état
+  const handleErrorWithState = useCallback((err: unknown) => {
+    if (err instanceof AppError) {
+      setError(err);
+    } else if (err instanceof Error) {
+      setError(new AppError('UNKNOWN_ERROR', {
+        message: err.message
+      }));
+    } else {
+      setError(new AppError('UNKNOWN_ERROR', {
+        message: 'Une erreur inconnue est survenue'
+      }));
+    }
+    setIsLoading(false);
+  }, []);
+
+  // Exécuter une promesse avec gestion d'erreur
+  const handlePromise = useCallback(<T,>(promise: Promise<T>): Promise<T> => {
+    setIsLoading(true);
+    clearError();
+    
+    return promise
+      .then((result) => {
+        setIsLoading(false);
+        return result;
+      })
+      .catch((err) => {
+        handleErrorWithState(err);
+        throw err;
+      });
+  }, [clearError, handleErrorWithState]);
+
+  return {
+    error,
+    isLoading,
+    clearError,
+    handleError: handleErrorWithState,
+    handlePromise
+  };
 };
+
+export default useErrorHandler;

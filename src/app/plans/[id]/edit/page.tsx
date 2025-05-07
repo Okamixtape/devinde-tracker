@@ -4,7 +4,7 @@ import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
-import { BusinessPlanData } from "../services/interfaces/dataModels";
+import { BusinessPlanData } from "@/app/services/interfaces/dataModels";
 import { getBusinessPlanService } from '@/app/services/serviceFactory';
 import { SectionManager } from '@/app/components/section/SectionManager';
 

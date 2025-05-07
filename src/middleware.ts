@@ -8,10 +8,12 @@
  * ce middleware pourra être réactivé pour assurer une protection côté serveur.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+// NextRequest est conservé pour référence et sera utilisé quand le middleware sera réactivé
+import { /* NextRequest kept for future use */ NextResponse } from 'next/server';
 
 // Liste des chemins qui nécessitent une authentification
-const protectedPaths = [
+// Commenté car temporairement inutilisé - Sera réactivé avec le middleware
+/*const protectedPaths = [
   '/plans',
   '/dashboard',
   '/financials',
@@ -22,19 +24,21 @@ const protectedPaths = [
   '/profile',
   '/monitoring',
   '/pitch',
-];
+];*/
 
 // Liste des chemins publics (ne nécessitent pas d'authentification)
-const publicPaths = [
+// Commenté car temporairement inutilisé - Sera réactivé avec le middleware
+/*const publicPaths = [
   '/',
   '/login',
   '/register',
   '/resources',
   '/documentation',
-];
+];*/
 
 // Nom du cookie d'authentification
-const AUTH_COOKIE = 'auth_token';
+// Commenté car temporairement inutilisé - Sera réactivé avec le middleware
+// const AUTH_COOKIE = 'auth_token';
 
 /**
  * Middleware Next.js pour la protection des routes - TEMPORAIREMENT DÉSACTIVÉ
@@ -42,7 +46,8 @@ const AUTH_COOKIE = 'auth_token';
  * Pour éviter tout conflit avec l'authentification côté client,
  * ce middleware est désactivé et retourne NextResponse.next() systématiquement.
  */
-export function middleware(request: NextRequest) {
+// Le paramètre request est intentionnellement omis car le middleware est désactivé
+export function middleware(/* request: NextRequest */) {
   // DÉSACTIVÉ TEMPORAIREMENT - Retourner NextResponse.next() dans tous les cas
   return NextResponse.next();
   

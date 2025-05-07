@@ -18,8 +18,8 @@ import {
   LineChart,
   Target
 } from "lucide-react";
-import { UI_CLASSES } from "../styles/ui-classes";
-import useBusinessPlanData from "../hooks/useBusinessPlanData";
+import { UI_CLASSES } from "@/app/styles/ui-classes";
+import useBusinessPlanData from "@/app/hooks/useBusinessPlanData";
 import type { BusinessPlanData, SectionKey } from "./types";
 
 // Types d'une section du business plan avec ses métadonnées

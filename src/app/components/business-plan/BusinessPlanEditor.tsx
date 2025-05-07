@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { getBusinessPlanService } from '@/app/services/serviceFactory';
-import { BusinessPlanData } from '@/app/services/interfaces/dataModels';
+import { BusinessPlanData } from "@/app/services/interfaces/dataModels";
 
 interface BusinessPlanEditorProps {
   businessPlanId?: string;

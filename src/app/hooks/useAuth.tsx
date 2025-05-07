@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authService, UserData, UserRole } from '../services/core/authService';
+import { authService, UserData, UserRole } from "@/app/services/core/authService";
 
 // Configuration: mettre à true pour désactiver l'authentification pendant le développement
 const DEV_MODE_BYPASS_AUTH = true;
@@ -87,7 +87,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
     checkAuth();
-  }, [authService]);
+  }, []); // authService is a singleton import, not a prop or state, so it doesn't need to be in deps
   
   // Authentifier un utilisateur
   const login = useCallback(async (email: string, password: string): Promise<boolean> => {
@@ -117,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  }, [authService]);
+  }, []); // authService is a singleton import, not a prop or state
   
   // Enregistrer un nouvel utilisateur
   const register = useCallback(async (email: string, password: string, name: string): Promise<boolean> => {
@@ -147,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  }, [authService]);
+  }, []); // authService is a singleton import, not a prop or state
   
   // Déconnecter l'utilisateur
   const logout = useCallback(async (): Promise<void> => {
@@ -171,7 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  }, [authService]);
+  }, []); // authService is a singleton import, not a prop or state
   
   // Vérifier si l'utilisateur a un rôle spécifique
   const hasRole = useCallback(async (role: UserRole): Promise<boolean> => {
@@ -181,7 +181,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (!user) return false;
     return await authService.hasRole(role);
-  }, [authService, user]);
+  }, [user]); // Only depend on user state, authService is a singleton import
   
   // Préparation du contexte
   const contextValue: AuthContextType = {

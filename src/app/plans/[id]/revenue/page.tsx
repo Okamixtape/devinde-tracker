@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { BusinessPlanData } from "../services/interfaces/dataModels";
-import { RevenueProjector } from '@/app/components/revenue/RevenueProjector';
+import { BusinessPlan } from "@/app/services/interfaces/serviceInterfaces";
+import { HourlyRate, ServicePackage, Subscription } from "@/app/services/interfaces/dataModels";
+import { RevenueProjector, RevenueProjectionData } from '@/app/components/revenue/RevenueProjector';
 import { 
   getBusinessPlanService, 
   getSectionService 
@@ -20,7 +21,7 @@ export default function RevenuePage() {
   const router = useRouter();
   const id = params?.id as string;
   
-  const [businessPlan, setBusinessPlan] = useState<BusinessPlanData | null>(null);
+  const [businessPlan, setBusinessPlan] = useState<BusinessPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -40,7 +41,7 @@ export default function RevenuePage() {
           setError(result.error?.message || 'Impossible de charger le plan d\'affaires');
           router.push('/plans');
         }
-      } catch (error) {
+      } catch (error: unknown) {
         setError(error instanceof Error ? error.message : 'Une erreur s\'est produite');
         router.push('/plans');
       } finally {
@@ -48,30 +49,37 @@ export default function RevenuePage() {
       }
     };
     
-    loadBusinessPlan();
-  }, [id, router]);
+    if (id) {
+      loadBusinessPlan();
+    }
+  }, [id, router, businessPlanService]);
   
-  // Handle saving projection data
-  const handleSaveProjections = async (projectionData: any) => {
+  // Handle saving projection data with proper type safety
+  const handleSaveProjections = async (projectionData: RevenueProjectionData) => {
     if (!businessPlan) return;
     
     try {
       // Update the business plan with new projection data
-      const updatedPlan = {
+      const updatedPlan: Partial<BusinessPlan> = {
         ...businessPlan,
         revenueProjections: projectionData
       };
       
       const result = await businessPlanService.updateItem(id, updatedPlan);
       
-      if (result.success) {
+      if (result.success && result.data) {
         setBusinessPlan(result.data);
         
         // Update section completion if there's a revenue section
-        const revenueSection = businessPlan.sections?.find(section => section.key === 'revenue');
+        const revenueSection = businessPlan.sections?.find(section => {
+          const sectionObj = section as Record<string, unknown>;
+          return sectionObj.key === 'revenue';
+        });
+        
         if (revenueSection) {
-          // Simply having done projections counts as 100% completion for this section
-          await sectionService.updateSectionCompletion(revenueSection.id, 100);
+          const sectionObj = revenueSection as Record<string, unknown>;
+          const sectionId = String(sectionObj.id);
+          await sectionService.updateSectionCompletion(sectionId, 100);
         }
       } else {
         setError(result.error?.message || 'Échec de l\'enregistrement des projections');
@@ -115,10 +123,11 @@ export default function RevenuePage() {
       
       <RevenueProjector
         businessPlanId={id}
-        hourlyRates={businessPlan.businessModel?.hourlyRates || []}
-        packages={businessPlan.businessModel?.packages || []}
-        subscriptions={businessPlan.businessModel?.subscriptions || []}
+        hourlyRates={(businessPlan as Record<string, unknown>).hourlyRates as HourlyRate[] || []}
+        packages={(businessPlan as Record<string, unknown>).packages as ServicePackage[] || []}
+        subscriptions={(businessPlan as Record<string, unknown>).subscriptions as Subscription[] || []}
         onSave={handleSaveProjections}
+        readOnly={false}
       />
     </div>
   );

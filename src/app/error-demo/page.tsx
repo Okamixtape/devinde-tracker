@@ -1,11 +1,11 @@
 'use client';
 
 import React from 'react';
-import { useToast } from '../components/error/ToastManager';
-import { useError } from '../context/ErrorContext';
-import { AppError, ErrorCategory, ErrorSeverity } from "../services/utils/errorHandling";
-import { useAsyncHandler } from '../hooks/useAsyncHandler';
-import { withLoading, LoadingIndicator } from '../components/error/WithLoading';
+import { useToast } from "@/app/components/error/ToastManager";
+import { useError } from "@/app/context/ErrorContext";
+import { AppError, ErrorCategory, ErrorSeverity } from "@/app/services/utils/errorHandling";
+import { useAsyncHandler } from "@/app/hooks/useAsyncHandler";
+import { withLoading, LoadingIndicator } from "@/app/components/error/WithLoading";
 
 // Fonction qui simule une opération async qui échoue après un délai
 const simulateErrorAfterDelay = (delay: number, shouldFail: boolean = true): Promise<string> => {
@@ -53,7 +53,7 @@ const ErrorDemoPage: React.FC = () => {
 
   // Handler pour afficher un toast d'erreur
   const handleErrorToast = () => {
-    showError('Une erreur s\'est produite', 'Erreur');
+    showError('Une erreur s\'est produite');
   };
 
   // Handler pour afficher une erreur complexe

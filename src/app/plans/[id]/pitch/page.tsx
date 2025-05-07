@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { BusinessPlanData, PitchData } from "../services/interfaces/dataModels";
+import { BusinessPlanData, PitchData } from "@/app/services/interfaces/dataModels";
 import { getBusinessPlanService } from '@/app/services/serviceFactory';
 
 // Interface locale pour les sections d'affichage uniquement

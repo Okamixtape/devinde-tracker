@@ -46,13 +46,14 @@ export interface UserSettingsData {
  */
 export interface Section {
   id: string;
-  businessPlanId?: string;
+  businessPlanId: string; // Changed from optional to required to match serviceInterfaces.ts
   key: string;
   title: string;
   icon: string;
   color: string;
   completion: number;
   route: string;
+  order: number;
   data?: Record<string, unknown>;
   updatedAt?: string;
 }

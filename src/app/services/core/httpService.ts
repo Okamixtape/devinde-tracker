@@ -18,7 +18,7 @@ const errorTrackingService = {
   }
 };
 // Importer les types d'erreur depuis le bon emplacement (à ajuster selon la structure du projet)
-import { AppError, ErrorSeverity } from "../services/utils/errorHandling";
+import { AppError, ErrorSeverity } from "@/app/services/utils/errorHandling";
 
 // Définition temporaire d'ErrorType s'il n'est pas disponible depuis errorHandling
 enum ErrorType {
@@ -110,10 +110,12 @@ export class HttpService {
       appError = error;
     } else if (error instanceof Response) {
       appError = new AppError(
-        `HTTP Error: ${error.status} ${error.statusText}`,
-        error.status.toString(),
-        ErrorSeverity.ERROR,
-        { url, status: error.status }
+        'NETWORK_ERROR',
+        { 
+          message: `HTTP Error: ${error.status} ${error.statusText}`,
+          severity: ErrorSeverity.ERROR,
+          details: { url, status: error.status }
+        }
       );
     } else {
       // Gestion sécurisée pour les erreurs de type unknown
@@ -121,10 +123,12 @@ export class HttpService {
         error instanceof Error ? error.message : 'Unknown HTTP error';
       
       appError = new AppError(
-        errorMessage,
-        'HTTP_ERROR',
-        ErrorSeverity.ERROR,
-        { url, error: String(error) }
+        'NETWORK_ERROR',
+        {
+          message: errorMessage,
+          severity: ErrorSeverity.ERROR,
+          details: { url, error: String(error) }
+        }
       );
     }
 
@@ -169,10 +173,12 @@ export class HttpService {
       
       if (!response.ok) {
         throw new AppError(
-          `HTTP Error: ${response.status} ${response.statusText}`,
-          response.status.toString(),
-          ErrorSeverity.ERROR,
-          { url: fullUrl, status: response.status }
+          'NETWORK_ERROR',
+          { 
+            message: `HTTP Error: ${response.status} ${response.statusText}`,
+            severity: ErrorSeverity.ERROR,
+            details: { url: fullUrl, status: response.status }
+          }
         );
       }
       

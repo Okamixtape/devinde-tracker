@@ -5,6 +5,21 @@ import { SearchQuery, SearchResults, FilterOption } from '../core/searchService'
 import { ServiceResult } from './dataModels';
 
 /**
+ * Section - Interface for business plan sections
+ */
+export interface Section {
+  id: string;
+  key: string;
+  title: string;
+  businessPlanId: string;
+  completion: number;
+  order: number;
+  data?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
  * Generic storage service interface - All storage services implement this
  */
 export interface StorageService<T> {
@@ -37,51 +52,72 @@ export interface StorageService<T> {
 /**
  * Business Plan Service - Specific operations for business plans
  */
-export interface BusinessPlanService extends StorageService<any> {
+// Define a proper BusinessPlan interface
+export interface BusinessPlan {
+  id: string;
+  name: string;
+  userId: string;
+  sections: Record<string, unknown>[];
+  createdAt: string;
+  updatedAt: string;
+  [key: string]: unknown;
+}
+
+export interface BusinessPlanService extends StorageService<BusinessPlan> {
   /**
    * Get business plans for a specific user
    */
-  getUserBusinessPlans(userId: string): Promise<ServiceResult<any[]>>;
+  getUserBusinessPlans(userId: string): Promise<ServiceResult<BusinessPlan[]>>;
   
   /**
    * Export a business plan to a specified format
    */
-  exportBusinessPlan(id: string, format?: string): Promise<ServiceResult<any>>;
+  exportBusinessPlan(id: string, format?: string): Promise<ServiceResult<unknown>>;
   
   /**
    * Import a business plan from external data
    */
-  importBusinessPlan(data: any): Promise<ServiceResult<any>>;
+  importBusinessPlan(data: Record<string, unknown>): Promise<ServiceResult<BusinessPlan>>;
   
   /**
    * Create a duplicate of an existing business plan
    */
-  duplicateBusinessPlan(id: string, newName?: string): Promise<ServiceResult<any>>;
+  duplicateBusinessPlan(id: string, newName?: string): Promise<ServiceResult<BusinessPlan>>;
 }
 
 /**
  * Section Service - For managing sections within a business plan
  */
-export interface SectionService {
+export interface SectionService extends StorageService<Section> {
   /**
    * Get all sections for a business plan
    */
-  getSections(businessPlanId: string): Promise<ServiceResult<any[]>>;
+  getSections(businessPlanId: string): Promise<ServiceResult<Section[]>>;
   
   /**
    * Update the completion status of a section
    */
-  updateSectionCompletion(id: string, completion: number): Promise<ServiceResult<any>>;
+  updateSectionCompletion(id: string, completion: number): Promise<ServiceResult<Section>>;
   
   /**
    * Enrich existing sections with missing sections from SECTIONS_CONFIG
    */
-  enrichSections(businessPlanId: string, existingSections: any[]): any[];
+  enrichSections(businessPlanId: string, existingSections: Section[]): Section[];
   
   /**
-   * Get an icon component for a section key
+   * Get section configuration by key
    */
-  getIconForSection(sectionKey: string): any;
+  getSectionByKey(key: string): Section | null;
+
+  /**
+   * Get section display title
+   */
+  getSectionTitle(key: string): string;
+
+  /**
+   * Get icon for section by key
+   */
+  getIconForSection(key: string): string;
   
   /**
    * Get description for a section key
@@ -91,7 +127,7 @@ export interface SectionService {
   /**
    * Get complete section definition by key
    */
-  getSectionByKey(key: string): any;
+  getSectionByKey(key: string): Section | null;
   
   /**
    * Get section display title

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import SearchBar from '@/app/components/search/SearchBar';
 import SearchFilters from '@/app/components/search/SearchFilters';
@@ -18,12 +18,12 @@ const SearchPage: React.FC = () => {
   const initialSearchTerm = searchParams.get('q') || '';
   
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
-  const [filters, setFilters] = useState<Record<string, any>>({});
+  const [filters, setFilters] = useState<Record<string, unknown>>({});
   const [results, setResults] = useState<SearchResultsType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [filterOptions, setFilterOptions] = useState<FilterOption[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const searchService = new SearchServiceImpl();
+  const searchService = useMemo(() => new SearchServiceImpl(), []);
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Récupération des options de filtrage disponibles
@@ -40,7 +40,7 @@ const SearchPage: React.FC = () => {
     };
 
     fetchFilterOptions();
-  }, []);
+  }, [searchService]);
 
   // Fonction de recherche qui sera appelée à chaque modification des critères
   const performSearch = useCallback(async () => {
@@ -75,7 +75,7 @@ const SearchPage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearchTerm, filters, currentPage]);
+  }, [debouncedSearchTerm, filters, currentPage, searchService]);
 
   // Exécuter la recherche lorsque les critères changent
   useEffect(() => {
@@ -91,7 +91,7 @@ const SearchPage: React.FC = () => {
     setSearchTerm(term);
   };
 
-  const handleFilterChange = (newFilters: Record<string, any>) => {
+  const handleFilterChange = (newFilters: Record<string, unknown>) => {
     setFilters(newFilters);
   };
 
@@ -147,7 +147,7 @@ const SearchPage: React.FC = () => {
               <div className="text-center py-12 bg-gray-50 rounded-lg">
                 <div className="text-gray-400 text-5xl mb-4">🔍</div>
                 <h3 className="text-xl font-medium text-gray-700 mb-2">
-                  Que recherchez-vous aujourd'hui ?
+                  Que recherchez-vous aujourd&apos;hui ?
                 </h3>
                 <p className="text-gray-500">
                   Saisissez un terme de recherche pour trouver des plans, tâches, projets et utilisateurs.

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { BusinessPlanData, MarketAnalysisData } from "../services/interfaces/dataModels";
+import { BusinessPlanData, MarketAnalysisData } from "@/app/services/interfaces/dataModels";
 import { TargetAudienceAnalyzer } from '@/app/components/market-analysis/TargetAudienceAnalyzer';
 import { 
   getBusinessPlanService, 

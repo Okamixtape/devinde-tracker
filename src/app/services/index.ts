@@ -2,9 +2,37 @@
  * Services Index - Central export point for all services
  */
 
-// Service Interfaces
-export * from "../services/interfaces/serviceInterfaces";
-export * from "../services/interfaces/dataModels";
+// Service Interfaces - Export façon sélective pour éviter les collisions
+// Exporter de serviceInterfaces.ts
+export type {
+  StorageService,
+  BusinessPlanService,
+  SectionService,
+  Section as SectionInterface,
+  BusinessPlan,
+  AuthService,
+  UserPreferences
+} from "./interfaces/serviceInterfaces";
+
+// Exporter de dataModels.ts (sans l'interface Section qui est déjà exportée)
+export type {
+  BusinessPlanData,
+  BusinessPlanMetaData,
+  UserSettingsData,
+  PitchData,
+  ServicesData,
+  BusinessModelData,
+  MarketAnalysisData,
+  FinancialsData,
+  ActionPlanData,
+  ServiceResult,
+  ServiceError,
+  HourlyRate,
+  ServicePackage,
+  Subscription,
+  Milestone,
+  Task
+} from "./interfaces/dataModels";
 
 // Core Services
 export { LocalStorageService } from './core/localStorageService';

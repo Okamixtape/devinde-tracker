@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { HourlyRate, ServicePackage, Subscription } from "../services/interfaces/dataModels";
+import { HourlyRate, ServicePackage, Subscription } from "@/app/services/interfaces/dataModels";
 
 interface RevenueProjectorProps {
   businessPlanId: string;
@@ -12,7 +12,7 @@ interface RevenueProjectorProps {
   readOnly?: boolean;
 }
 
-interface ProjectionSettings {
+export interface ProjectionSettings {
   months: number;
   growthRate: number;
   clientRetentionRate: number;
@@ -30,7 +30,7 @@ interface ProjectionSettings {
   };
 }
 
-interface RevenueProjectionData {
+export interface RevenueProjectionData {
   businessPlanId: string;
   projectionSettings: ProjectionSettings;
   projectionResults: {
@@ -55,7 +55,7 @@ interface RevenueProjectionData {
   };
 }
 
-interface ProjectionData {
+export interface ProjectionData {
   month: number;
   hourlyRevenue: number;
   packageRevenue: number;

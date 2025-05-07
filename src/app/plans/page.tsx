@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getBusinessPlanService } from '../services/serviceFactory';
-import { BusinessPlanData } from "../services/interfaces/dataModels";
-import ProtectPage from '../components/auth/ProtectPage';
+import { getBusinessPlanService } from "@/app/services/serviceFactory";
+import { BusinessPlanData } from "@/app/services/interfaces/dataModels";
+import ProtectPage from "@/app/components/auth/ProtectPage";
 
 /**
  * BusinessPlans Page

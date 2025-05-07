@@ -7,7 +7,7 @@ import {
   SortingParams, 
   FilterParams, 
   processData 
-} from "../services/utils/dataOperations";
+} from "@/app/services/utils/dataOperations";
 
 interface UseDataOperationProps<T> {
   initialData?: T[];

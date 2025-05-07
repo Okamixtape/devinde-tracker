@@ -6,8 +6,8 @@
  * Utilise localStorage pour le stockage local persistant des données.
  */
 
-import { secureLocalStorage } from '../utils/security';
-import { getCurrentTimestamp, generateUUID } from '../utils/helpers';
+import { secureLocalStorage } from "@/app/services/utils/security";
+import { getCurrentTimestamp, generateUUID } from "@/app/services/utils/helpers";
 
 // Clé de stockage pour les données d'analytique
 export const ANALYTICS_STORAGE_KEY = 'devinde-tracker-analytics';
@@ -107,7 +107,13 @@ class AnalyticsService {
     try {
       const storedConfig = secureLocalStorage.getItem('analytics-config');
       if (storedConfig) {
-        return JSON.parse(storedConfig);
+        // Vérifier si storedConfig est déjà un objet ou une chaîne
+        if (typeof storedConfig === 'string') {
+          return JSON.parse(storedConfig);
+        } else if (typeof storedConfig === 'object') {
+          // Si c'est déjà un objet, le retourner directement
+          return storedConfig as AnalyticsConfig;
+        }
       }
     } catch (error) {
       console.error('Erreur lors du chargement de la configuration analytics:', error);
@@ -141,7 +147,13 @@ class AnalyticsService {
     try {
       const storedEvents = secureLocalStorage.getItem(ANALYTICS_STORAGE_KEY);
       if (storedEvents) {
-        return JSON.parse(storedEvents);
+        // Vérifier si storedEvents est déjà un objet ou une chaîne
+        if (typeof storedEvents === 'string') {
+          return JSON.parse(storedEvents);
+        } else if (Array.isArray(storedEvents)) {
+          // Si c'est déjà un tableau, le retourner directement
+          return storedEvents as AnalyticsEvent[];
+        }
       }
     } catch (error) {
       console.error('Erreur lors du chargement des événements analytics:', error);

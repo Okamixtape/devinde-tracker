@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { BusinessPlanData, ActionPlanData } from "../services/interfaces/dataModels";
+import { BusinessPlanData, ActionPlanData } from "@/app/services/interfaces/dataModels";
 import { ActionPlanManager } from '@/app/components/action-plan/ActionPlanManager';
 import { 
   getBusinessPlanService, 

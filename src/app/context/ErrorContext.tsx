@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react';
-import { ErrorResponse, AppError, handleError, ErrorCategory, ErrorSeverity } from "../services/utils/errorHandling";
-import ErrorNotification from '../components/error/ErrorNotification';
+import { ErrorResponse, AppError, handleError, ErrorCategory, ErrorSeverity } from "@/app/services/utils/errorHandling";
+import ErrorNotification from "@/app/components/error/ErrorNotification";
 
 // Interface pour définir la forme du contexte d'erreur
 interface ErrorContextType {

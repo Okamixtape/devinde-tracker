@@ -5,8 +5,8 @@
  * Utilise l'API Web Performance et stocke les données dans localStorage.
  */
 
-import { secureLocalStorage } from '../utils/security';
-import { getCurrentTimestamp, generateUUID } from '../utils/helpers';
+import { secureLocalStorage } from "@/app/services/utils/security";
+import { getCurrentTimestamp, generateUUID } from "@/app/services/utils/helpers";
 import { analyticsService, AnalyticsEventType } from './analyticsService';
 
 // Clé de stockage pour les données de performance
@@ -68,6 +68,7 @@ class PerformanceService {
   private initialized: boolean = false;
   private webVitals: WebVitals = {};
   private sessionId: string;
+  private metaData: Map<string, unknown> = new Map();
 
   private constructor() {
     this.config = this.loadConfig();
@@ -100,7 +101,7 @@ class PerformanceService {
     this.initialized = true;
 
     // Analytique pour l'initialisation du service
-    analyticsService.trackEvent('performance_monitoring_initialized', {
+    analyticsService.trackEvent(AnalyticsEventType.FEATURE_USE, {
       sessionId: this.sessionId,
       userAgent: navigator.userAgent
     });
@@ -182,15 +183,20 @@ class PerformanceService {
       if (this.config.collectResourceTiming) {
         const resourceObserver = new PerformanceObserver((entries) => {
           entries.getEntries().forEach((entry) => {
+            // Cast to PerformanceResourceTiming to access initiatorType
+            const resourceEntry = entry as PerformanceResourceTiming;
+            
             // Si l'entrée ne contient pas initiatorType, ne pas la traiter
-            if (!(entry as any).initiatorType) return;
+            if (!resourceEntry.initiatorType) return;
             
             // Ne pas traiter les ressources si elles ne sont pas pertinentes
-            const initiatorType = (entry as any).initiatorType;
+            const initiatorType = resourceEntry.initiatorType;
             if (initiatorType === 'beacon' || initiatorType === 'fetch' || initiatorType === 'xmlhttprequest') {
               return; // Les appels API sont déjà capturés par une autre méthode
             }
 
+            // Note: Entry was already cast to PerformanceResourceTiming above
+            
             this.logPerformanceEntry({
               type: PerformanceMetricType.RESOURCE_LOAD,
               name: entry.name,
@@ -199,7 +205,7 @@ class PerformanceService {
                 entryType: entry.entryType,
                 initiatorType,
                 startTime: entry.startTime,
-                responseEnd: entry.responseEnd
+                responseEnd: resourceEntry.responseEnd
               }
             });
           });
@@ -218,8 +224,8 @@ class PerformanceService {
             name: 'largest-contentful-paint',
             duration: lastEntry.startTime,
             details: {
-              element: (lastEntry as any).element ? (lastEntry as any).element.tagName : null,
-              size: (lastEntry as any).size || 0
+              element: 'element' in lastEntry && lastEntry.element ? (lastEntry.element as { tagName: string }).tagName : null,
+              size: 'size' in lastEntry ? (lastEntry.size as number) : 0
             }
           });
         }
@@ -231,8 +237,16 @@ class PerformanceService {
         let cumulativeLayoutShift = 0;
         
         entries.getEntries().forEach((entry) => {
-          if (!(entry as any).hadRecentInput) {
-            cumulativeLayoutShift += (entry as any).value || 0;
+          // Cast to LayoutShift which is part of the Web API
+          interface LayoutShift extends PerformanceEntry {
+            hadRecentInput: boolean;
+            value: number;
+          }
+          
+          // First cast to unknown, then to LayoutShift to avoid direct conversion errors
+          const layoutShift = entry as unknown as LayoutShift;
+          if (!layoutShift.hadRecentInput) {
+            cumulativeLayoutShift += layoutShift.value || 0;
           }
         });
         
@@ -250,9 +264,20 @@ class PerformanceService {
       clsObserver.observe({ type: 'layout-shift', buffered: true });
 
       // Recueillir des données de mémoire à intervalles réguliers
-      if (this.config.collectMemory && (performance as any).memory) {
+      // Chrome-specific memory API
+      interface PerformanceMemory {
+        jsHeapSizeLimit: number;
+        totalJSHeapSize: number;
+        usedJSHeapSize: number;
+      }
+      
+      interface PerformanceWithMemory extends Performance {
+        memory?: PerformanceMemory;
+      }
+      
+      if (this.config.collectMemory && (performance as PerformanceWithMemory).memory) {
         setInterval(() => {
-          const memory = (performance as any).memory;
+          const memory = (performance as PerformanceWithMemory).memory!;
           
           this.logPerformanceEntry({
             type: PerformanceMetricType.MEMORY,
@@ -304,7 +329,7 @@ class PerformanceService {
           });
           
           // Analytique pour le chargement de page
-          analyticsService.trackEvent('page_load_performance', {
+          analyticsService.trackEvent(AnalyticsEventType.FEATURE_USE, {
             pageLoadTime,
             url: window.location.href
           });
@@ -324,7 +349,9 @@ class PerformanceService {
       const fidObserver = new PerformanceObserver((entries) => {
         const firstInput = entries.getEntries()[0];
         if (firstInput) {
-          const delay = firstInput.processingStart! - firstInput.startTime;
+          // Cast to PerformanceEventTiming to access processingStart
+          const firstInputTiming = firstInput as PerformanceEventTiming;
+          const delay = firstInputTiming.processingStart! - firstInput.startTime;
           
           this.webVitals.FID = delay;
           
@@ -333,9 +360,10 @@ class PerformanceService {
             name: 'first-input-delay',
             duration: delay,
             details: {
-              inputType: (firstInput as any).name,
+              inputType: 'name' in firstInput ? (firstInput as { name: string }).name : 'unknown',
               startTime: firstInput.startTime,
-              target: (firstInput as any).target ? (firstInput as any).target.tagName : null
+              target: 'target' in firstInput && (firstInput as { target?: { tagName: string } }).target ? 
+                (firstInput as { target: { tagName: string } }).target.tagName : null
             }
           });
         }
@@ -378,7 +406,19 @@ class PerformanceService {
   public startApiCall(endpoint: string): string {
     const callId = generateUUID();
     this.apiTimers.set(callId, performance.now());
+    // Enregistrer l'endpoint pour des analyses futures
+    this.recordApiEndpoint(callId, endpoint);
     return callId;
+  }
+  
+  // Enregistrer l'endpoint pour des analyses futures (structure préparée pour des améliorations)
+  private recordApiEndpoint(callId: string, endpoint: string): void {
+    // Simplement stocker pour l'instant, cela permettra d'analyser les performances par endpoint plus tard
+    if (!this.metaData.has('apiEndpoints')) {
+      this.metaData.set('apiEndpoints', new Map<string, string>());
+    }
+    const endpointMap = this.metaData.get('apiEndpoints') as Map<string, string>;
+    endpointMap.set(callId, endpoint);
   }
 
   // Terminer la mesure d'une API call
@@ -479,7 +519,8 @@ class PerformanceService {
       const storedConfig = secureLocalStorage.getItem('devinde-tracker-performance-config');
       
       if (storedConfig) {
-        return JSON.parse(storedConfig);
+        // Check if storedConfig is already an object or a string that needs to be parsed
+        return typeof storedConfig === 'string' ? JSON.parse(storedConfig) as PerformanceConfig : storedConfig as PerformanceConfig;
       }
     } catch (e) {
       console.warn('Failed to load performance config:', e);
@@ -511,7 +552,8 @@ class PerformanceService {
       const storedEntries = secureLocalStorage.getItem(PERFORMANCE_STORAGE_KEY);
       
       if (storedEntries) {
-        return JSON.parse(storedEntries);
+        // Check if storedEntries is already an object or a string that needs to be parsed
+        return typeof storedEntries === 'string' ? JSON.parse(storedEntries) as PerformanceEntry[] : storedEntries as PerformanceEntry[];
       }
     } catch (e) {
       console.warn('Failed to load stored performance entries:', e);

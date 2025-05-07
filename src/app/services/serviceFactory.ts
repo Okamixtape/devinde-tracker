@@ -12,14 +12,14 @@ import {
   SearchService,
   StorageService
 } from "@/app/services/interfaces/serviceInterfaces";
-import { MigrationService } from '@/app/services/interfaces/migrationService';
+import { MigrationService } from "@/app/services/interfaces/migrationService";
 import { BusinessPlanServiceImpl } from '@/app/services/core/businessPlanService';
 import { LocalStorageService } from '@/app/services/core/localStorageService';
 import { authService } from '@/app/services/core/authService';
 import { SectionServiceImpl } from '@/app/services/core/sectionService';
 import { SearchServiceImpl } from '@/app/services/core/searchService';
 import { MigrationServiceImpl } from '@/app/services/core/migrationService';
-import { I18nService } from '@/app/services/interfaces/i18nService';
+import { I18nService } from "@/app/services/interfaces/i18nService";
 import { I18nServiceImpl } from '@/app/services/core/i18nService';
 
 // Singleton instances

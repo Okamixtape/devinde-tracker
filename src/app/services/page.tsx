@@ -1,10 +1,10 @@
 "use client";
 import React from "react";
-import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
-import ServicesSection from "../components/ServicesSection";
-import Layout from "../components/Layout";
-import { useSectionsData } from "../hooks/useSectionsData";
-import { BusinessPlanData } from "../components/types";
+import { useBusinessPlanData } from "@/app/hooks/useBusinessPlanData";
+import ServicesSection from "@/app/components/ServicesSection";
+import Layout from "@/app/components/Layout";
+import { useSectionsData } from "@/app/hooks/useSectionsData";
+import { BusinessPlanData } from "@/app/components/types";
 
 export default function ServicesPage() {
   const { businessPlanData, addListItem, removeListItem, exportData, importData } = useBusinessPlanData();

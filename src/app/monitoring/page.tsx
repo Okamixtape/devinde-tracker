@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import MonitoringDashboard from '../components/monitoring/MonitoringDashboard';
+import MonitoringDashboard from "@/app/components/monitoring/MonitoringDashboard";
 
 /**
  * Monitoring Page

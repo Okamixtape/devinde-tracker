@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { useErrorHandling } from '@/app/providers/ErrorHandlingProvider';
-import { BusinessPlanService, SectionService, AuthService } from "../services/interfaces/serviceInterfaces";
-import { ServiceDoc } from '@/app/services/utils/documentation';
+import { BusinessPlanService, SectionService, AuthService } from "@/app/services/interfaces/serviceInterfaces";
+import { ServiceDoc } from "@/app/services/utils/documentation";
 
 // Define a service type that can be any of our service interfaces
 type AnyService = BusinessPlanService | SectionService | AuthService;

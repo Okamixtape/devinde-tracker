@@ -2,9 +2,9 @@
  * SectionService - Implementation of section data operations
  */
 import { SectionService } from '../interfaces/serviceInterfaces';
-import { ServiceResult, Section, BusinessPlanData } from '../interfaces/dataModels';
+import { ServiceResult, Section } from '../interfaces/dataModels';
 import { generateUUID, getCurrentTimestamp } from '../utils/helpers';
-import { SECTIONS_CONFIG, SectionConfig } from '@/app/config/sections-config';
+import { SECTIONS_CONFIG } from '../../config/sections-config';
 import { BusinessPlanServiceImpl } from './businessPlanService';
 
 /**
@@ -39,15 +39,25 @@ export class SectionServiceImpl implements SectionService {
         if (!plan.sections) continue;
         
         // Find the section with matching ID
-        const section = plan.sections.find((s: Section) => s.id === id);
+        const section = plan.sections.find(s => s.id === id);
         
         if (section) {
           return {
             success: true,
             data: {
               ...section,
-              businessPlanId: plan.id || ''
-            }
+              id: section.id || '',
+              key: section.key || '',
+              title: section.title || '',
+              icon: section.icon || 'file',
+              color: section.color || '#4285F4',
+              route: section.route || '',
+              completion: section.completion || 0,
+              order: section.order || 0, 
+              businessPlanId: plan.id || '',
+              data: section.data || {},
+              updatedAt: section.updatedAt || new Date().toISOString()
+            } as Section
           };
         }
       }
@@ -94,10 +104,12 @@ export class SectionServiceImpl implements SectionService {
         if (!plan.sections) continue;
         
         // Add business plan ID to each section
-        const sectionsWithPlanId = plan.sections.map((section: Section) => ({
-          ...section,
-          businessPlanId: plan.id || ''
-        }));
+        const sectionsWithPlanId = plan.sections.map(section => {
+          return {
+            ...(section as unknown as object),
+            businessPlanId: plan.id || ''
+          } as Section;
+        });
         
         allSections.push(...sectionsWithPlanId);
       }
@@ -121,8 +133,32 @@ export class SectionServiceImpl implements SectionService {
   /**
    * Get section configuration by key
    */
-  getSectionByKey(key: string): SectionConfig | undefined {
-    return SECTIONS_CONFIG.find(section => section.key === key);
+  getSectionByKey(key: string): Section | null {
+    const config = SECTIONS_CONFIG.find(section => section.key === key);
+    if (!config) return null;
+    
+    // Create a Section instance from config
+    return {
+      id: `section-${config.key}`,
+      businessPlanId: '', // Will be set when creating a real section
+      key: config.key,
+      title: config.title,
+      icon: config.icon,
+      color: config.color || '#4285F4',
+      route: config.route || `/section/${config.key}`,
+      completion: 0,
+      order: config.order || 0,
+      data: {},
+      updatedAt: new Date().toISOString()
+    };
+  }
+  
+  /**
+   * Get icon for a section
+   */
+  getIconForSection(sectionKey: string): string {
+    const config = SECTIONS_CONFIG.find(section => section.key === sectionKey);
+    return config?.icon || 'file';
   }
 
   /**
@@ -138,7 +174,7 @@ export class SectionServiceImpl implements SectionService {
    */
   enrichSections(businessPlanId: string, existingSections: Section[]): Section[] {
     // Récupérer tous les identifiants de sections existantes
-    const existingKeys = existingSections.map((s: Section) => s.key);
+    const existingKeys = existingSections.map(s => s.key);
     
     // Filtrer les sections de configuration qui ne sont pas déjà présentes
     const missingSections = SECTIONS_CONFIG.filter(config => !existingKeys.includes(config.key));
@@ -158,20 +194,13 @@ export class SectionServiceImpl implements SectionService {
         businessPlanId,
         updatedAt: now,
         completion: 0,
+        order: config.order || 0,
         data: {}
       } as Section;
     });
     
     // Combiner les sections existantes et nouvelles
     return [...existingSections, ...newSections];
-  }
-
-  /**
-   * Get an icon component for a section key
-   */
-  getIconForSection(sectionKey: string): string {
-    const section = this.getSectionByKey(sectionKey);
-    return section ? section.icon : 'grid'; // Icône par défaut
   }
 
   /**
@@ -219,10 +248,12 @@ export class SectionServiceImpl implements SectionService {
       }
       
       // Add business plan ID to each section
-      const sectionsWithPlanId = plan.sections.map((section: Section) => ({
-        ...section,
-        businessPlanId
-      }));
+      const sectionsWithPlanId = plan.sections.map(section => {
+        return {
+          ...(section as unknown as object),
+          businessPlanId: plan.id || ''
+        } as Section;
+      });
       
       return {
         success: true,
@@ -273,12 +304,13 @@ export class SectionServiceImpl implements SectionService {
         businessPlanId: section.businessPlanId,
         key: section.key || `section-${Date.now()}`,
         title: section.title || 'New Section',
-        icon: section.icon || 'file',
+        icon: section.icon || this.getIconForSection(section.key || ''),
         color: section.color || '#4285F4',
         completion: section.completion || 0,
         route: section.route || `/section/${section.key || `section-${Date.now()}`}`,
+        order: section.order || 0,
         data: section.data || {},
-        updatedAt: new Date(getCurrentTimestamp()).toISOString()
+        updatedAt: new Date().toISOString()
       };
       
       // Update the business plan with the new section
@@ -286,8 +318,8 @@ export class SectionServiceImpl implements SectionService {
       const updatedSections = [...currentSections, newSection];
       
       const updateResult = await this.businessPlanService.updateItem(section.businessPlanId, {
-        sections: updatedSections
-      } as Partial<BusinessPlanData>);
+        sections: updatedSections as unknown as Record<string, unknown>[]
+      });
       
       if (!updateResult.success) {
         return {
@@ -360,12 +392,12 @@ export class SectionServiceImpl implements SectionService {
       }
       
       // Find and update the section
-      const updatedSections = plan.sections.map((s: Section) => {
+      const updatedSections = plan.sections.map(s => {
         if (s.id === id) {
           return {
             ...s,
             ...sectionUpdate,
-            updatedAt: new Date(getCurrentTimestamp()).toISOString()
+            updatedAt: new Date().toISOString()
           };
         }
         return s;
@@ -373,8 +405,8 @@ export class SectionServiceImpl implements SectionService {
       
       // Update the business plan with the updated sections
       const updateResult = await this.businessPlanService.updateItem(businessPlanId, {
-        sections: updatedSections
-      } as Partial<BusinessPlanData>);
+        sections: updatedSections as unknown as Record<string, unknown>[]
+      });
       
       if (!updateResult.success) {
         return {
@@ -384,7 +416,7 @@ export class SectionServiceImpl implements SectionService {
       }
       
       // Get the updated section
-      const updatedSection = updatedSections.find((s: Section) => s.id === id);
+      const updatedSection = updatedSections.find(s => s.id === id);
       
       if (!updatedSection) {
         return {
@@ -401,7 +433,7 @@ export class SectionServiceImpl implements SectionService {
         data: {
           ...updatedSection,
           businessPlanId
-        }
+        } as Section
       };
     } catch (e) {
       return {
@@ -419,19 +451,29 @@ export class SectionServiceImpl implements SectionService {
    * Update the completion status of a section
    */
   async updateSectionCompletion(id: string, completion: number): Promise<ServiceResult<Section>> {
-    // Validate completion value
-    if (completion < 0 || completion > 100) {
+    try {
+      // Validate completion value
+      if (completion < 0 || completion > 100) {
+        return {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: 'Completion value must be between 0 and 100'
+          }
+        };
+      }
+      
+      // Use the updateItem method with just the completion field
+      return this.updateItem(id, { completion });
+    } catch (e) {
       return {
         success: false,
         error: {
-          code: 'VALIDATION_ERROR',
-          message: 'Completion value must be between 0 and 100'
+          code: 'UPDATE_COMPLETION_ERROR',
+          message: `Failed to update section completion: ${e instanceof Error ? e.message : String(e)}`
         }
       };
     }
-    
-    // Use the updateItem method with just the completion field
-    return this.updateItem(id, { completion });
   }
 
   /**
@@ -485,12 +527,12 @@ export class SectionServiceImpl implements SectionService {
       }
       
       // Filter out the section to delete
-      const updatedSections = plan.sections.filter((s: Section) => s.id !== id);
+      const updatedSections = plan.sections.filter(s => s.id !== id);
       
       // Update the business plan with the filtered sections
       const updateResult = await this.businessPlanService.updateItem(businessPlanId, {
-        sections: updatedSections
-      } as Partial<BusinessPlanData>);
+        sections: updatedSections as unknown as Record<string, unknown>[]
+      });
       
       if (!updateResult.success) {
         return {
@@ -540,6 +582,7 @@ export class SectionServiceImpl implements SectionService {
       icon: sectionConfig.icon,
       color: sectionConfig.color,
       route: sectionConfig.route,
+      order: sectionConfig.order,
       data: {}
     });
   }
@@ -586,18 +629,30 @@ export class SectionServiceImpl implements SectionService {
       }
       
       // Create a new ordered array of sections
-      const reorderedSections = sectionIds.map((id) => {
-        return plan.sections!.find((s) => s.id === id)!;
+      const reorderedSections = sectionIds.map((id, index) => {
+        const section = plan.sections!.find((s) => s.id === id)!;
+        return {
+          ...section,
+          order: index
+        };
       });
       
       // Add any sections that weren't in the reorder list
-      const unorderedSections = plan.sections.filter((s) => !sectionIds.includes(s.id));
-      reorderedSections.push(...unorderedSections);
+      const unorderedSections = plan.sections.filter((s) => !sectionIds.includes(s.id as string));
+      
+      // Ajouter l'ordre aux sections non ordonnées avant de les ajouter
+      const startOrder = reorderedSections.length;
+      const processedUnorderedSections = unorderedSections.map((s, index) => ({
+        ...s,
+        order: startOrder + index
+      }));
+      
+      reorderedSections.push(...processedUnorderedSections);
       
       // Update the business plan with the reordered sections
       const updateResult = await this.businessPlanService.updateItem(businessPlanId, {
-        sections: reorderedSections
-      } as Partial<BusinessPlanData>);
+        sections: reorderedSections as unknown as Record<string, unknown>[]
+      });
       
       if (!updateResult.success) {
         return {
@@ -610,7 +665,7 @@ export class SectionServiceImpl implements SectionService {
       const sectionsWithPlanId = reorderedSections.map((section) => ({
         ...section,
         businessPlanId
-      }));
+      })) as Section[];
       
       return {
         success: true,

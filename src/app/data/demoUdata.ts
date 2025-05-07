@@ -1,6 +1,6 @@
 // Données de démonstration pour différents profils
 
-import { BusinessPlanData } from "../components/types";
+import { BusinessPlanData } from "@/app/components/types";
 
 // Développeur web freelance
 export const webFreelanceData: BusinessPlanData = {

@@ -5,10 +5,10 @@
  * Cette page sera supprimée dans une future version.
  */
 import React from "react";
-import { useBusinessPlanData } from "../hooks/useBusinessPlanData";
-import PricingSection from "../components/PricingSection";
-import Layout from "../components/Layout";
-import { useSectionsData } from "../hooks/useSectionsData";
+import { useBusinessPlanData } from "@/app/hooks/useBusinessPlanData";
+import PricingSection from "@/app/components/PricingSection";
+import Layout from "@/app/components/Layout";
+import { useSectionsData } from "@/app/hooks/useSectionsData";
 
 export default function BusinessModelPage() {
   const { businessPlanData, updateData, exportData, importData } = useBusinessPlanData();

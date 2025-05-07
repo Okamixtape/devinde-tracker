@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { BusinessPlanData, Section } from "../services/interfaces/dataModels";
+import { BusinessPlanData, Section } from "@/app/services/interfaces/dataModels";
 import { SECTIONS_CONFIG, SECTION_ORDER } from '@/app/config/sections-config';
 
 // Types pour les propriétés du composant

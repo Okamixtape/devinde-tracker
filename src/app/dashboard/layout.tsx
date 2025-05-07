@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import ProtectedRoute from '../components/auth/ProtectedRoute';
+import ProtectedRoute from "@/app/components/auth/ProtectedRoute";
 
 export default function DashboardLayout({
   children,

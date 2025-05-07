@@ -7,10 +7,10 @@ import {
   handleError,
   ErrorCategory,
   ErrorSeverity 
-} from "../services/utils/errorHandling";
-import ErrorNotification from '../components/error/ErrorNotification';
-import ErrorBoundary from '../components/error/ErrorBoundary';
-import { ServiceResult } from "../services/interfaces/dataModels";
+} from "@/app/services/utils/errorHandling";
+import ErrorNotification from "@/app/components/error/ErrorNotification";
+import ErrorBoundary from "@/app/components/error/ErrorBoundary";
+import { ServiceResult } from "@/app/services/interfaces/dataModels";
 
 // Define the context shape
 interface ErrorHandlingContextType {
@@ -78,7 +78,8 @@ export const ErrorHandlingProvider: React.FC<ErrorHandlingProviderProps> = ({
     if (!result.success || !result.data) {
       if (result.error) {
         // Convert ServiceResult error to AppError
-        const appError = new AppError(result.error.code || 'UNKNOWN_ERROR', {
+        // Utiliser un code d'erreur valide, 'UNKNOWN_ERROR' est un code valide de ErrorCodes
+        const appError = new AppError('UNKNOWN_ERROR', {
           message: result.error.message || 'An operation failed',
           details: result.error.details,
           category: ErrorCategory.DATA,

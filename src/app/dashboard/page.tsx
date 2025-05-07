@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getBusinessPlanService } from '../services/serviceFactory';
+import { getBusinessPlanService } from "@/app/services/serviceFactory";
 
 /**
  * Composant DashboardPage

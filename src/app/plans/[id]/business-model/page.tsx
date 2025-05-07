@@ -2,7 +2,46 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { BusinessPlanData } from "../services/interfaces/dataModels";
+import { BusinessPlan } from "@/app/services/interfaces/serviceInterfaces";
+
+// Interfaces locales pour ne pas conflictuer avec d'autres définitions
+interface HourlyRate {
+  name: string;
+  rate: number;
+  description?: string;
+}
+
+interface Package {
+  name: string;
+  price: number;
+  description?: string;
+  features?: string[];
+}
+
+interface Subscription {
+  name: string;
+  price: number;
+  period: string;
+  description?: string;
+  features?: string[];
+}
+
+// Interface pour le modèle d'affaires
+interface BusinessModelData {
+  valueProposition?: string[];
+  customerSegments?: string[];
+  channels?: string[];
+  customerRelationships?: string[];
+  keyResources?: string[];
+  keyActivities?: string[];
+  keyPartners?: string[];
+  costStructure?: string[];
+  revenueStreams?: string[];
+  // Structure de tarification
+  hourlyRates?: HourlyRate[];
+  packages?: Package[];
+  subscriptions?: Subscription[];
+}
 import { getBusinessPlanService } from '@/app/services/serviceFactory';
 import { PricingImpactVisualizer } from '@/app/components/business-model/PricingImpactVisualizer';
 
@@ -14,12 +53,11 @@ interface BusinessModelSection {
 }
 
 export default function BusinessModelPage() {
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = useParams() as { id: string };
   const businessPlanService = getBusinessPlanService();
   
   const [loading, setLoading] = useState<boolean>(true);
-  const [businessPlan, setBusinessPlan] = useState<BusinessPlanData | null>(null);
+  const [businessPlan, setBusinessPlan] = useState<BusinessPlan | null>(null);
   const [error, setError] = useState<string | null>(null);
   
   useEffect(() => {
@@ -28,7 +66,7 @@ export default function BusinessModelPage() {
       try {
         const result = await businessPlanService.getItem(id);
         if (result.success && result.data) {
-          setBusinessPlan(result.data);
+          setBusinessPlan(result.data as BusinessPlan);
         } else {
           setError(result.error?.message || 'Impossible de charger le plan d\'affaires');
         }
@@ -94,15 +132,18 @@ export default function BusinessModelPage() {
   
   const businessModel = businessPlan.businessModel;
   
+  // S'assurer que businessModel est correctement typé
+  const businessModelData: BusinessModelData = businessModel || {};
+  
   // Récupérer ou initialiser des tableaux vides pour les propriétés optionnelles
-  const valueProposition = (businessModel as any).valueProposition || [];
-  const customerSegments = (businessModel as any).customerSegments || [];
-  const channels = (businessModel as any).channels || [];
-  const customerRelationships = (businessModel as any).customerRelationships || [];
-  const keyResources = (businessModel as any).keyResources || [];
-  const keyActivities = (businessModel as any).keyActivities || [];
-  const keyPartners = (businessModel as any).keyPartners || [];
-  const costStructure = (businessModel as any).costStructure || [];
+  const valueProposition = businessModelData.valueProposition || [];
+  const customerSegments = businessModelData.customerSegments || [];
+  const channels = businessModelData.channels || [];
+  const customerRelationships = businessModelData.customerRelationships || [];
+  const keyResources = businessModelData.keyResources || [];
+  const keyActivities = businessModelData.keyActivities || [];
+  const keyPartners = businessModelData.keyPartners || [];
+  const costStructure = businessModelData.costStructure || [];
   
   // Création des sections
   const sections: BusinessModelSection[] = [
@@ -129,14 +170,14 @@ export default function BusinessModelPage() {
     {
       title: 'Sources de Revenus',
       content: [
-        ...(businessModel.hourlyRates || []).map(rate => typeof rate === 'string' ? rate : `${rate.serviceType}: ${rate.rate}€/h`),
-        ...(businessModel.packages || []).map(pkg => typeof pkg === 'string' ? pkg : `${pkg.name}: ${pkg.price}€`),
-        ...(businessModel.subscriptions || []).map(sub => typeof sub === 'string' ? sub : `${sub.name}: ${sub.monthlyPrice}€/mois`)
+        ...(businessModelData.hourlyRates || []).map(rate => typeof rate === 'string' ? rate : `${rate.name}: ${rate.rate}€/h`),
+        ...(businessModelData.packages || []).map(pkg => typeof pkg === 'string' ? pkg : `${pkg.name}: ${pkg.price}€`),
+        ...(businessModelData.subscriptions || []).map(sub => typeof sub === 'string' ? sub : `${sub.name}: ${sub.price}€/${sub.period}`)
       ],
       isComplete: (
-        (Array.isArray(businessModel.hourlyRates) && businessModel.hourlyRates.length > 0) ||
-        (Array.isArray(businessModel.packages) && businessModel.packages.length > 0) ||
-        (Array.isArray(businessModel.subscriptions) && businessModel.subscriptions.length > 0)
+        (Array.isArray(businessModelData.hourlyRates) && businessModelData.hourlyRates.length > 0) ||
+        (Array.isArray(businessModelData.packages) && businessModelData.packages.length > 0) ||
+        (Array.isArray(businessModelData.subscriptions) && businessModelData.subscriptions.length > 0)
       )
     },
     {
@@ -160,6 +201,8 @@ export default function BusinessModelPage() {
       isComplete: Array.isArray(costStructure) && costStructure.length > 0
     }
   ];
+  
+  // Fonctions d'assistance et formatage pour le rendu de l'UI
   
   return (
     <div className="container mx-auto px-4 py-8">
@@ -196,11 +239,73 @@ export default function BusinessModelPage() {
         </p>
       </div>
       
-      {/* Visualisation de l'impact de la tarification */}
-      {businessPlan && businessPlan.businessModel && (
-        <PricingImpactVisualizer 
-          businessModel={businessPlan.businessModel}
-        />
+      {/* Section des tarifications */}
+      <div className="mb-8">
+        <h2 className="text-xl font-semibold mb-4">Modèles de tarification</h2>
+        {/* Rendu des modèles de tarification */}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+          {businessModelData.hourlyRates && businessModelData.hourlyRates.length > 0 && (
+            <div className="border rounded-lg p-4 shadow-sm">
+              <h3 className="text-lg font-semibold mb-3">Tarifs horaires</h3>
+              <ul className="space-y-2">
+                {businessModelData.hourlyRates.map((rate, index) => (
+                  <li key={index} className="border-b pb-2">
+                    <div className="font-medium">{rate.name}: {rate.rate} €/h</div>
+                    {rate.description && <div className="text-sm text-gray-600">{rate.description}</div>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {businessModelData.packages && businessModelData.packages.length > 0 && (
+            <div className="border rounded-lg p-4 shadow-sm">
+              <h3 className="text-lg font-semibold mb-3">Packages</h3>
+              <ul className="space-y-2">
+                {businessModelData.packages.map((pkg, index) => (
+                  <li key={index} className="border-b pb-2">
+                    <div className="font-medium">{pkg.name}: {pkg.price} €</div>
+                    {pkg.description && <div className="text-sm text-gray-600">{pkg.description}</div>}
+                    {pkg.features && (
+                      <ul className="mt-1 text-xs list-disc pl-5">
+                        {pkg.features.map((feature, idx) => (
+                          <li key={idx}>{feature}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {businessModelData.subscriptions && businessModelData.subscriptions.length > 0 && (
+            <div className="border rounded-lg p-4 shadow-sm">
+              <h3 className="text-lg font-semibold mb-3">Abonnements</h3>
+              <ul className="space-y-2">
+                {businessModelData.subscriptions.map((sub, index) => (
+                  <li key={index} className="border-b pb-2">
+                    <div className="font-medium">{sub.name}: {sub.price} €/{sub.period}</div>
+                    {sub.description && <div className="text-sm text-gray-600">{sub.description}</div>}
+                    {sub.features && (
+                      <ul className="mt-1 text-xs list-disc pl-5">
+                        {sub.features.map((feature, idx) => (
+                          <li key={idx}>{feature}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Visualisation de l'impact des modèles tarifaires */}
+      {businessModelData && (
+        // Force le typage pour éviter les erreurs de compatibilité entre les interfaces
+        <PricingImpactVisualizer businessModel={JSON.parse(JSON.stringify(businessModelData))} />
       )}
       
       {/* Sections du modèle économique */}

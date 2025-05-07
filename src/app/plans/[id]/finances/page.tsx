@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { BusinessPlanData, FinancialsData } from "../services/interfaces/dataModels";
+import { BusinessPlanData, FinancialsData } from "@/app/services/interfaces/dataModels";
 import { FinancialCalculator } from '@/app/components/financial/FinancialCalculator';
 import { 
   getBusinessPlanService, 

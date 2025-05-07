@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Save, Trash2, Plus, Edit, X } from "lucide-react";
-import { UI_CLASSES } from "../styles/ui-classes";
+import { UI_CLASSES } from "@/app/styles/ui-classes";
 import type { BusinessPlanData } from "./types";
 
 // Types pour les éléments de tarification

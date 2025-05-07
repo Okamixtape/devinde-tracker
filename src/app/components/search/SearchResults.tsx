@@ -38,7 +38,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         <div className="text-gray-400 text-5xl mb-4">🔍</div>
         <h3 className="text-xl font-medium text-gray-700 mb-2">Aucun résultat trouvé</h3>
         <p className="text-gray-500">
-          Aucun résultat ne correspond à votre recherche "{searchTerm}".
+          Aucun résultat ne correspond à votre recherche &quot;{searchTerm}&quot;.
           <br />
           Essayez de modifier vos termes de recherche ou vos filtres.
         </p>
@@ -101,7 +101,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
     }).format(date);
   };
 
-  const renderStatusBadge = (status?: string) => {
+  const renderStatusBadge = (status?: string | number | boolean | string[] | Date) => {
     if (!status) return null;
 
     let colorClass = '';
@@ -125,9 +125,15 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         colorClass = 'bg-gray-100 text-gray-800';
     }
 
+    // Convertir le statut en chaîne pour l'affichage
+    const displayStatus = typeof status === 'string' ? status :
+      status instanceof Date ? status.toLocaleDateString() :
+      Array.isArray(status) ? status.join(', ') :
+      String(status);
+      
     return (
       <span className={`px-2 py-1 text-xs rounded-full ${colorClass}`}>
-        {status}
+        {displayStatus}
       </span>
     );
   };
@@ -135,7 +141,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   return (
     <div>
       <p className="text-gray-600 mb-4">
-        {totalCount} résultat{totalCount !== 1 ? 's' : ''} pour "{searchTerm}"
+        {totalCount} résultat{totalCount !== 1 ? 's' : ''} pour &quot;{searchTerm}&quot;
       </p>
 
       <div className="space-y-4">
@@ -193,7 +199,10 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                     {item.owner && (
                       <div className="flex items-center text-xs text-gray-500 mr-4">
                         <FiUser className="mr-1" />
-                        {item.owner}
+                        {typeof item.owner === 'string' ? item.owner :
+                         item.owner instanceof Date ? item.owner.toLocaleDateString() :
+                         Array.isArray(item.owner) ? item.owner.join(', ') :
+                         String(item.owner)}
                       </div>
                     )}
                     

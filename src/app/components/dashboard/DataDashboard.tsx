@@ -27,11 +27,11 @@ export function DataDashboard({
   const existingSections = businessPlanData.sections || [];
   const sections = sectionService.enrichSections(businessPlanId, existingSections);
   const totalSections = sections.length;
-  const completedSections = sections.filter(section => section.completion === 100).length;
-  const partialSections = sections.filter(section => section.completion > 0 && section.completion < 100).length;
+  const completedSections = sections.filter((section: { completion: number }) => section.completion === 100).length;
+  const partialSections = sections.filter((section: { completion: number }) => section.completion > 0 && section.completion < 100).length;
   const completionPercentage = totalSections === 0 
     ? 0 
-    : Math.round(sections.reduce((acc, section) => acc + section.completion, 0) / totalSections);
+    : Math.round(sections.reduce((acc: number, section: { completion: number }) => acc + section.completion, 0) / totalSections);
   
   // Extract financial data
   const hourlyRates = businessPlanData.businessModel?.hourlyRates || [];
@@ -60,9 +60,9 @@ export function DataDashboard({
     notStarted: Section[];
   } => {
     return {
-      complete: sections.filter(section => section.completion === 100),
-      inProgress: sections.filter(section => section.completion > 0 && section.completion < 100),
-      notStarted: sections.filter(section => section.completion === 0)
+      complete: sections.filter((section: { completion: number }) => section.completion === 100),
+      inProgress: sections.filter((section: { completion: number }) => section.completion > 0 && section.completion < 100),
+      notStarted: sections.filter((section: { completion: number }) => section.completion === 0)
     };
   };
   

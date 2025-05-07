@@ -6,7 +6,7 @@ module.exports = {
     'plugin:import/recommended',
     'plugin:import/typescript',
   ],
-  plugins: ['@typescript-eslint', 'import'],
+  plugins: ['@typescript-eslint', 'import', 'react-hooks'],
   rules: {
     // Nettoyer les imports non utilisés
     'no-unused-vars': 'off', // Désactivé car @typescript-eslint/no-unused-vars est plus précis
@@ -16,8 +16,16 @@ module.exports = {
       caughtErrorsIgnorePattern: '^_'
     }],
     
-    // Éviter les any autant que possible
-    '@typescript-eslint/no-explicit-any': 'warn',
+    // Désactivé temporairement pour permettre le build
+    // Note: We'll gradually enable this in the future for better type safety
+    '@typescript-eslint/no-explicit-any': 'error',
+    
+    // React Hooks rules
+    'react-hooks/rules-of-hooks': 'error',
+    'react-hooks/exhaustive-deps': 'warn',
+    
+    // React-specific rules for HOCs
+    'react/display-name': 'error',
     
     // Règles d'importation
     'import/order': [

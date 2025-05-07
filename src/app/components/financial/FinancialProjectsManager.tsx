@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { FinancialProject, FinancialTransaction } from "../services/interfaces/dataModels";
+import { FinancialProject, FinancialTransaction } from "@/app/services/interfaces/dataModels";
 
 interface FinancialProjectsManagerProps {
   businessPlanId: string;
@@ -479,19 +479,19 @@ export function FinancialProjectsManager({
                     <div className="bg-green-50 dark:bg-green-900/20 p-3 rounded-md">
                       <div className="text-sm text-green-700 dark:text-green-300">Revenus</div>
                       <div className="text-xl font-bold">
-                        {formatCurrency(selectedProject.totalIncome)}
+                        {formatCurrency(selectedProject.totalIncome || 0)}
                       </div>
                     </div>
                     <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-md">
                       <div className="text-sm text-red-700 dark:text-red-300">Dépenses</div>
                       <div className="text-xl font-bold">
-                        {formatCurrency(selectedProject.totalExpenses)}
+                        {formatCurrency(selectedProject.totalExpenses || 0)}
                       </div>
                     </div>
                     <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-md">
                       <div className="text-sm text-blue-700 dark:text-blue-300">Solde</div>
                       <div className="text-xl font-bold">
-                        {formatCurrency(selectedProject.balance)}
+                        {formatCurrency(selectedProject.balance || 0)}
                       </div>
                     </div>
                   </div>

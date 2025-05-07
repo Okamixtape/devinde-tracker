@@ -4,10 +4,13 @@ import React, { useState, useEffect } from 'react';
 import { FiChevronDown, FiChevronUp, FiFilter } from 'react-icons/fi';
 import { FilterOption } from '@/app/services/core/searchService';
 
+// Define a type for filter values - string[] for checkbox groups, string for selects and dates
+type FilterValue = string | string[] | undefined;
+
 interface SearchFiltersProps {
   filterOptions: FilterOption[];
-  selectedFilters: Record<string, any>;
-  onFilterChange: (filters: Record<string, any>) => void;
+  selectedFilters: Record<string, FilterValue>;
+  onFilterChange: (filters: Record<string, FilterValue>) => void;
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({
@@ -16,7 +19,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   onFilterChange
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [localFilters, setLocalFilters] = useState<Record<string, any>>(selectedFilters);
+  const [localFilters, setLocalFilters] = useState<Record<string, FilterValue>>(selectedFilters);
 
   // Mettre à jour les filtres locaux quand les filtres sélectionnés changent
   useEffect(() => {
@@ -28,11 +31,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
   };
 
   const handleCheckboxChange = (filterId: string, value: string, checked: boolean) => {
+    // Safely handle the array case - type assert as we know checkbox filters store string arrays
     const currentValues = Array.isArray(localFilters[filterId]) 
-      ? [...localFilters[filterId]] 
+      ? [...(localFilters[filterId] as string[])] 
       : [];
     
-    let newValues;
+    let newValues: string[];
     if (checked) {
       newValues = [...currentValues, value];
     } else {
@@ -121,8 +125,10 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                 {filter.type === 'checkbox' && filter.options && (
                   <div className="space-y-2">
                     {filter.options.map(option => {
-                      const isChecked = Array.isArray(localFilters[filter.id]) && 
-                        localFilters[filter.id]?.includes(option.value);
+                      // Safe type assertion since we know checkbox filters use string arrays
+                      const filterValues = localFilters[filter.id] as string[] | undefined;
+                      const isChecked = Array.isArray(filterValues) && 
+                        filterValues.includes(option.value);
                       
                       return (
                         <div key={option.value} className="flex items-center">
@@ -147,7 +153,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
 
                 {filter.type === 'select' && filter.options && (
                   <select
-                    value={localFilters[filter.id] || ''}
+                    value={(localFilters[filter.id] as string) || ''}
                     onChange={(e) => handleSelectChange(filter.id, e.target.value)}
                     className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
                   >
@@ -166,7 +172,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                       <label className="block text-sm text-gray-600 mb-1">De</label>
                       <input
                         type="date"
-                        value={localFilters.dateFrom || ''}
+                        value={(localFilters.dateFrom as string) || ''}
                         onChange={(e) => handleDateChange(filter.id, 'from', e.target.value)}
                         className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
                       />
@@ -175,7 +181,7 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({
                       <label className="block text-sm text-gray-600 mb-1">À</label>
                       <input
                         type="date"
-                        value={localFilters.dateTo || ''}
+                        value={(localFilters.dateTo as string) || ''}
                         onChange={(e) => handleDateChange(filter.id, 'to', e.target.value)}
                         className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50"
                       />

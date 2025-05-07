@@ -1,12 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import * as TabsUI from '@headlessui/react';
+import { performanceService, WebVitals, PerformanceEntry, PerformanceMetricType } from '@/app/services/core/performanceService';
+import { errorTrackingService, ErrorData, ErrorType, ErrorStatus } from '@/app/services/core/errorTrackingService';
+import { analyticsService, AnalyticsEvent, AnalyticsEventType } from '@/app/services/core/analyticsService';
 import PerformancePanel from './PerformancePanel';
 import ErrorsPanel from './ErrorsPanel';
 import AnalyticsPanel from './AnalyticsPanel';
-import { analyticsService, AnalyticsEventType } from '@/app/services/core/analyticsService';
-import { performanceService, PerformanceMetricType, WebVitals } from '@/app/services/core/performanceService';
-import { errorTrackingService, ErrorType, ErrorStatus } from '@/app/services/core/errorTrackingService';
 
 // Définir l'enum ErrorSeverity ici aussi pour éviter les problèmes d'importation
 enum ErrorSeverity {
@@ -30,9 +31,10 @@ enum ErrorSeverity {
 export default function MonitoringDashboard() {
   // État pour les données de chaque panneau
   const [webVitals, setWebVitals] = useState<WebVitals>({});
-  const [performanceEntries, setPerformanceEntries] = useState<any[]>([]);
-  const [errors, setErrors] = useState<any[]>([]);
-  const [analytics, setAnalytics] = useState<any[]>([]);
+  // Utilisation de types spécifiques pour les données de monitoring
+  const [performanceEntries, setPerformanceEntries] = useState<PerformanceEntry[]>([]);
+  const [errors, setErrors] = useState<ErrorData[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsEvent[]>([]);
   const [activeTab, setActiveTab] = useState<'performance' | 'errors' | 'analytics'>('performance');
 
   // Charger les données lors du montage du composant
@@ -78,15 +80,15 @@ export default function MonitoringDashboard() {
   const generateTestPerformanceData = () => {
     // Simuler des données Web Vitals
     const mockWebVitals = {
-      lcp: 2450,
-      fid: 70,
-      cls: 0.12,
-      ttfb: 280,
-      fcp: 950
+      LCP: 2450,
+      FID: 70,
+      CLS: 0.12,
+      TTFB: 280,
+      FCP: 950
     };
     
     // Simuler des entrées de performance
-    const mockEntries = [
+    const mockEntries: PerformanceEntry[] = [
       {
         id: '1',
         type: PerformanceMetricType.PAGE_LOAD,
@@ -125,31 +127,40 @@ export default function MonitoringDashboard() {
 
   const generateTestErrorData = () => {
     // Simuler des erreurs
-    const mockErrors = [
+    const mockErrors: ErrorData[] = [
       {
-        id: '1',
-        timestamp: Date.now() - 300000,
+        id: 'e1',
+        timestamp: Date.now() - 500000,
         type: ErrorType.JAVASCRIPT,
-        message: "Cannot read property 'length' of undefined",
-        stack: "TypeError: Cannot read property 'length' of undefined\n    at processData (app.js:143)\n    at handleClick (app.js:89)",
-        url: '/plans/1',
-        path: '/plans/1',
-        severity: ErrorSeverity.ERROR,
+        message: "Cannot read property 'value' of undefined",
+        stack: "TypeError: Cannot read property 'value' of undefined at getData (app.js:123)",
+        url: 'https://devinde-tracker.app',
+        path: '/dashboard',
+        severity: ErrorSeverity.HIGH,
         status: ErrorStatus.NEW,
         occurrence: 3,
-        browserInfo: { userAgent: navigator.userAgent }
+        sessionId: 'test-session-1',
+        browserInfo: {
+          userAgent: navigator.userAgent,
+          language: navigator.language
+        }
       },
       {
-        id: '2',
-        timestamp: Date.now() - 150000,
-        type: ErrorType.API,
-        message: "API Error: Failed to fetch data",
-        url: '/plans/2',
-        path: '/plans/2',
-        severity: ErrorSeverity.WARNING,
-        status: ErrorStatus.NEW,
+        id: 'e2',
+        timestamp: Date.now() - 450000,
+        type: ErrorType.NETWORK,
+        message: "Failed to fetch data: Network error",
+        stack: "Error: Failed to fetch at fetchData (api.js:45)",
+        url: 'https://devinde-tracker.app',
+        path: '/plans',
+        severity: ErrorSeverity.MEDIUM,
+        status: ErrorStatus.RESOLVED,
         occurrence: 1,
-        browserInfo: { userAgent: navigator.userAgent }
+        sessionId: 'test-session-1',
+        browserInfo: {
+          userAgent: navigator.userAgent,
+          language: navigator.language
+        }
       }
     ];
     
@@ -157,92 +168,95 @@ export default function MonitoringDashboard() {
   };
 
   const generateTestAnalyticsData = () => {
-    // Simuler des données analytiques
-    const mockAnalytics = [
+    // Simuler des données d'analytics
+    const mockAnalytics: AnalyticsEvent[] = [
       {
-        id: '1',
+        id: 'a1',
         type: AnalyticsEventType.PAGE_VIEW,
-        timestamp: Date.now() - 600000,
-        path: '/plans/1',
+        timestamp: Date.now() - 400000,
+        path: '/dashboard',
+        sessionId: 'test-session-1',
+        anonymousId: 'anon-123'
       },
       {
-        id: '2',
+        id: 'a2',
         type: AnalyticsEventType.BUTTON_CLICK,
-        timestamp: Date.now() - 590000,
+        timestamp: Date.now() - 390000,
         properties: {
-          buttonId: 'save-plan',
-          buttonText: 'Enregistrer'
+          buttonId: 'create-plan',
+          buttonText: 'Créer un plan'
         },
-        path: '/plans/1'
+        path: '/dashboard',
+        sessionId: 'test-session-1',
+        anonymousId: 'anon-123'
       },
       {
-        id: '3',
+        id: 'a3',
         type: AnalyticsEventType.FORM_SUBMIT,
-        timestamp: Date.now() - 580000,
+        timestamp: Date.now() - 380000,
         properties: {
-          formId: 'plan-form'
+          formId: 'plan-form',
+          success: true
         },
-        path: '/plans/1'
+        path: '/plans/new',
+        sessionId: 'test-session-1',
+        anonymousId: 'anon-123'
       }
     ];
     
     setAnalytics(mockAnalytics);
   };
 
-  // Fonction pour changer l'onglet actif
-  const changeTab = (tab: 'performance' | 'errors' | 'analytics') => {
-    setActiveTab(tab);
+  // Fonction pour gérer le changement d'onglet via headlessUI Tabs
+  const handleTabChange = (index: number) => {
+    if (index === 0) setActiveTab('performance');
+    else if (index === 1) setActiveTab('errors');
+    else setActiveTab('analytics');
+  };
+  
+  // Conversion de l'activeTab string en index pour headlessUI
+  const tabIndex = activeTab === 'performance' ? 0 : activeTab === 'errors' ? 1 : 2;
+  
+  // Map des noms d'onglets
+  const tabs = {
+    performance: 'Performance',
+    errors: 'Erreurs',
+    analytics: 'Analytique'
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-      {/* Onglets de navigation */}
-      <div className="flex border-b border-gray-200 dark:border-gray-700">
-        <button
-          onClick={() => changeTab('performance')}
-          className={`flex-1 py-4 px-6 text-center font-medium ${
-            activeTab === 'performance'
-              ? 'text-blue-600 border-b-2 border-blue-500 dark:text-blue-400 dark:border-blue-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-          }`}
-        >
-          Performance
-        </button>
-        <button
-          onClick={() => changeTab('errors')}
-          className={`flex-1 py-4 px-6 text-center font-medium ${
-            activeTab === 'errors'
-              ? 'text-blue-600 border-b-2 border-blue-500 dark:text-blue-400 dark:border-blue-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-          }`}
-        >
-          Erreurs
-        </button>
-        <button
-          onClick={() => changeTab('analytics')}
-          className={`flex-1 py-4 px-6 text-center font-medium ${
-            activeTab === 'analytics'
-              ? 'text-blue-600 border-b-2 border-blue-500 dark:text-blue-400 dark:border-blue-400'
-              : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-          }`}
-        >
-          Analytique
-        </button>
-      </div>
-
-      {/* Contenu du tableau de bord */}
-      <div className="p-6">
-        {activeTab === 'performance' && (
-          <PerformancePanel webVitals={webVitals} performanceEntries={performanceEntries} />
-        )}
-
-        {activeTab === 'errors' && (
-          <ErrorsPanel errors={errors} />
-        )}
-
-        {activeTab === 'analytics' && (
-          <AnalyticsPanel analytics={analytics} />
-        )}
+    <div className="bg-white dark:bg-gray-900 shadow-lg rounded-lg overflow-hidden">
+      <div className="border-b border-gray-200 dark:border-gray-700">
+        <TabsUI.Tab.Group selectedIndex={tabIndex} onChange={handleTabChange}>
+          <TabsUI.Tab.List className="flex space-x-1 p-1">
+            {Object.entries(tabs).map(([key, label]) => (
+              <TabsUI.Tab
+                key={key}
+                className={({ selected }) =>
+                  `w-full py-2.5 text-sm font-medium leading-5 text-gray-700 dark:text-gray-200 rounded-lg
+                  focus:outline-none focus:ring-2 ring-offset-2 ring-offset-blue-400 ring-white ring-opacity-60
+                  ${selected ? 'bg-blue-100 dark:bg-blue-900 shadow' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`
+                }
+              >
+                {label}
+              </TabsUI.Tab>
+            ))}
+          </TabsUI.Tab.List>
+          <TabsUI.Tab.Panels className="p-4">
+            <TabsUI.Tab.Panel>
+              <PerformancePanel 
+                webVitals={webVitals} 
+                performanceEntries={performanceEntries}
+              />
+            </TabsUI.Tab.Panel>
+            <TabsUI.Tab.Panel>
+              <ErrorsPanel errors={errors} />
+            </TabsUI.Tab.Panel>
+            <TabsUI.Tab.Panel>
+              <AnalyticsPanel events={analytics} />
+            </TabsUI.Tab.Panel>
+          </TabsUI.Tab.Panels>
+        </TabsUI.Tab.Group>
       </div>
     </div>
   );

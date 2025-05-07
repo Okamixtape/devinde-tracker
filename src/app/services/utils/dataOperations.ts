@@ -27,7 +27,7 @@ export interface SortingParams<T> {
 export interface FilterParams<T> {
   field: keyof T;
   operator: 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'contains' | 'startsWith' | 'endsWith';
-  value: any;
+  value: string | number | boolean | Date | null;
 }
 
 /**
@@ -108,29 +108,49 @@ export function sort<T>(data: T[], params: SortingParams<T>): T[] {
 /**
  * Compare values based on the specified operator
  */
-function compareValues(value: any, filterValue: any, operator: string): boolean {
+/**
+ * Compare values supports different primitive types depending on operator
+ */
+type ComparisonValue = string | number | boolean | Date | null | undefined;
+
+function compareValues(value: ComparisonValue, filterValue: ComparisonValue, operator: string): boolean {
+  // Handle null/undefined values - treat them as equal to each other and not equal to anything else
+  if (value === null || value === undefined) {
+    if (filterValue === null || filterValue === undefined) {
+      return operator === 'eq' || operator === 'gte' || operator === 'lte';
+    }
+    return operator === 'neq';
+  }
+  
+  if (filterValue === null || filterValue === undefined) {
+    return operator === 'neq';
+  }
   switch (operator) {
     case 'eq': 
       return value === filterValue;
     case 'neq': 
       return value !== filterValue;
     case 'gt': 
-      return value > filterValue;
+      // Safe comparison after null checks above
+      return value > filterValue!;
     case 'gte': 
-      return value >= filterValue;
+      // Safe comparison after null checks above
+      return value >= filterValue!;
     case 'lt': 
-      return value < filterValue;
+      // Safe comparison after null checks above
+      return value < filterValue!;
     case 'lte': 
-      return value <= filterValue;
+      // Safe comparison after null checks above
+      return value <= filterValue!;
     case 'contains': 
-      return typeof value === 'string' && 
-        value.toLowerCase().includes(filterValue.toString().toLowerCase());
-    case 'startsWith': 
-      return typeof value === 'string' && 
-        value.toLowerCase().startsWith(filterValue.toString().toLowerCase());
-    case 'endsWith': 
-      return typeof value === 'string' && 
-        value.toLowerCase().endsWith(filterValue.toString().toLowerCase());
+      // Safe string operations after null checks above
+      return String(value).toLowerCase().includes(String(filterValue!).toLowerCase());
+    case 'startsWith':
+      // Safe string operations after null checks above
+      return String(value).toLowerCase().startsWith(String(filterValue!).toLowerCase());
+    case 'endsWith':
+      // Safe string operations after null checks above
+      return String(value).toLowerCase().endsWith(String(filterValue!).toLowerCase());
     default:
       return false;
   }
@@ -143,7 +163,8 @@ export function applyFilter<T>(data: T[], filter: FilterParams<T>): T[] {
   const { field, operator, value } = filter;
   
   return data.filter(item => {
-    const itemValue = item[field];
+    // Type assertion to handle generic T values safely
+    const itemValue = item[field] as ComparisonValue;
     return compareValues(itemValue, value, operator);
   });
 }
@@ -197,8 +218,8 @@ export interface ValidationSchema {
     min?: number;
     max?: number;
     pattern?: RegExp;
-    enum?: any[];
-    validate?: (value: any) => boolean;
+    enum?: Array<string | number>;
+    validate?: (value: unknown) => boolean;
   };
 }
 
@@ -221,7 +242,7 @@ export interface ValidationResult {
 /**
  * Validate data against a schema
  */
-export function validateData(data: Record<string, any>, schema: ValidationSchema): ValidationResult {
+export function validateData(data: Record<string, unknown>, schema: ValidationSchema): ValidationResult {
   const errors: ValidationError[] = [];
   
   // Check each field in the schema
@@ -243,39 +264,49 @@ export function validateData(data: Record<string, any>, schema: ValidationSchema
     }
     
     // Type validation
-    if (rules.type === 'string' && typeof value !== 'string') {
-      errors.push({
-        field,
-        message: `Field '${field}' must be a string`
-      });
+    if (rules.type === 'string') {
+      if (value === null || value === undefined || typeof value !== 'string') {
+        errors.push({
+          field,
+          message: `Field '${field}' must be a string`
+        });
+      }
     }
     
-    if (rules.type === 'number' && typeof value !== 'number') {
-      errors.push({
-        field,
-        message: `Field '${field}' must be a number`
-      });
+    if (rules.type === 'number') {
+      if (value === null || value === undefined || typeof value !== 'number') {
+        errors.push({
+          field,
+          message: `Field '${field}' must be a number`
+        });
+      }
     }
     
-    if (rules.type === 'boolean' && typeof value !== 'boolean') {
-      errors.push({
-        field,
-        message: `Field '${field}' must be a boolean`
-      });
+    if (rules.type === 'boolean') {
+      if (value === null || value === undefined || typeof value !== 'boolean') {
+        errors.push({
+          field,
+          message: `Field '${field}' must be a boolean`
+        });
+      }
     }
     
-    if (rules.type === 'date' && !(value instanceof Date) && isNaN(Date.parse(value))) {
-      errors.push({
-        field,
-        message: `Field '${field}' must be a valid date`
-      });
+    if (rules.type === 'date') {
+      if (value === null || value === undefined || (!(value instanceof Date) && isNaN(Date.parse(String(value))))) {
+        errors.push({
+          field,
+          message: `Field '${field}' must be a valid date`
+        });
+      }
     }
     
-    if (rules.type === 'array' && !Array.isArray(value)) {
-      errors.push({
-        field,
-        message: `Field '${field}' must be an array`
-      });
+    if (rules.type === 'array') {
+      if (value === null || value === undefined || !Array.isArray(value)) {
+        errors.push({
+          field,
+          message: `Field '${field}' must be an array`
+        });
+      }
     }
     
     if (rules.type === 'object' && (typeof value !== 'object' || value === null || Array.isArray(value))) {
@@ -286,17 +317,17 @@ export function validateData(data: Record<string, any>, schema: ValidationSchema
     }
     
     // Min/Max validations
-    if (typeof value === 'string' && rules.min !== undefined && value.length < rules.min) {
+    if (value !== null && value !== undefined && typeof value === 'string' && rules.min !== undefined && value.length < rules.min) {
       errors.push({
         field,
-        message: `Field '${field}' must be at least ${rules.min} characters`
+        message: `Field '${field}' must be at least ${rules.min} characters long`
       });
     }
     
-    if (typeof value === 'string' && rules.max !== undefined && value.length > rules.max) {
+    if (value !== null && value !== undefined && typeof value === 'string' && rules.max !== undefined && value.length > rules.max) {
       errors.push({
         field,
-        message: `Field '${field}' must be no more than ${rules.max} characters`
+        message: `Field '${field}' must be no more than ${rules.max} characters long`
       });
     }
     
@@ -314,14 +345,14 @@ export function validateData(data: Record<string, any>, schema: ValidationSchema
       });
     }
     
-    if (Array.isArray(value) && rules.min !== undefined && value.length < rules.min) {
+    if (value !== null && value !== undefined && Array.isArray(value) && rules.min !== undefined && value.length < rules.min) {
       errors.push({
         field,
         message: `Field '${field}' must have at least ${rules.min} items`
       });
     }
     
-    if (Array.isArray(value) && rules.max !== undefined && value.length > rules.max) {
+    if (value !== null && value !== undefined && Array.isArray(value) && rules.max !== undefined && value.length > rules.max) {
       errors.push({
         field,
         message: `Field '${field}' must have no more than ${rules.max} items`
@@ -329,18 +360,27 @@ export function validateData(data: Record<string, any>, schema: ValidationSchema
     }
     
     // Pattern validation
-    if (typeof value === 'string' && rules.pattern && !rules.pattern.test(value)) {
+    if (value !== null && value !== undefined && typeof value === 'string' && rules.pattern && !rules.pattern.test(value)) {
       errors.push({
         field,
-        message: `Field '${field}' has an invalid format`
+        message: `Field '${field}' does not match the required pattern`
       });
     }
     
     // Enum validation
-    if (rules.enum && !rules.enum.includes(value)) {
+    if (rules.enum && value !== null && value !== undefined) {
+      // Type assertion to handle the enum values safely
+      const valueToCheck = value as string | number;
+      if (!rules.enum.includes(valueToCheck)) {
+        errors.push({
+          field,
+          message: `Field '${field}' must be one of the allowed values`
+        });
+      }
+    } else if (rules.enum && (value === null || value === undefined) && rules.required) {
       errors.push({
         field,
-        message: `Field '${field}' must be one of: ${rules.enum.join(', ')}`
+        message: `Field '${field}' must be one of the allowed values`
       });
     }
     

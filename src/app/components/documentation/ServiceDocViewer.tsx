@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import ServicePlayground from './ServicePlayground';
-import { ServiceDoc } from '@/app/services/utils/documentation';
+import { ServiceDoc } from "@/app/services/utils/documentation";
 
 interface ServiceDocViewerProps {
   serviceDoc: ServiceDoc;
@@ -126,7 +126,8 @@ export const ServiceDocViewer: React.FC<ServiceDocViewerProps> = ({ serviceDoc }
                 </div>
               </div>
               
-              {currentMethod.example && (
+              {/* Ajouter un cast de type pour éviter l'erreur de TypeScript */}
+              {(currentMethod.example as any) && (
                 <div className="mt-6">
                   <h4 className="text-lg font-medium text-gray-800 mb-2">Example</h4>
                   <div className="bg-gray-900 rounded-md p-4 overflow-x-auto">
