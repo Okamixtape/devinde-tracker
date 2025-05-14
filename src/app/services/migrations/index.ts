@@ -4,7 +4,7 @@
  * Ce module centralise toutes les migrations de données disponibles
  * et contient les fonctions permettant de les initialiser au démarrage de l'application.
  */
-import { Migration, MigrationService } from '../interfaces/migrationService';
+import { Migration, MigrationService, ApplicationDataState } from '../interfaces/migrationService';
 import { ServiceResult } from "../interfaces/dataModels";
 
 /**
@@ -19,7 +19,7 @@ export const migrations: Migration[] = [];
 migrations.push({
   targetVersion: '1.1.0',
   description: 'Ajoute le champ active aux sections',
-  migrationFn: async (data: any): Promise<ServiceResult<any>> => {
+  migrationFn: async (data: ApplicationDataState): Promise<ServiceResult<ApplicationDataState>> => {
     try {
       // Récupérer toutes les données de sections dans localStorage
       const storageKeys = Object.keys(localStorage).filter(key => 
@@ -72,7 +72,7 @@ migrations.push({
 migrations.push({
   targetVersion: '1.2.0',
   description: 'Ajoute un timestamp de dernière modification aux plans d\'affaires',
-  migrationFn: async (data: any): Promise<ServiceResult<any>> => {
+  migrationFn: async (data: ApplicationDataState): Promise<ServiceResult<ApplicationDataState>> => {
     try {
       // Récupérer toutes les données des plans d'affaires dans localStorage
       const storageKeys = Object.keys(localStorage).filter(key => 
@@ -125,7 +125,7 @@ migrations.push({
 migrations.push({
   targetVersion: '1.3.0',
   description: 'Ajoute un champ version aux projets financiers',
-  migrationFn: async (data: any): Promise<ServiceResult<any>> => {
+  migrationFn: async (data: ApplicationDataState): Promise<ServiceResult<ApplicationDataState>> => {
     try {
       // Récupérer toutes les données des projets financiers dans localStorage
       const storageKeys = Object.keys(localStorage).filter(key => 

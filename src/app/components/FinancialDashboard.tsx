@@ -241,7 +241,7 @@ const FinancialDashboard: React.FC<Props> = ({ data, ...props }) => {
           <div className="flex items-center justify-between">
             <div className="mt-2">
               <p className={`text-xl font-bold ${UI_CLASSES.TEXT}`}>{annualTotals.expenses.toLocaleString()}€</p>
-              <p className="text-sm">Dont {data.initialInvestment.toLocaleString()}€ d'investissement</p>
+              <p className="text-sm">Dont {data.initialInvestment.toLocaleString()}€ d&apos;investissement</p>
             </div>
             <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
               <ArrowDownCircle size={24} className="text-red-600 dark:text-red-400" />

@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { FinancialProject, FinancialTransaction } from "@/app/services/interfaces/dataModels";
 
 interface FinancialProjectsManagerProps {
@@ -23,6 +24,9 @@ export function FinancialProjectsManager({
   onProjectsChange,
   readOnly = false
 }: FinancialProjectsManagerProps) {
+  // Récupérer les paramètres d'URL
+  const searchParams = useSearchParams();
+  
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectClient, setNewProjectClient] = useState('');
@@ -31,28 +35,64 @@ export function FinancialProjectsManager({
   const [newProjectEndDate, setNewProjectEndDate] = useState<Date>(new Date());
   const [newProjectBudget, setNewProjectBudget] = useState(0);
   const [newProjectStatus, setNewProjectStatus] = useState<'active' | 'completed' | 'cancelled'>('active');
+  const [newProjectCategory, setNewProjectCategory] = useState<'client' | 'internal' | 'investment'>('client');
   const [newTransactionAmount, setNewTransactionAmount] = useState<number>(0);
   const [newTransactionDescription, setNewTransactionDescription] = useState<string>('');
   const [newTransactionDate, setNewTransactionDate] = useState<Date>(new Date());
   const [newTransactionType, setNewTransactionType] = useState<'income' | 'expense'>('income');
   const [isAddingProject, setIsAddingProject] = useState(false);
+  const [isEditingProject, setIsEditingProject] = useState(false);
   const [isAddingTransaction, setIsAddingTransaction] = useState(false);
+  
+  // Vérifier si une demande de création de projet à partir d'un service a été faite
+  useEffect(() => {
+    const createProject = searchParams.get('createProject');
+    const serviceDataParam = searchParams.get('serviceData');
+    
+    if (createProject === 'true' && serviceDataParam) {
+      try {
+        // Décoder et parser les données du service
+        const serviceData = JSON.parse(decodeURIComponent(serviceDataParam));
+        
+        // Pré-remplir le formulaire de projet avec les données du service
+        setNewProjectName(serviceData.name || 'Nouveau projet');
+        setNewProjectDescription(serviceData.description || '');
+        
+        // Déterminer le budget en fonction du type de facturation du service
+        if (serviceData.billingMode === 'hourly' && serviceData.hourlyRate && serviceData.estimatedHours) {
+          setNewProjectBudget(serviceData.hourlyRate * serviceData.estimatedHours);
+        } else if (serviceData.billingMode === 'package' && serviceData.packagePrice) {
+          setNewProjectBudget(serviceData.packagePrice);
+        } else if (serviceData.billingMode === 'subscription' && serviceData.subscriptionPrice && serviceData.subscriptionDuration) {
+          setNewProjectBudget(serviceData.subscriptionPrice * serviceData.subscriptionDuration);
+        }
+        
+        // Ouvrir automatiquement le formulaire d'ajout de projet
+        setIsAddingProject(true);
+      } catch (error) {
+        console.error('Erreur lors du décodage des données du service:', error);
+      }
+    }
+  }, [searchParams]);
 
   // Trouver le projet sélectionné
   const selectedProject = projects.find(p => p.id === selectedProjectId) || null;
+  
+  // Filtrer les projets pour n'afficher que ceux qui appartiennent à ce business plan
+  const filteredProjects = projects.filter(p => p.businessPlanId === businessPlanId || !p.businessPlanId);
 
   // Statistiques des projets
   const projectStats = React.useMemo(() => {
-    if (!projects || projects.length === 0) return { totalBudget: 0, activeProjects: 0, completedProjects: 0, plannedProjects: 0, cancelledProjects: 0 };
+    if (!filteredProjects || filteredProjects.length === 0) return { totalBudget: 0, activeProjects: 0, completedProjects: 0, plannedProjects: 0, cancelledProjects: 0 };
 
     return {
-      totalBudget: projects.reduce((sum, project) => sum + project.budget, 0),
-      activeProjects: projects.filter(p => p.status === 'active').length,
-      completedProjects: projects.filter(p => p.status === 'completed').length,
-      plannedProjects: projects.filter(p => p.status === 'planned').length,
-      cancelledProjects: projects.filter(p => p.status === 'cancelled').length
+      totalBudget: filteredProjects.reduce((sum, project) => sum + project.budget, 0),
+      activeProjects: filteredProjects.filter(p => p.status === 'active').length,
+      completedProjects: filteredProjects.filter(p => p.status === 'completed').length,
+      plannedProjects: filteredProjects.filter(p => p.status === 'planned').length,
+      cancelledProjects: filteredProjects.filter(p => p.status === 'cancelled').length
     };
-  }, [projects]);
+  }, [filteredProjects]);
 
   // Calcul des totaux pour un projet
   const calculateProjectTotals = (project: FinancialProject): void => {
@@ -102,21 +142,7 @@ export function FinancialProjectsManager({
     }
   };
 
-  // Modification des champs d'un projet existant
-  const handleEditProjectField = (projectId: string, field: keyof FinancialProject, value: string | number | Date) => {
-    const projectIndex = projects.findIndex(p => p.id === projectId);
-
-    if (projectIndex !== -1) {
-      const updatedProjects = [...projects];
-      const updatedProject = {
-        ...updatedProjects[projectIndex],
-        [field]: value
-      };
-
-      updatedProjects[projectIndex] = updatedProject;
-      onProjectsChange(updatedProjects);
-    }
-  };
+  // Cette fonction a été remplacée par la logique d'édition du projet complet
 
   // Suppression d'une transaction
   const handleDeleteTransaction = (projectId: string, transactionId: string) => {
@@ -152,27 +178,39 @@ export function FinancialProjectsManager({
     }
   };
 
+  // Générer un nouvel ID unique pour un projet
+  const generateProjectId = () => {
+    // Inclure le businessPlanId pour garantir l'unicité des projets associés au plan d'affaires
+    const prefix = businessPlanId.substring(0, 4);
+    return prefix + '-' + Math.random().toString(36).substring(2, 12);
+  };
+
   // Gestion du projet
   const handleAddProject = () => {
-    if (!newProjectName || !newProjectStartDate) return;
-
-    const projectToAdd: FinancialProject = {
-      id: Date.now().toString(),
+    if (!newProjectName.trim()) {
+      return; // Don't add an empty project
+    }
+    
+    const newProject: FinancialProject = {
+      id: generateProjectId(),
+      businessPlanId: businessPlanId, // Ajouter l'ID du business plan pour référence
       name: newProjectName,
-      description: newProjectDescription,
       client: newProjectClient,
-      startDate: newProjectStartDate.toISOString().split('T')[0],
-      endDate: newProjectEndDate.toISOString().split('T')[0],
+      description: newProjectDescription,
+      startDate: newProjectStartDate.toISOString(),
+      endDate: newProjectEndDate.toISOString(),
       budget: newProjectBudget,
       status: newProjectStatus,
+      category: newProjectCategory,
       transactions: [],
-      category: 'client',
-      roi: 0
+      totalIncome: 0,
+      totalExpenses: 0,
+      balance: 0
     };
 
-    const updatedProjects = [...projects, projectToAdd];
+    const updatedProjects = [...projects, newProject];
     onProjectsChange(updatedProjects);
-    setSelectedProjectId(projectToAdd.id);
+    setSelectedProjectId(newProject.id);
     setIsAddingProject(false);
     setNewProjectName('');
     setNewProjectClient('');
@@ -244,7 +282,7 @@ export function FinancialProjectsManager({
         </div>
         <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
           <div className="text-sm text-green-600 dark:text-green-300">Projets Actifs</div>
-          <div className="text-2xl font-bold">{projectStats.activeProjects}</div>
+          <div className="text-xl font-semibold mt-6 mb-3">Projets ({filteredProjects.length})</div>
         </div>
         <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
           <div className="text-sm text-purple-600 dark:text-purple-300">Projets Complétés</div>
@@ -256,10 +294,10 @@ export function FinancialProjectsManager({
         </div>
       </div>
 
-      {/* Formulaire d'ajout/édition de projet */}
-      {isAddingProject && !readOnly && (
+      {/* Formulaire d'ajout ou de modification de projet */}
+      {(isAddingProject || isEditingProject) && !readOnly && (
         <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg mb-6 border border-gray-200 dark:border-gray-600">
-          <h3 className="text-lg font-medium mb-4">Nouveau Projet</h3>
+          <h3 className="text-lg font-medium mb-4">{isAddingProject ? 'Nouveau Projet' : 'Modifier le Projet'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -345,20 +383,62 @@ export function FinancialProjectsManager({
                 <option value="cancelled">Annulé</option>
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Catégorie *
+              </label>
+              <select
+                value={newProjectCategory}
+                onChange={(e) => setNewProjectCategory(e.target.value as 'client' | 'internal' | 'investment')}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-white"
+              >
+                <option value="client">Client</option>
+                <option value="internal">Interne</option>
+                <option value="investment">Investissement</option>
+              </select>
+            </div>
           </div>
           <div className="flex justify-end space-x-2">
             <button
-              onClick={() => setIsAddingProject(false)}
+              onClick={() => {
+                setIsAddingProject(false);
+                setIsEditingProject(false);
+              }}
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition"
             >
               Annuler
             </button>
-            <button
-              onClick={handleAddProject}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition"
-            >
-              Ajouter
-            </button>
+            {isEditingProject ? (
+              <button
+                onClick={() => {
+                  if (selectedProject) {
+                    const updatedProject = {
+                      ...selectedProject,
+                      name: newProjectName,
+                      description: newProjectDescription,
+                      client: newProjectClient,
+                      startDate: newProjectStartDate.toISOString(),
+                      endDate: newProjectEndDate.toISOString(),
+                      budget: newProjectBudget,
+                      status: newProjectStatus,
+                      category: newProjectCategory
+                    };
+                    handleUpdateProject(updatedProject);
+                    setIsEditingProject(false);
+                  }
+                }}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition"
+              >
+                Enregistrer les modifications
+              </button>
+            ) : (
+              <button
+                onClick={handleAddProject}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition"
+              >
+                Ajouter
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -375,7 +455,7 @@ export function FinancialProjectsManager({
             </div>
           ) : (
             <div className="space-y-2">
-              {projects.map(project => (
+              {filteredProjects.map(project => (
                 <div
                   key={project.id}
                   onClick={() => setSelectedProjectId(project.id || null)}
@@ -422,6 +502,23 @@ export function FinancialProjectsManager({
                       className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-md transition"
                     >
                       Ajouter Transaction
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Préremplir les champs avec les données du projet actuel
+                        setNewProjectName(selectedProject.name);
+                        setNewProjectDescription(selectedProject.description || '');
+                        setNewProjectClient(selectedProject.client || '');
+                        setNewProjectStartDate(new Date(selectedProject.startDate));
+                        setNewProjectEndDate(selectedProject.endDate ? new Date(selectedProject.endDate) : new Date());
+                        setNewProjectBudget(selectedProject.budget);
+                        setNewProjectStatus(selectedProject.status as 'active' | 'completed' | 'cancelled');
+                        setNewProjectCategory(selectedProject.category as 'client' | 'internal' | 'investment');
+                        setIsEditingProject(true);
+                      }}
+                      className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded-md transition"
+                    >
+                      Modifier
                     </button>
                     <button
                       onClick={() => handleDeleteProject(selectedProject.id)}

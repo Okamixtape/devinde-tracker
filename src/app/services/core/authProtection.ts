@@ -20,6 +20,7 @@ export const PROTECTED_PATHS = [
   '/profile',
   '/monitoring',
   '/pitch',
+  '/risk-clients',
 ];
 
 // Liste des chemins publics

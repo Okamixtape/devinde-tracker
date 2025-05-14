@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, FormEvent } from 'react';
-import { useErrorHandling } from '@/app/providers/ErrorHandlingProvider';
 import { useSecurity } from '@/app/hooks/useSecurity';
 import { RateLimitOperation } from "@/app/services/utils/security";
 
@@ -36,8 +35,6 @@ export const SecuredForm: React.FC<SecuredFormProps> = ({
     csrfToken, 
     checkOperationRateLimit 
   } = useSecurity();
-  
-  const { setError } = useErrorHandling();
   
   // Form state
   const [formData, setFormData] = useState<Record<string, string>>({});

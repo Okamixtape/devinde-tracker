@@ -9,14 +9,12 @@
     "lint": "next lint",
     "find-deadcode": "ts-prune",
     "lint:imports": "eslint src --ext .ts,.tsx --fix",
-    "organize-imports": "node scripts/organize-imports.js",
     "prepare": "husky",
     "pre-commit": "lint-staged"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "eslint --fix",
-      "node scripts/organize-imports.js"
+      "eslint --fix"
     ]
   },
   "dependencies": {
@@ -28,6 +26,7 @@
     "react-dom": "^19.0.0",
     "react-hot-toast": "^2.5.2",
     "react-icons": "^5.5.0",
+    "react-to-print": "^3.1.0",
     "recharts": "^2.15.3",
     "tailwind-merge": "^3.2.0",
     "task-master-ai": "^0.13.2"

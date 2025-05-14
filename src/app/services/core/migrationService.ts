@@ -431,7 +431,7 @@ export class MigrationServiceImpl implements MigrationService {
   /**
    * Get the default data version (used when no version is stored)
    */
-  private getDefaultVersion(): string {
+  getDefaultVersion(): string {
     return '0.0.0';
   }
   

@@ -1,0 +1,25 @@
+# Fichiers générés
+.next/
+node_modules/
+dist/
+build/
+coverage/
+
+# Fichiers non-JavaScript/TypeScript
+*.json
+*.md
+*.css
+*.scss
+*.html
+*.svg
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.ico
+
+# Autres fichiers à ignorer
+.turbo/
+.vscode/
+.idea/
+.git/

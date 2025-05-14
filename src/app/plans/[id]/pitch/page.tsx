@@ -59,18 +59,37 @@ export default function PitchViewerPage() {
   };
   
   // Fonction pour mettre à jour les champs texte
-  const handleInputChange = (field: keyof PitchData, value: string) => {
+  const handleInputChange = (field: string, value: string, isServiceField: boolean = false) => {
     if (!businessPlan) return;
     
-    const updatedPitch = {
-      ...businessPlan.pitch,
-      [field]: value
-    };
-    
-    setBusinessPlan({
-      ...businessPlan,
-      pitch: updatedPitch
-    });
+    if (isServiceField) {
+      // Traitement pour les champs de services (technologies, process)
+      const fieldKey = field === 'technologies' ? 'technologies' : 'process';
+      // Séparation par virgules pour les technologies, par lignes pour process
+      const separator = fieldKey === 'technologies' ? ',' : '\n';
+      const values = value.split(separator).map(item => item.trim()).filter(item => item !== '');
+      
+      const updatedServices = {
+        ...businessPlan.services,
+        [fieldKey]: values
+      };
+      
+      setBusinessPlan({
+        ...businessPlan,
+        services: updatedServices
+      });
+    } else {
+      // Traitement normal pour les champs du pitch
+      const updatedPitch = {
+        ...businessPlan.pitch,
+        [field]: value
+      };
+      
+      setBusinessPlan({
+        ...businessPlan,
+        pitch: updatedPitch
+      });
+    }
   };
   
   // Fonction pour sauvegarder les modifications
@@ -96,13 +115,17 @@ export default function PitchViewerPage() {
   // Fonction de rendu d'une section
   const renderSection = (section: DisplaySection) => {
     // Détermination du champ correspondant dans le modèle PitchData
-    let fieldKey: keyof PitchData | null = null;
+    let fieldKey: string | null = null;
+    let isServiceField = false;
+    
     switch(section.title) {
       case 'Problème': fieldKey = 'problem'; break;
       case 'Solution': fieldKey = 'solution'; break;
       case 'Proposition Unique de Valeur': fieldKey = 'uniqueValueProposition'; break;
       case 'Public Cible': fieldKey = 'targetAudience'; break;
       case 'Avantage Concurrentiel': fieldKey = 'competitiveAdvantage'; break;
+      case 'Technologies Maîtrisées': fieldKey = 'technologies'; isServiceField = true; break;
+      case 'Méthodologie de Travail': fieldKey = 'process'; isServiceField = true; break;
       default: fieldKey = null;
     }
 
@@ -155,8 +178,10 @@ export default function PitchViewerPage() {
                           dark:border-gray-600 dark:bg-gray-700 dark:text-white
                           focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 rows={4}
-                value={businessPlan?.pitch[fieldKey] as string || ""}
-                onChange={(e) => handleInputChange(fieldKey as keyof PitchData, e.target.value)}
+                value={isServiceField 
+                  ? (businessPlan?.services[fieldKey as keyof typeof businessPlan.services] as string[])?.join(fieldKey === 'technologies' ? ', ' : '\n') || ""
+                  : businessPlan?.pitch[fieldKey as keyof PitchData] as string || ""}
+                onChange={(e) => handleInputChange(fieldKey as string, e.target.value, isServiceField)}
                 placeholder={section.content}
                 autoFocus
               />
@@ -210,6 +235,7 @@ export default function PitchViewerPage() {
   
   // Récupérer ou initialiser les éléments du pitch
   const pitch = businessPlan.pitch || {};
+  const services = businessPlan.services || { offerings: [], technologies: [], process: [] };
   
   // Création des sections à afficher
   const sections: DisplaySection[] = [
@@ -237,6 +263,20 @@ export default function PitchViewerPage() {
       title: 'Avantage Concurrentiel',
       content: pitch.competitiveAdvantage || "Quels sont vos avantages par rapport à la concurrence ?",
       isComplete: !!pitch.competitiveAdvantage
+    },
+    {
+      title: 'Technologies Maîtrisées',
+      content: services.technologies.length > 0 
+              ? services.technologies.join(', ') 
+              : "Listez ici les technologies que vous maîtrisez.",
+      isComplete: services.technologies.length > 0
+    },
+    {
+      title: 'Méthodologie de Travail',
+      content: services.process.length > 0 
+              ? services.process.join('\n') 
+              : "Décrivez ici votre méthodologie de travail.",
+      isComplete: services.process.length > 0
     }
   ];
   

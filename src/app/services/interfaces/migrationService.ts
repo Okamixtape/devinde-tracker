@@ -76,4 +76,9 @@ export interface MigrationService {
    * Run all pending migrations
    */
   runPendingMigrations(): Promise<ServiceResult<boolean>>;
+  
+  /**
+   * Get the default version when no version is found in storage
+   */
+  getDefaultVersion(): string;
 }

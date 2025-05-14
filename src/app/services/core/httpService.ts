@@ -6,31 +6,8 @@
  */
 
 import { getAuthService } from '../serviceFactory';
-// Corrigé pour utiliser le service importé depuis le bon chemin (vérifier que le fichier existe)
-// Déclaration de module temporaire pour éviter les erreurs d'import
-// À remplacer par l'import réel quand errorTrackingService.ts sera correctement implémenté
-// import { errorTrackingService } from './errorTrackingService';
-
-// Définition temporaire d'un service de suivi des erreurs pour assurer la compilation
-const errorTrackingService = {
-  captureException: (message: string, type: ErrorType, severity: ErrorSeverity, context?: Record<string, unknown>) => {
-    console.error(`[${type}][${severity}] ${message}`, context);
-  }
-};
-// Importer les types d'erreur depuis le bon emplacement (à ajuster selon la structure du projet)
+import { errorTrackingService, ErrorType } from './errorTrackingService';
 import { AppError, ErrorSeverity } from "@/app/services/utils/errorHandling";
-
-// Définition temporaire d'ErrorType s'il n'est pas disponible depuis errorHandling
-enum ErrorType {
-  NETWORK = 'NETWORK',
-  AUTHENTICATION = 'AUTHENTICATION',
-  AUTHORIZATION = 'AUTHORIZATION',
-  VALIDATION = 'VALIDATION',
-  NOT_FOUND = 'NOT_FOUND',
-  SERVER = 'SERVER',
-  UNKNOWN = 'UNKNOWN',
-  API = 'API'
-}
 
 export interface RequestConfig {
   headers?: Record<string, string>;
@@ -132,12 +109,11 @@ export class HttpService {
       );
     }
 
-    // Enregistrer l'erreur avec le service temporaire
+    // Enregistrer l'erreur avec le service de suivi d'erreurs
     errorTrackingService.captureException(
-      appError.message,
+      appError,
       ErrorType.API,
-      ErrorSeverity.ERROR,
-      { source: 'HttpService', url, error: appError }
+      { source: 'HttpService', url }
     );
 
     return Promise.reject(appError);

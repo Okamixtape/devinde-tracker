@@ -1,0 +1,148 @@
+<context>
+# Overview  
+DevIndé Tracker est une application Next.js/React conçue pour aider les développeurs web indépendants à structurer leur activité professionnelle. Elle offre un tableau de bord interactif avec visualisations, analyses financières et conseils personnalisés pour construire une activité pérenne.
+
+# Core Features  
+## Tableau de bord principal
+- Fournit une vue d'ensemble de l'avancement du business plan
+- Présente des statistiques clés et graphiques de progression
+- Permet de naviguer rapidement vers les différentes fonctionnalités
+
+## Planification financière
+- Gestion complète des projets financiers avec budgets et transactions
+- Politique de tarification avec gestion des tarifs horaires, forfaits et abonnements
+- Simulateur financier interactif pour projeter revenus et dépenses
+
+## Timeline pour le plan d'action
+- Visualisation chronologique des jalons importants
+- Suivi de la progression par catégorie (business, technique, marketing)
+- Filtrage par statut des actions
+
+## Système d'authentification
+- Gestion des utilisateurs non-connectés et connectés
+- Protection des données personnelles
+- Redirections intelligentes vers la connexion
+
+## Architecture de services
+- Structure modulaire avec séparation des responsabilités
+- Système de stockage local sécurisé
+- Interfaces de services bien définies pour extensibilité future
+
+# User Experience  
+## Personas
+- Développeurs freelance débutants: Besoin de structure et conseils
+- Développeurs indépendants expérimentés: Besoin d'outils de suivi et d'optimisation
+- Développeurs en transition: Besoin de planification financière
+
+## Parcours utilisateur
+- Inscription/Authentification avec expérience adaptée
+- Configuration initiale du profil et des objectifs
+- Création et gestion du business plan via les sections dédiées
+- Consultation régulière du tableau de bord pour suivre les progrès
+- Ajustement des projets financiers selon l'évolution de l'activité
+
+## Considérations UX/UI
+- Interface moderne avec support du mode sombre/clair
+- Design responsive adapté à tous les appareils
+- Navigation intuitive et retours visuels immédiats
+- Accessibilité optimisée
+</context>
+<PRD>
+# Technical Architecture  
+## Composants système
+- Frontend Next.js/React avec architecture de composants modulaire
+- Système de services complet (ServiceLayer) avec interfaces bien définies
+- Moteur de persistance basé sur localStorage pour le stockage client
+- Architecture MVC adaptée avec séparation des modèles, vues et contrôleurs
+- Système d'authentification client-side avec gestion d'état
+
+## Modèles de données
+- BusinessPlan: Modèle principal avec sections structurées
+- Sections: Modèles spécifiques pour chaque partie du business plan
+- FinancialProject: Projets financiers avec transactions associées
+- FinancialTransaction: Revenus et dépenses liés aux projets
+- User: Informations utilisateur et préférences
+- Settings: Configuration globale de l'application
+
+## Interfaces de services
+- StorageService: Interface de persistance des données
+- BusinessPlanService: Gestion des plans d'affaires
+- SectionService: Manipulation des sections spécifiques
+- AuthService: Authentification et gestion des utilisateurs
+- FinancialService: Gestion des projets et calculs financiers
+
+## Infrastructure
+- Déploiement client-side uniquement (pas de backend pour le moment)
+- Système de build et déploiement via Next.js
+- Gestion d'état local via React Context et hooks personnalisés
+- Stockage persistant via localStorage avec encryption des données sensibles
+
+# Development Roadmap  
+## Phase 1: Fondation (Complétée)
+- Architecture de base et système de services
+- Modèles de données fondamentaux
+- Interface utilisateur minimale
+- Système d'authentification de base
+- Stockage persistant des données
+
+## Phase 2: Fonctionnalités essentielles (Complétée)
+- Tableau de bord principal avec visualisations
+- Sections du business plan avec éditeurs
+- Gestion des projets financiers et transactions
+- Calculateur financier interactif
+- Timeline pour le plan d'action
+
+## Phase 3: Expérience utilisateur (En cours)
+- Amélioration de l'expérience utilisateur non connecté
+- Système de redirections intelligentes
+- Protection des données personnelles
+- Adaptation de la navigation selon l'état d'authentification
+- Messages de feedback visuels
+
+## Phase 4: Enhancements futurs (Planifiée)
+- Intégration avec des services externes (calendriers, outils comptables)
+- Système de notifications et rappels
+- Suggestions intelligentes basées sur le contenu
+- Exportation avancée des plans et rapports
+- Fonctionnalités collaboratives
+
+# Logical Dependency Chain
+## Fondation architecturale
+1. Définition de l'architecture des composants système
+2. Conception des modèles de données et schémas
+3. Implémentation de la couche de service de données
+
+## Interface utilisateur
+4. Développement du frontend minimal viable
+5. Implémentation de l'authentification utilisateur
+6. Infrastructure et pipeline de déploiement
+
+## Logique métier
+7. Implémentation de la logique métier principale
+8. Développement des intégrations externes
+9. Ajout de fonctionnalités financières avancées
+
+## Finalisation
+10. Développement du monitoring côté client
+11. Amélioration de l'expérience utilisateur non connecté
+
+# Risks and Mitigations  
+## Défis techniques
+- **Complexité des calculs financiers**: Implémentation de tests unitaires rigoureux et validation par des experts comptables
+- **Persistance des données côté client**: Système de sauvegarde et restauration, avec gestion des conflits
+- **Performance avec grands volumes de données**: Utilisation de pagination, virtualisation et optimisation des rendus
+
+## Stratégie MVP
+- Focus initial sur les fonctionnalités essentielles pour les indépendants
+- Approche itérative avec livraisons régulières de fonctionnalités utilisables
+- Tests utilisateurs fréquents pour valider la direction
+
+## Contraintes de ressources
+- Optimisation du code pour maintenance à long terme
+- Documentation complète pour faciliter l'évolution
+- Structure modulaire permettant des améliorations progressives
+
+## Évolution future
+- Architecture conçue pour permettre l'ajout d'un backend ultérieurement
+- Interfaces de services standardisées facilitant les intégrations
+- Structure de données compatible avec une migration vers une base de données

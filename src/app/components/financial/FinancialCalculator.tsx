@@ -12,6 +12,7 @@ interface FinancialCalculatorProps {
   packages: ServicePackage[];
   subscriptions: Subscription[];
   readOnly?: boolean;
+  initialActiveTab?: 'calculator' | 'projects';
 }
 
 // Tab enumeration
@@ -30,10 +31,11 @@ export function FinancialCalculator({
   hourlyRates,
   packages,
   subscriptions,
-  readOnly = false
+  readOnly = false,
+  initialActiveTab = 'calculator'
 }: FinancialCalculatorProps) {
   // Tab state
-  const [activeTab, setActiveTab] = useState<TabType>('calculator');
+  const [activeTab, setActiveTab] = useState<TabType>(initialActiveTab);
   
   // Initialize financial data
   const [financials, setFinancials] = useState<FinancialsData>(financialsData || {

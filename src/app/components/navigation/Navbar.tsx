@@ -172,6 +172,13 @@ export function Navbar() {
             >
               Ressources
             </Link>
+            <Link 
+              href="/risk-clients" 
+              className="block px-3 py-2 rounded-md text-base font-medium text-gray-200 hover:text-white hover:bg-blue-700 transition-colors duration-150 ease-in-out"
+              onClick={() => setMenuOpen(false)}
+            >
+              Clients à risque
+            </Link>
           </div>
           
           {/* Séparateur */}

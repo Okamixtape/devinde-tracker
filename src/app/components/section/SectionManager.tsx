@@ -35,7 +35,9 @@ const DEFAULT_SECTIONS: Section[] = SECTIONS_CONFIG.map(config => ({
   icon: config.icon,
   color: config.color,
   completion: 0,
-  route: config.route
+  route: config.route,
+  businessPlanId: '', // Sera rempli lors de l'assignation à un business plan
+  order: config.order || 0 // Utiliser l'ordre du config ou 0 par défaut
 }));
 
 /**
@@ -359,7 +361,7 @@ export function SectionManager({ businessPlan, onSave, onCancel }: SectionManage
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd"></path>
               </svg>
               <p className="text-blue-700 dark:text-blue-300">
-                Cliquez sur une section pour l'ouvrir. Notez que certaines sections peuvent ne pas être encore implémentées.
+                Cliquez sur une section pour l&apos;ouvrir. Notez que certaines sections peuvent ne pas être encore implémentées.
               </p>
             </div>
           </div>

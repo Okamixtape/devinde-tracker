@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FiChevronDown, FiGrid, FiDollarSign, FiPieChart, FiTrendingUp, FiClipboard, FiBookOpen, FiBriefcase } from 'react-icons/fi';
+import { FiChevronDown, FiGrid, FiDollarSign, FiPieChart, FiTrendingUp, FiClipboard, FiBookOpen, FiBriefcase, FiFileText } from 'react-icons/fi';
 import { useDataServiceContext } from '@/app/contexts/DataServiceContext';
 
 interface NavigationItem {
@@ -33,7 +33,8 @@ const PlanNavigationDropdown: React.FC<PlanNavigationDropdownProps> = ({ planId,
     'market-analysis': <FiPieChart className="mr-2" />,
     finances: <FiTrendingUp className="mr-2" />,
     'action-plan': <FiClipboard className="mr-2" />,
-    revenue: <FiTrendingUp className="mr-2" />
+    revenue: <FiTrendingUp className="mr-2" />,
+    documents: <FiFileText className="mr-2" />
   };
 
   // Utiliser le contexte pour accéder au service des sections

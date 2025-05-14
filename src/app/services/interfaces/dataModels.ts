@@ -166,6 +166,7 @@ export interface Expense {
  */
 export interface FinancialProject {
   id: string;
+  businessPlanId?: string;  // ID du business plan auquel appartient ce projet
   name: string;
   description: string;
   client: string;

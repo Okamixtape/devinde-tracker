@@ -89,6 +89,24 @@ export const SECTIONS_CONFIG: SectionConfig[] = [
     color: "#0EA5E9",
     route: "/revenue",
     order: 7
+  },
+  {
+    id: "section-financial-dashboard",
+    key: "financial-dashboard",
+    title: "Dashboard Financier",
+    icon: "chart-pie",
+    color: "#14B8A6",
+    route: "/financial-dashboard",
+    order: 8
+  },
+  {
+    id: "section-documents",
+    key: "documents",
+    title: "Documents",
+    icon: "document-text",
+    color: "#6B7280",
+    route: "/documents",
+    order: 9
   }
 ];
 

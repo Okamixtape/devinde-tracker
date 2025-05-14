@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { BusinessPlanData, FinancialsData } from "@/app/services/interfaces/dataModels";
 import { FinancialCalculator } from '@/app/components/financial/FinancialCalculator';
 import { 
@@ -18,11 +18,21 @@ import {
 export default function FinancesPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params?.id as string;
   
   const [businessPlan, setBusinessPlan] = useState<BusinessPlanData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'calculator' | 'projects'>('calculator');
+  
+  // Vérifier si on doit activer l'onglet des projets (création à partir d'un service)
+  useEffect(() => {
+    const createProject = searchParams.get('createProject');
+    if (createProject === 'true') {
+      setActiveTab('projects');
+    }
+  }, [searchParams]);
   
   // Initialize services
   const businessPlanService = getBusinessPlanService();
@@ -49,7 +59,7 @@ export default function FinancesPage() {
     };
     
     loadBusinessPlan();
-  }, [id, router]);
+  }, [id, router, businessPlanService]);
   
   // Handle saving financial data
   const handleSaveFinancials = async (financialsData: FinancialsData) => {
@@ -131,6 +141,7 @@ export default function FinancesPage() {
         hourlyRates={businessPlan.businessModel?.hourlyRates || []}
         packages={businessPlan.businessModel?.packages || []}
         subscriptions={businessPlan.businessModel?.subscriptions || []}
+        initialActiveTab={activeTab}
       />
     </div>
   );
