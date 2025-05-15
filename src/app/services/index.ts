@@ -3,16 +3,17 @@
  */
 
 // Service Interfaces - Export façon sélective pour éviter les collisions
-// Exporter de serviceInterfaces.ts
+// Exporter de service-interfaces.ts
 export type {
   StorageService,
   BusinessPlanService,
   SectionService,
+  ISectionService,
   Section as SectionInterface,
   BusinessPlan,
   AuthService,
   UserPreferences
-} from "./interfaces/serviceInterfaces";
+} from "./interfaces/service-interfaces";
 
 // Exporter de dataModels.ts (sans l'interface Section qui est déjà exportée)
 export type {
@@ -58,6 +59,6 @@ export const sectionService = new SectionServiceImpl();
  */
 export const serviceFactory = {
   getBusinessPlanService: () => businessPlanService,
-  getSectionService: () => sectionService,
+  getSectionService: () => sectionService as ISectionService,
   getAuthService: () => authService
 };

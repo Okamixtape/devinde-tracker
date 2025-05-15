@@ -2,319 +2,229 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
-import { BusinessPlan } from "@/app/services/interfaces/serviceInterfaces";
-
-// Interfaces locales pour ne pas conflictuer avec d'autres définitions
-interface HourlyRate {
-  name: string;
-  rate: number;
-  description?: string;
-}
-
-interface Package {
-  name: string;
-  price: number;
-  description?: string;
-  features?: string[];
-}
-
-interface Subscription {
-  name: string;
-  price: number;
-  period: string;
-  description?: string;
-  features?: string[];
-}
-
-// Interface pour le modèle d'affaires
-interface BusinessModelData {
-  valueProposition?: string[];
-  customerSegments?: string[];
-  channels?: string[];
-  customerRelationships?: string[];
-  keyResources?: string[];
-  keyActivities?: string[];
-  keyPartners?: string[];
-  costStructure?: string[];
-  revenueStreams?: string[];
-  // Structure de tarification
-  hourlyRates?: HourlyRate[];
-  packages?: Package[];
-  subscriptions?: Subscription[];
-}
+import { useBusinessModel } from '@/app/hooks/useBusinessModel';
 import { getBusinessPlanService } from '@/app/services/serviceFactory';
-import { PricingImpactVisualizer } from '@/app/components/business-model/PricingImpactVisualizer';
+import { BusinessPlanData } from '@/app/services/interfaces/dataModels';
+import BusinessModelForm from '@/app/components/business-model/BusinessModelForm';
+import ScenarioSimulator from '@/app/components/business-model/ScenarioSimulator';
+import KPIDashboard from '@/app/components/business-model/KPIDashboard';
+import { UI_CLASSES } from '@/app/styles/ui-classes';
+import { Settings, CreditCard, BarChart2, HelpCircle } from 'lucide-react';
+import Link from 'next/link';
 
-// Extension de l'interface BusinessModelData pour les champs additionnels
-interface BusinessModelSection {
-  title: string;
-  content: string[];
-  isComplete: boolean;
-}
-
+/**
+ * Page principale du modèle économique
+ * 
+ * Intègre les différentes composantes du modèle économique :
+ * - Configuration du modèle
+ * - Simulateur de scénarios
+ * - Tableau de suivi des KPIs
+ */
 export default function BusinessModelPage() {
-  const { id } = useParams() as { id: string };
-  const businessPlanService = getBusinessPlanService();
+  const params = useParams();
+  const planId = params?.id as string || '';
   
-  const [loading, setLoading] = useState<boolean>(true);
-  const [businessPlan, setBusinessPlan] = useState<BusinessPlan | null>(null);
+  // États pour la gestion de la page
+  const [activeTab, setActiveTab] = useState<'configuration' | 'simulator' | 'kpis'>('configuration');
+  const [businessPlan, setBusinessPlan] = useState<BusinessPlanData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   
+  // Charger les données du plan d'affaires
   useEffect(() => {
-    const loadBusinessPlan = async () => {
-      setLoading(true);
+    const fetchBusinessPlan = async () => {
       try {
-        const result = await businessPlanService.getItem(id);
-        if (result.success && result.data) {
-          setBusinessPlan(result.data as BusinessPlan);
+        setIsLoading(true);
+        const businessPlanService = getBusinessPlanService();
+        
+        // Si aucun ID n'est fourni, récupérer le premier plan d'affaires
+        if (!planId) {
+          const result = await businessPlanService.getItems();
+          
+          if (result.success && result.data && result.data.length > 0) {
+            setBusinessPlan(result.data[0] as any as BusinessPlanData);
+          } else {
+            setError('Aucun plan d\'affaires trouvé.');
+          }
         } else {
-          setError(result.error?.message || 'Impossible de charger le plan d\'affaires');
+          // Sinon, récupérer le plan spécifié
+          const result = await businessPlanService.getItem(planId);
+          
+          if (result.success && result.data) {
+            setBusinessPlan(result.data as any as BusinessPlanData);
+          } else {
+            setError(`Plan d'affaires avec l'ID ${planId} non trouvé.`);
+          }
         }
-      } catch (error) {
-        setError(error instanceof Error ? error.message : 'Une erreur s\'est produite');
+      } catch (err) {
+        setError(`Erreur lors du chargement du plan d'affaires: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
     
-    loadBusinessPlan();
-  }, [id, businessPlanService]);
-  
-  // Fonction de rendu d'une section
-  const renderSection = (section: BusinessModelSection) => {
+    fetchBusinessPlan();
+  }, [planId]);
+
+  // Afficher un chargement pendant le chargement des données
+  if (isLoading) {
     return (
-      <div className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">{section.title}</h3>
-          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-            section.isComplete 
-              ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
-              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
-          }`}>
-            {section.isComplete ? 'Complété' : 'À compléter'}
-          </span>
-        </div>
-        
-        <div className="space-y-3">
-          {section.content.map((item, index) => (
-            <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-md">
-              <p className="text-gray-700 dark:text-gray-300">{item}</p>
-            </div>
-          ))}
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement du modèle économique...</p>
         </div>
       </div>
     );
-  };
-  
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
   }
-  
-  if (error) {
+
+  // Si une erreur s'est produite
+  if (error || !businessPlan) {
     return (
-      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-400">
-        <p>{error}</p>
-      </div>
-    );
-  }
-  
-  if (!businessPlan) {
-    return (
-      <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md text-yellow-700 dark:text-yellow-400">
-        <p>Aucun plan d&apos;affaires trouvé</p>
-      </div>
-    );
-  }
-  
-  const businessModel = businessPlan.businessModel;
-  
-  // S'assurer que businessModel est correctement typé
-  const businessModelData: BusinessModelData = businessModel || {};
-  
-  // Récupérer ou initialiser des tableaux vides pour les propriétés optionnelles
-  const valueProposition = businessModelData.valueProposition || [];
-  const customerSegments = businessModelData.customerSegments || [];
-  const channels = businessModelData.channels || [];
-  const customerRelationships = businessModelData.customerRelationships || [];
-  const keyResources = businessModelData.keyResources || [];
-  const keyActivities = businessModelData.keyActivities || [];
-  const keyPartners = businessModelData.keyPartners || [];
-  const costStructure = businessModelData.costStructure || [];
-  
-  // Création des sections
-  const sections: BusinessModelSection[] = [
-    {
-      title: 'Proposition de Valeur',
-      content: valueProposition,
-      isComplete: Array.isArray(valueProposition) && valueProposition.length > 0
-    },
-    {
-      title: 'Segments de Clientèle',
-      content: customerSegments,
-      isComplete: Array.isArray(customerSegments) && customerSegments.length > 0
-    },
-    {
-      title: 'Canaux de Distribution',
-      content: channels,
-      isComplete: Array.isArray(channels) && channels.length > 0
-    },
-    {
-      title: 'Relations Client',
-      content: customerRelationships,
-      isComplete: Array.isArray(customerRelationships) && customerRelationships.length > 0
-    },
-    {
-      title: 'Sources de Revenus',
-      content: [
-        ...(businessModelData.hourlyRates || []).map(rate => typeof rate === 'string' ? rate : `${rate.name}: ${rate.rate}€/h`),
-        ...(businessModelData.packages || []).map(pkg => typeof pkg === 'string' ? pkg : `${pkg.name}: ${pkg.price}€`),
-        ...(businessModelData.subscriptions || []).map(sub => typeof sub === 'string' ? sub : `${sub.name}: ${sub.price}€/${sub.period}`)
-      ],
-      isComplete: (
-        (Array.isArray(businessModelData.hourlyRates) && businessModelData.hourlyRates.length > 0) ||
-        (Array.isArray(businessModelData.packages) && businessModelData.packages.length > 0) ||
-        (Array.isArray(businessModelData.subscriptions) && businessModelData.subscriptions.length > 0)
-      )
-    },
-    {
-      title: 'Ressources Clés',
-      content: keyResources,
-      isComplete: Array.isArray(keyResources) && keyResources.length > 0
-    },
-    {
-      title: 'Activités Clés',
-      content: keyActivities,
-      isComplete: Array.isArray(keyActivities) && keyActivities.length > 0
-    },
-    {
-      title: 'Partenaires Clés',
-      content: keyPartners,
-      isComplete: Array.isArray(keyPartners) && keyPartners.length > 0
-    },
-    {
-      title: 'Structure de Coûts',
-      content: costStructure,
-      isComplete: Array.isArray(costStructure) && costStructure.length > 0
-    }
-  ];
-  
-  // Fonctions d'assistance et formatage pour le rendu de l'UI
-  
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
-        Modèle Économique
-      </h1>
-      
-      <div className="mb-6 p-6 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-200 dark:border-blue-800">
-        <h2 className="text-lg font-medium mb-3 text-blue-800 dark:text-blue-300">
-          À propos du Modèle Économique
-        </h2>
-        <p className="text-blue-700 dark:text-blue-400 mb-2">
-          Cette section vous permet de définir les éléments clés de votre modèle économique en tant qu&apos;indépendant, 
-          en utilisant le cadre du Business Model Canvas adapté à votre situation.
-        </p>
-        <p className="text-blue-700 dark:text-blue-400 mb-2">
-          Le Business Model Canvas est un outil stratégique qui vous permet de décrire et visualiser votre modèle économique à travers 9 composantes essentielles :
-        </p>
-        <ul className="list-disc pl-6 text-blue-700 dark:text-blue-400 mb-2 space-y-1">
-          <li>Les partenaires clés (avec qui vous collaborez)</li>
-          <li>Les activités clés (ce que vous faites)</li>
-          <li>Les ressources clés (ce dont vous avez besoin)</li>
-          <li>La proposition de valeur (ce que vous offrez)</li>
-          <li>Les relations clients (comment vous interagissez)</li>
-          <li>Les canaux de communication (comment vous êtes découvert)</li>
-          <li>Les segments de clientèle (pour qui vous créez de la valeur)</li>
-          <li>La structure de coûts (ce que vous dépensez)</li>
-          <li>Les sources de revenus (comment vous générez des fonds)</li>
-        </ul>
-        <p className="text-blue-700 dark:text-blue-400">
-          Complétez les différentes sections pour avoir une vision claire de votre proposition de valeur, 
-          de vos clients, de vos revenus et de vos coûts. Utilisez également la visualisation d&apos;impact 
-          pour simuler et comprendre l&apos;effet de votre tarification sur vos revenus potentiels.
-        </p>
-      </div>
-      
-      {/* Section des tarifications */}
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Modèles de tarification</h2>
-        {/* Rendu des modèles de tarification */}
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          {businessModelData.hourlyRates && businessModelData.hourlyRates.length > 0 && (
-            <div className="border rounded-lg p-4 shadow-sm">
-              <h3 className="text-lg font-semibold mb-3">Tarifs horaires</h3>
-              <ul className="space-y-2">
-                {businessModelData.hourlyRates.map((rate, index) => (
-                  <li key={index} className="border-b pb-2">
-                    <div className="font-medium">{rate.name}: {rate.rate} €/h</div>
-                    {rate.description && <div className="text-sm text-gray-600">{rate.description}</div>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {businessModelData.packages && businessModelData.packages.length > 0 && (
-            <div className="border rounded-lg p-4 shadow-sm">
-              <h3 className="text-lg font-semibold mb-3">Packages</h3>
-              <ul className="space-y-2">
-                {businessModelData.packages.map((pkg, index) => (
-                  <li key={index} className="border-b pb-2">
-                    <div className="font-medium">{pkg.name}: {pkg.price} €</div>
-                    {pkg.description && <div className="text-sm text-gray-600">{pkg.description}</div>}
-                    {pkg.features && (
-                      <ul className="mt-1 text-xs list-disc pl-5">
-                        {pkg.features.map((feature, idx) => (
-                          <li key={idx}>{feature}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          
-          {businessModelData.subscriptions && businessModelData.subscriptions.length > 0 && (
-            <div className="border rounded-lg p-4 shadow-sm">
-              <h3 className="text-lg font-semibold mb-3">Abonnements</h3>
-              <ul className="space-y-2">
-                {businessModelData.subscriptions.map((sub, index) => (
-                  <li key={index} className="border-b pb-2">
-                    <div className="font-medium">{sub.name}: {sub.price} €/{sub.period}</div>
-                    {sub.description && <div className="text-sm text-gray-600">{sub.description}</div>}
-                    {sub.features && (
-                      <ul className="mt-1 text-xs list-disc pl-5">
-                        {sub.features.map((feature, idx) => (
-                          <li key={idx}>{feature}</li>
-                        ))}
-                      </ul>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      </div>
-      
-      {/* Visualisation de l'impact des modèles tarifaires */}
-      {businessModelData && (
-        // Force le typage pour éviter les erreurs de compatibilité entre les interfaces
-        <PricingImpactVisualizer businessModel={JSON.parse(JSON.stringify(businessModelData))} />
-      )}
-      
-      {/* Sections du modèle économique */}
-      <div className="mt-8 grid grid-cols-1 gap-6">
-        {sections.map((section, index) => (
-          <div key={index}>
-            {renderSection(section)}
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="max-w-md w-full p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Erreur</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {error || 'Impossible de charger le plan d\'affaires. Veuillez réessayer.'}
+          </p>
+          <div className="flex justify-center">
+            <Link href="/plans" className={UI_CLASSES.BUTTON_PRIMARY}>
+              Retour aux plans d'affaires
+            </Link>
           </div>
-        ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ID du plan à utiliser
+  const currentPlanId = businessPlan.id || '';
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-12">
+      {/* En-tête de la page */}
+      <div className="pt-6 pb-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className={UI_CLASSES.HEADING_1}>Modèle Économique</h1>
+            <p className={UI_CLASSES.TEXT_SMALL}>
+              Définissez votre stratégie tarifaire, configurez vos objectifs financiers, et simulez différents scénarios.
+            </p>
+          </div>
+          
+          <div className="flex items-center space-x-2">
+            <Link 
+              href={`/plans/${currentPlanId}/business-model/canvas`}
+              className={`${UI_CLASSES.BUTTON_SECONDARY} flex items-center`}
+            >
+              <Settings size={18} className="mr-2" />
+              Business Model Canvas
+            </Link>
+            
+            <Link 
+              href={`/plans/${currentPlanId}/financial-dashboard`}
+              className={`${UI_CLASSES.BUTTON_SECONDARY} flex items-center`}
+            >
+              <CreditCard size={18} className="mr-2" />
+              Dashboard Financier
+            </Link>
+          </div>
+        </div>
+      </div>
+      
+      {/* Onglets de navigation */}
+      <div className="flex border-b border-gray-200 dark:border-gray-700 mb-6 overflow-x-auto hide-scrollbar">
+        <button
+          className={`mr-6 py-3 px-1 font-medium border-b-2 whitespace-nowrap ${
+            activeTab === 'configuration'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+          }`}
+          onClick={() => setActiveTab('configuration')}
+        >
+          Configuration des Tarifs
+        </button>
+        <button
+          className={`mr-6 py-3 px-1 font-medium border-b-2 whitespace-nowrap ${
+            activeTab === 'simulator'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+          }`}
+          onClick={() => setActiveTab('simulator')}
+        >
+          Simulateur de Scénarios
+        </button>
+        <button
+          className={`mr-6 py-3 px-1 font-medium border-b-2 whitespace-nowrap ${
+            activeTab === 'kpis'
+              ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+              : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+          }`}
+          onClick={() => setActiveTab('kpis')}
+        >
+          Tableau de Bord KPI
+        </button>
+      </div>
+      
+      {/* Contenu de l'onglet actif */}
+      <div className="mb-8">
+        {activeTab === 'configuration' && (
+          <>
+            <BusinessModelForm 
+              planId={currentPlanId} 
+              onSaved={() => {
+                // Recharger automatiquement les autres composants après sauvegarde
+              }}
+            />
+          </>
+        )}
+        
+        {activeTab === 'simulator' && (
+          <>
+            <ScenarioSimulator 
+              planId={currentPlanId}
+              initialParams={{
+                hoursPerWeek: 40,
+                newClientsPerMonth: 3,
+              }}
+            />
+          </>
+        )}
+        
+        {activeTab === 'kpis' && (
+          <>
+            <KPIDashboard planId={currentPlanId} />
+          </>
+        )}
+      </div>
+      
+      {/* Section d'aide contextuelle */}
+      <div className={`${UI_CLASSES.CARD} border border-gray-200 dark:border-gray-700 mt-8`}>
+        <div className="flex items-start">
+          <div className="flex-shrink-0 bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
+            <HelpCircle size={24} className="text-blue-600 dark:text-blue-400" />
+          </div>
+          
+          <div className="ml-4">
+            <h3 className="text-lg font-medium text-gray-800 dark:text-white mb-2">Comment utiliser cette section ?</h3>
+            <div className="text-gray-600 dark:text-gray-400 space-y-2">
+              <p>
+                Le module Modèle Économique vous aide à définir une stratégie tarifaire rentable et à analyser différents scénarios de revenus :
+              </p>
+              
+              <ol className="list-decimal pl-5 space-y-1">
+                <li><span className="font-medium text-gray-800 dark:text-white">Configuration des Tarifs:</span> Définissez vos taux horaires, forfaits et abonnements.</li>
+                <li><span className="font-medium text-gray-800 dark:text-white">Simulateur de Scénarios:</span> Testez différentes combinaisons de paramètres pour voir leur impact sur vos revenus.</li>
+                <li><span className="font-medium text-gray-800 dark:text-white">Tableau de Bord KPI:</span> Suivez vos indicateurs clés et recevez des recommandations personnalisées.</li>
+              </ol>
+              
+              <p className="pt-2">
+                Commencez par configurer vos offres dans l'onglet <span className="font-medium text-gray-800 dark:text-white">Configuration des Tarifs</span>, 
+                puis utilisez le <span className="font-medium text-gray-800 dark:text-white">Simulateur de Scénarios</span> pour évaluer leur impact financier.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

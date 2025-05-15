@@ -3,18 +3,21 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Document, DocumentStatus, Payment, PaymentMethod } from '../interfaces/invoicing';
 import DocumentService from './documentService';
+import { IPaymentService } from './interfaces/service-interfaces';
 
-// Clé LocalStorage
+// LocalStorage key
 const PAYMENTS_KEY = 'devinde_payments';
 
 /**
- * Service de gestion des paiements
+ * Implementation of the Payment Service
+ * Provides methods to manage payments
  */
-export const PaymentService = {
+class PaymentServiceImpl implements IPaymentService {
   /**
-   * Récupère tous les paiements
+   * Retrieves all payments
+   * @returns Array of all payments
    */
-  getAllPayments: (): Payment[] => {
+  getAllPayments(): Payment[] {
     if (typeof window === 'undefined') return [];
     
     const paymentsJSON = localStorage.getItem(PAYMENTS_KEY);
@@ -23,44 +26,50 @@ export const PaymentService = {
     try {
       return JSON.parse(paymentsJSON);
     } catch (error) {
-      console.error('Erreur lors de la récupération des paiements:', error);
+      console.error('Error retrieving payments:', error);
       return [];
     }
-  },
+  }
   
   /**
-   * Récupère les paiements d'un document spécifique
+   * Retrieves payments for a specific document
+   * @param documentId The ID of the document to retrieve payments for
+   * @returns Array of payments
    */
-  getDocumentPayments: (documentId: string): Payment[] => {
-    const payments = PaymentService.getAllPayments();
+  getDocumentPayments(documentId: string): Payment[] {
+    const payments = this.getAllPayments();
     return payments.filter(payment => payment.documentId === documentId);
-  },
+  }
   
   /**
-   * Ajoute un nouveau paiement
+   * Adds a new payment
+   * @param payment The payment to add
+   * @returns The added payment
    */
-  addPayment: (payment: Payment): Payment => {
-    // Génération d'un ID s'il n'en a pas
+  addPayment(payment: Payment): Payment {
+    // Generate an ID if it doesn't have one
     if (!payment.id) {
       payment.id = uuidv4();
     }
     
-    // Sauvegarde du paiement
-    const payments = PaymentService.getAllPayments();
+    // Save the payment
+    const payments = this.getAllPayments();
     payments.push(payment);
     localStorage.setItem(PAYMENTS_KEY, JSON.stringify(payments));
     
-    // Mise à jour du document associé
-    PaymentService.updateDocumentPaymentStatus(payment.documentId);
+    // Update the associated document
+    this.updateDocumentPaymentStatus(payment.documentId);
     
     return payment;
-  },
+  }
   
   /**
-   * Supprime un paiement
+   * Deletes a payment
+   * @param paymentId The ID of the payment to delete
+   * @returns True if deletion was successful, false otherwise
    */
-  deletePayment: (paymentId: string): boolean => {
-    const payments = PaymentService.getAllPayments();
+  deletePayment(paymentId: string): boolean {
+    const payments = this.getAllPayments();
     const paymentToDelete = payments.find(p => p.id === paymentId);
     
     if (!paymentToDelete) return false;
@@ -70,23 +79,24 @@ export const PaymentService = {
     
     localStorage.setItem(PAYMENTS_KEY, JSON.stringify(updatedPayments));
     
-    // Mise à jour du document associé
-    PaymentService.updateDocumentPaymentStatus(documentId);
+    // Update the associated document
+    this.updateDocumentPaymentStatus(documentId);
     
     return true;
-  },
+  }
   
   /**
-   * Met à jour le statut de paiement d'un document
+   * Updates the payment status of a document
+   * @param documentId The ID of the document to update
    */
-  updateDocumentPaymentStatus: (documentId: string): void => {
+  updateDocumentPaymentStatus(documentId: string): void {
     const document = DocumentService.getById(documentId);
     if (!document || document.type !== 'invoice') return;
     
-    const payments = PaymentService.getDocumentPayments(documentId);
+    const payments = this.getDocumentPayments(documentId);
     const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
     
-    // Mise à jour du document
+    // Update the document
     const updatedDocument: Document = {
       ...document,
       payments: payments,
@@ -97,19 +107,19 @@ export const PaymentService = {
         : undefined
     };
     
-    // Détermination du statut de paiement
+    // Determine the payment status
     if (totalPaid === 0) {
-      // Si aucun paiement n'a été effectué
+      // If no payments have been made
       if (document.dueDate && new Date(document.dueDate) < new Date()) {
         updatedDocument.status = DocumentStatus.OVERDUE;
       } else {
         updatedDocument.status = DocumentStatus.SENT;
       }
     } else if (totalPaid >= (document.total || 0)) {
-      // Si le montant est entièrement payé
+      // If the amount is fully paid
       updatedDocument.status = DocumentStatus.PAID;
     } else {
-      // Si le montant est partiellement payé
+      // If the amount is partially paid
       if (document.dueDate && new Date(document.dueDate) < new Date()) {
         updatedDocument.status = DocumentStatus.OVERDUE;
       } else {
@@ -117,29 +127,33 @@ export const PaymentService = {
       }
     }
     
-    // Sauvegarde du document mis à jour
+    // Save the updated document
     DocumentService.save(updatedDocument);
-  },
+  }
   
   /**
-   * Génère un récépissé de paiement
+   * Generates a payment receipt
+   * @param payment The payment to generate a receipt for
+   * @returns The receipt number
    */
-  generatePaymentReceipt: (payment: Payment): string => {
+  generatePaymentReceipt(payment: Payment): string {
     const document = DocumentService.getById(payment.documentId);
     if (!document) return '';
     
     const year = new Date().getFullYear();
     const month = (new Date().getMonth() + 1).toString().padStart(2, '0');
-    const receiptCount = PaymentService.getAllPayments().length + 1;
+    const receiptCount = this.getAllPayments().length + 1;
     const paddedCount = receiptCount.toString().padStart(3, '0');
     
-    return `RECU-${year}${month}-${paddedCount}`;
-  },
+    return `RCPT-${year}${month}-${paddedCount}`;
+  }
   
   /**
-   * Calcule les statistiques de paiement pour un document
+   * Calculates payment statistics for a document
+   * @param documentId The ID of the document to calculate statistics for
+   * @returns Payment statistics
    */
-  getPaymentStats: (documentId: string): {
+  getPaymentStats(documentId: string): {
     totalAmount: number;
     paidAmount: number;
     remainingAmount: number;
@@ -148,7 +162,7 @@ export const PaymentService = {
     isPartiallyPaid: boolean;
     isOverdue: boolean;
     paymentPercentage: number;
-  } => {
+  } {
     const document = DocumentService.getById(documentId);
     if (!document) {
       return {
@@ -163,7 +177,7 @@ export const PaymentService = {
       };
     }
     
-    const payments = PaymentService.getDocumentPayments(documentId);
+    const payments = this.getDocumentPayments(documentId);
     const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
     const totalAmount = document.total || 0;
     const remainingAmount = totalAmount - totalPaid;
@@ -179,6 +193,12 @@ export const PaymentService = {
       paymentPercentage: totalAmount > 0 ? (totalPaid / totalAmount) * 100 : 0
     };
   }
-};
+}
+
+// Create singleton instance
+export const PaymentService = new PaymentServiceImpl();
+
+// Export both the service instance and the implementation class
+export { PaymentServiceImpl };
 
 export default PaymentService;

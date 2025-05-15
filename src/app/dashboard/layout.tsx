@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import ProtectedRoute from "@/app/components/auth/ProtectedRoute";
+import { ProtectedPage } from '@/app/components/auth';
 
 export default function DashboardLayout({
   children,
@@ -9,8 +9,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute>
+    <ProtectedPage title="Tableau de bord" description="Pilotez votre activité indépendante">
       {children}
-    </ProtectedRoute>
+    </ProtectedPage>
   );
 }

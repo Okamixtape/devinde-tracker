@@ -1,0 +1,369 @@
+import { 
+  AppError, 
+  ErrorCategory, 
+  ErrorSeverity, 
+  ErrorResponse, 
+  handleError as utilsHandleError,
+  ErrorCodes,
+  createValidationError as utilsCreateValidationError,
+  createNotFoundError as utilsCreateNotFoundError
+} from "../utils/errorHandling";
+import { ServiceResult } from "../interfaces/dataModels";
+import { 
+  ErrorHandler, 
+  ErrorServiceConfig, 
+  ErrorHandlingOptions, 
+  IErrorService, 
+  LogLevel, 
+  TryOperationOptions, 
+  ErrorRecord 
+} from "../interfaces/IErrorService";
+import { generateUUID } from "../utils/helpers";
+
+/**
+ * Implémentation du service centralisé pour la gestion des erreurs dans l'application
+ * Suit l'interface IErrorService
+ */
+export class ErrorServiceImpl implements IErrorService {
+  private static instance: ErrorServiceImpl;
+  private readonly config: ErrorServiceConfig;
+  private errorHandlers: ErrorHandler[] = [];
+  private errorHistory: ErrorRecord[] = [];
+  private logLevel: LogLevel = LogLevel.ERROR;
+
+  /**
+   * Constructeur privé pour le pattern singleton
+   * @param config Configuration du service d'erreur
+   */
+  private constructor(config: ErrorServiceConfig = {}) {
+    this.config = {
+      includeDebugInfo: process.env.NODE_ENV === 'development',
+      logErrorsToConsole: true,
+      logErrorsToServer: process.env.NODE_ENV === 'production',
+      defaultErrorMessage: "Une erreur est survenue",
+      maxErrorHistorySize: 50,
+      ...config
+    };
+
+    if (this.config.errorHandlers && this.config.errorHandlers.length) {
+      this.errorHandlers = [...this.config.errorHandlers];
+    }
+
+    // Définir le niveau de log par défaut
+    this.logLevel = process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR;
+  }
+
+  /**
+   * Obtenir l'instance unique du service d'erreur (Singleton)
+   * @param config Configuration optionnelle
+   * @returns Instance du service d'erreur
+   */
+  public static getInstance(config?: ErrorServiceConfig): ErrorServiceImpl {
+    if (!ErrorServiceImpl.instance) {
+      ErrorServiceImpl.instance = new ErrorServiceImpl(config);
+    }
+    return ErrorServiceImpl.instance;
+  }
+
+  /**
+   * Configure le service d'erreur
+   * @param config Configuration partielle à appliquer
+   */
+  public configure(config: Partial<ErrorServiceConfig>): void {
+    Object.assign(this.config, config);
+    
+    if (config.errorHandlers) {
+      this.errorHandlers = [...config.errorHandlers];
+    }
+  }
+
+  /**
+   * Ajoute un gestionnaire d'erreur
+   * @param handler Fonction de gestion d'erreur à ajouter
+   */
+  public addErrorHandler(handler: ErrorHandler): void {
+    if (!this.errorHandlers.includes(handler)) {
+      this.errorHandlers.push(handler);
+    }
+  }
+
+  /**
+   * Supprime un gestionnaire d'erreur
+   * @param handler Fonction de gestion d'erreur à supprimer
+   */
+  public removeErrorHandler(handler: ErrorHandler): void {
+    this.errorHandlers = this.errorHandlers.filter(h => h !== handler);
+  }
+
+  /**
+   * Gère une erreur selon la configuration du service
+   * @param error Erreur à gérer
+   * @param options Options de gestion
+   * @returns Réponse d'erreur standardisée
+   */
+  public handleError(
+    error: unknown, 
+    options: ErrorHandlingOptions = {}
+  ): ErrorResponse {
+    const {
+      context = {},
+      includeDebugInfo = this.config.includeDebugInfo,
+      logError = this.shouldLogError(error),
+      notifyHandlers = true
+    } = options;
+
+    // Convertir en format standard
+    const errorResponse = utilsHandleError(error, {
+      includeDebugInfo,
+      logError
+    });
+
+    // Enregistrer dans l'historique des erreurs
+    this.addToErrorHistory(errorResponse, context);
+
+    // Notifier les gestionnaires d'erreur enregistrés
+    if (notifyHandlers && this.errorHandlers.length > 0) {
+      for (const handler of this.errorHandlers) {
+        try {
+          handler(error, context);
+        } catch (handlerError) {
+          console.error('Error in error handler:', handlerError);
+        }
+      }
+    }
+
+    // Envoyer au serveur si configuré
+    if (this.config.logErrorsToServer) {
+      this.logErrorToServer(errorResponse, context);
+    }
+
+    return errorResponse;
+  }
+
+  /**
+   * Détermine si une erreur doit être journalisée en fonction de sa sévérité
+   * et du niveau de journalisation configuré
+   * @param error Erreur à vérifier
+   * @returns Booléen indiquant si l'erreur doit être journalisée
+   */
+  private shouldLogError(error: unknown): boolean {
+    if (this.logLevel === LogLevel.NONE) return false;
+    if (this.logLevel === LogLevel.DEBUG) return true;
+
+    // Déterminer la sévérité de l'erreur
+    let severity = ErrorSeverity.ERROR; // Par défaut
+    if (error instanceof AppError) {
+      severity = error.severity;
+    }
+
+    // Vérifier si le niveau de log permet de journaliser cette sévérité
+    switch (severity) {
+      case ErrorSeverity.FATAL:
+      case ErrorSeverity.CRITICAL:
+      case ErrorSeverity.ERROR:
+        return this.logLevel >= LogLevel.ERROR;
+      case ErrorSeverity.WARNING:
+        return this.logLevel >= LogLevel.WARNING;
+      case ErrorSeverity.INFO:
+        return this.logLevel >= LogLevel.INFO;
+      default:
+        return false;
+    }
+  }
+
+  /**
+   * Ajoute une erreur à l'historique des erreurs
+   * @param errorResponse Réponse d'erreur standardisée
+   * @param context Contexte de l'erreur
+   */
+  private addToErrorHistory(errorResponse: ErrorResponse, context: Record<string, unknown> = {}): void {
+    const errorRecord: ErrorRecord = {
+      id: generateUUID(),
+      timestamp: new Date().toISOString(),
+      error: errorResponse,
+      context
+    };
+
+    // Ajouter l'erreur à l'historique
+    this.errorHistory.unshift(errorRecord);
+
+    // Limiter la taille de l'historique
+    if (this.errorHistory.length > (this.config.maxErrorHistorySize || 50)) {
+      this.errorHistory = this.errorHistory.slice(0, this.config.maxErrorHistorySize || 50);
+    }
+  }
+
+  /**
+   * Envoyer l'erreur au serveur (pour journalisation)
+   * Cette fonction serait connectée à un service de monitoring externe ou un backend
+   * @param error Erreur à envoyer
+   * @param context Contexte de l'erreur
+   */
+  private logErrorToServer(error: ErrorResponse, context: Record<string, unknown> = {}): void {
+    // Implémentation à connecter à un service de monitoring
+    // Pour l'instant, simple log dans la console
+    console.info('Erreur qui aurait été envoyée au serveur:', { error, context });
+    
+    // Dans un environnement réel, cette fonction pourrait envoyer des données à 
+    // Sentry, LogRocket, New Relic, etc.
+  }
+
+  /**
+   * Crée un ServiceResult d'erreur
+   * @param error Erreur à transformer
+   * @param options Options de gestion
+   * @returns ServiceResult contenant l'erreur
+   */
+  public createErrorResult<T>(
+    error: unknown, 
+    options?: ErrorHandlingOptions
+  ): ServiceResult<T> {
+    const errorResponse = this.handleError(error, options);
+    return {
+      success: false,
+      error: {
+        code: String(errorResponse.error.code),
+        message: errorResponse.error.message,
+        details: errorResponse.error.details
+      }
+    };
+  }
+
+  /**
+   * Crée un ServiceResult de succès
+   * @param data Données de résultat
+   * @returns ServiceResult contenant les données
+   */
+  public createSuccessResult<T>(data: T): ServiceResult<T> {
+    return {
+      success: true,
+      data
+    };
+  }
+
+  /**
+   * Vérifie si une erreur est d'une catégorie spécifique
+   * @param error Erreur à vérifier
+   * @param category Catégorie d'erreur
+   * @returns Vrai si l'erreur appartient à la catégorie
+   */
+  public isErrorOfCategory(error: unknown, category: ErrorCategory): boolean {
+    return error instanceof AppError && error.category === category;
+  }
+
+  /**
+   * Vérifie si une erreur a un code spécifique
+   * @param error Erreur à vérifier
+   * @param code Code d'erreur
+   * @returns Vrai si l'erreur a le code spécifié
+   */
+  public isErrorOfCode(error: unknown, code: number | keyof typeof ErrorCodes): boolean {
+    if (!(error instanceof AppError)) return false;
+    
+    const errorCode = typeof code === 'number' 
+      ? code 
+      : ErrorCodes[code]?.code;
+      
+    return error.code === errorCode;
+  }
+
+  /**
+   * Crée une erreur de validation
+   * @param message Message d'erreur
+   * @param details Détails supplémentaires
+   * @returns Erreur de validation
+   */
+  public createValidationError(message: string, details?: unknown): AppError {
+    return utilsCreateValidationError(message, details);
+  }
+
+  /**
+   * Crée une erreur d'authentification
+   * @param codeRef Code d'erreur d'authentification
+   * @param message Message personnalisé
+   * @param details Détails supplémentaires
+   * @returns Erreur d'authentification
+   */
+  public createAuthError(
+    codeRef: 'AUTH_REQUIRED' | 'INVALID_CREDENTIALS' | 'SESSION_EXPIRED' | 'ACCOUNT_LOCKED',
+    message?: string,
+    details?: unknown
+  ): AppError {
+    return new AppError(codeRef, {
+      message,
+      category: ErrorCategory.AUTHENTICATION,
+      severity: ErrorSeverity.ERROR,
+      details
+    });
+  }
+
+  /**
+   * Crée une erreur "non trouvé"
+   * @param resourceType Type de ressource
+   * @param resourceId Identifiant de la ressource
+   * @returns Erreur "non trouvé"
+   */
+  public createNotFoundError(resourceType: string, resourceId?: string): AppError {
+    return utilsCreateNotFoundError(resourceType, resourceId);
+  }
+
+  /**
+   * Traiter un bloc try/catch en retournant un ServiceResult
+   * @param operation Fonction à exécuter
+   * @param options Options de gestion d'erreurs
+   * @returns ServiceResult contenant le résultat ou l'erreur
+   */
+  public async tryOperation<T>(
+    operation: () => Promise<T>,
+    options: TryOperationOptions = {}
+  ): Promise<ServiceResult<T>> {
+    try {
+      const result = await operation();
+      return this.createSuccessResult(result);
+    } catch (error) {
+      const { errorMessage, context } = options;
+      
+      // Si un message d'erreur personnalisé est fourni, utiliser ce message
+      if (errorMessage) {
+        const appError = error instanceof AppError ? error : new AppError('UNKNOWN_ERROR', { 
+          message: String(error), 
+          category: ErrorCategory.SYSTEM, 
+          severity: ErrorSeverity.ERROR 
+        });
+        appError.userMessage = errorMessage;
+        return this.createErrorResult<T>(appError, { context });
+      }
+      
+      return this.createErrorResult<T>(error, { context });
+    }
+  }
+
+  /**
+   * Obtient l'historique des erreurs récentes
+   * @param limit Nombre maximal d'erreurs à retourner
+   * @returns Liste des erreurs récentes
+   */
+  public getRecentErrors(limit: number = 10): ErrorRecord[] {
+    return this.errorHistory.slice(0, Math.min(limit, this.errorHistory.length));
+  }
+
+  /**
+   * Définit le niveau de verbosité de la journalisation
+   * @param level Niveau de verbosité
+   */
+  public setLogLevel(level: LogLevel): void {
+    this.logLevel = level;
+  }
+}
+
+// Export de l'instance par défaut (pour rétrocompatibilité)
+export const errorService = ErrorServiceImpl.getInstance();
+
+// Export par défaut pour la rétrocompatibilité
+export default errorService;
+
+// Export de la classe pour injection de dépendance et tests
+export { ErrorServiceImpl };
+
+// Pour la rétrocompatibilité avec le code existant
+export class ErrorService extends ErrorServiceImpl {}

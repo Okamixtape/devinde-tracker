@@ -1,5 +1,7 @@
 /**
  * BusinessPlanService - Implementation of business plan data operations
+ * 
+ * @version 2.0 - Updated to use standardized interfaces
  */
 import { 
   BusinessPlanService, 
@@ -18,6 +20,31 @@ import {
   BusinessPlanMetaData,
   Section
 } from "../interfaces/dataModels";
+
+// Import standardized interfaces
+import { 
+  MilestoneWithDetails,
+  TaskWithDetails,
+  ActionPlanStatistics,
+  TimelineItem
+} from "../../interfaces/ActionPlanInterfaces";
+import {
+  BusinessModelCanvasData,
+  PricingModel,
+  RevenueProjections
+} from "../../interfaces/BusinessModelInterfaces";
+import {
+  CustomerSegment,
+  Competitor,
+  MarketOpportunity,
+  MarketTrend,
+  SwotAnalysis
+} from "../../interfaces/MarketAnalysisInterfaces";
+
+// Import adapters for data transformation
+import ActionPlanAdapter from "../../adapters/ActionPlanAdapter";
+import BusinessModelAdapter from "../../adapters/BusinessModelAdapter";
+import MarketAnalysisAdapter from "../../adapters/MarketAnalysisAdapter";
 import { generateUUID, getCurrentISOTimestamp } from "../utils/helpers";
 import { secureLocalStorage } from "../utils/security";
 import { LocalStorageService } from './localStorageService';
@@ -36,13 +63,19 @@ export const DATA_VERSION_STORAGE_KEY = 'devinde-tracker-data-version';
 
 /**
  * Function to convert from BusinessPlanData to BusinessPlan
+ * Enhanced with standardized interfaces and adapters
  */
 function convertToBusinessPlan(data: BusinessPlanData): BusinessPlan {
+  // Use the adapters to transform standardized data
+  const uiActionPlan = data.actionPlan ? ActionPlanAdapter.toUI(data) : null;
+  const uiBusinessModel = data.businessModel ? BusinessModelAdapter.toUI(data) : null;
+  const uiMarketAnalysis = data.marketAnalysis ? MarketAnalysisAdapter.toUI(data) : null;
+
   return {
     id: data.id || generateUUID(),
     name: data.name,
     userId: data.userId || 'default-user',
-    // Convertir les sections de DataModels.Section à ServiceInterfaces.Section
+    // Convert sections from DataModels.Section to ServiceInterfaces.Section
     sections: (data.sections || []).map(section => ({
       id: section.id,
       businessPlanId: section.businessPlanId,
@@ -51,14 +84,14 @@ function convertToBusinessPlan(data: BusinessPlanData): BusinessPlan {
       completion: section.completion,
       order: section.order,
       data: section.data,
-      createdAt: section.updatedAt, // On utilise updatedAt comme fallback pour createdAt
+      createdAt: section.updatedAt, // Use updatedAt as fallback for createdAt
       updatedAt: section.updatedAt
     })),
     createdAt: data.createdAt || getCurrentISOTimestamp(),
     updatedAt: data.updatedAt || getCurrentISOTimestamp(),
-    // Inclure d'autres propriétés par conversion de type
+    // Include other properties by type conversion
     description: data.description,
-    // Conversion explicite avec typage approprié
+    // Explicit conversion with appropriate typing
     pitch: data.pitch as PitchData,
     services: data.services as ServicesData,
     businessModel: data.businessModel as BusinessModelData,
@@ -66,28 +99,37 @@ function convertToBusinessPlan(data: BusinessPlanData): BusinessPlan {
     financials: data.financials as FinancialsData,
     actionPlan: data.actionPlan as ActionPlanData,
     meta: data.meta as BusinessPlanMetaData,
-    settings: data.settings as UserSettingsData
+    settings: data.settings as UserSettingsData,
+    // Include standardized data for UI components
+    standardized: {
+      actionPlan: uiActionPlan,
+      businessModel: uiBusinessModel?.canvas,
+      pricingModel: uiBusinessModel?.pricing,
+      marketAnalysis: uiMarketAnalysis
+    }
   };
 }
 
 /**
  * Function to convert from BusinessPlan to BusinessPlanData
+ * Enhanced with standardized interfaces and adapters
  */
 function convertToBusinessPlanData(plan: BusinessPlan): BusinessPlanData {
-  // Obtenir les valeurs par défaut pour garantir que toutes les propriétés requises sont présentes
+  // Get default values to ensure all required properties are present
   const defaultData = getDefaultBusinessPlanData();
   
-  return {
+  // Prepare the base structure
+  const baseData: BusinessPlanData = {
     id: plan.id,
     name: plan.name,
     userId: plan.userId,
-    // Convertir les sections de ServiceInterfaces.Section à DataModels.Section
+    // Convert sections from ServiceInterfaces.Section to DataModels.Section
     sections: (plan.sections || []).map(section => ({
       id: section.id || '',
       businessPlanId: section.businessPlanId || '',
       key: section.key || '',
       title: section.title || '',
-      // Fournir des valeurs par défaut pour les propriétés qui n'existent que dans DataModels.Section
+      // Provide default values for properties that only exist in DataModels.Section
       icon: 'default-icon',
       color: '#333333',
       route: `/sections/${section.key || 'unknown'}`,
@@ -99,8 +141,8 @@ function convertToBusinessPlanData(plan: BusinessPlan): BusinessPlanData {
     createdAt: plan.createdAt,
     updatedAt: plan.updatedAt || getCurrentISOTimestamp(),
     description: plan.description as string,
-    // Utiliser les propriétés du plan ou les valeurs par défaut
-    // Conversion explicite avec typage approprié
+    // Use the plan properties or default values
+    // Explicit conversion with appropriate typing
     pitch: (plan.pitch as PitchData) || defaultData.pitch,
     services: (plan.services as ServicesData) || defaultData.services,
     businessModel: (plan.businessModel as BusinessModelData) || defaultData.businessModel,
@@ -110,21 +152,58 @@ function convertToBusinessPlanData(plan: BusinessPlan): BusinessPlanData {
     meta: (plan.meta as BusinessPlanMetaData) || defaultData.meta,
     settings: (plan.settings as UserSettingsData) || defaultData.settings
   };
+  
+  // Apply standardized data if available
+  if (plan.standardized) {
+    // Convert UI action plan to service format
+    if (plan.standardized.actionPlan) {
+      const actionPlanUpdates = ActionPlanAdapter.toService(plan.standardized.actionPlan);
+      baseData.actionPlan = {
+        ...baseData.actionPlan,
+        ...actionPlanUpdates.actionPlan
+      };
+    }
+    
+    // Convert UI business model to service format
+    if (plan.standardized.businessModel && plan.standardized.pricingModel) {
+      const businessModelUpdates = BusinessModelAdapter.toService({
+        canvas: plan.standardized.businessModel,
+        pricing: plan.standardized.pricingModel
+      });
+      baseData.businessModel = {
+        ...baseData.businessModel,
+        ...businessModelUpdates.businessModel
+      };
+    }
+    
+    // Convert UI market analysis to service format
+    if (plan.standardized.marketAnalysis) {
+      const marketAnalysisUpdates = MarketAnalysisAdapter.toService(plan.standardized.marketAnalysis);
+      baseData.marketAnalysis = {
+        ...baseData.marketAnalysis,
+        ...marketAnalysisUpdates.marketAnalysis
+      };
+    }
+  }
+  
+  return baseData;
 }
 
 /**
  * Default empty data for a new business plan
+ * Also creates default values for the standardized interfaces
  */
 function getDefaultBusinessPlanData(): Omit<BusinessPlanData, 'name'> {
   const timestamp = getCurrentISOTimestamp();
   
-  return {
+  // Default data object following the old interface model
+  const defaultData = {
     id: generateUUID(),
     userId: 'default-user',
     createdAt: timestamp,
     updatedAt: timestamp,
     description: '',
-    // Respecter la structure exacte de PitchData
+    // Following the exact structure of PitchData
     pitch: {
       title: '',
       summary: '',
@@ -136,32 +215,32 @@ function getDefaultBusinessPlanData(): Omit<BusinessPlanData, 'name'> {
       targetAudience: '',
       competitiveAdvantage: ''
     },
-    // Respecter la structure exacte de ServicesData
+    // Following the exact structure of ServicesData
     services: {
       offerings: [],
       technologies: [],
       process: []
     },
-    // Respecter la structure exacte de BusinessModelData
+    // Following the exact structure of BusinessModelData
     businessModel: {
       hourlyRates: [],
       packages: [],
       subscriptions: []
     },
-    // Respecter la structure exacte de MarketAnalysisData
+    // Following the exact structure of MarketAnalysisData
     marketAnalysis: {
       competitors: [],
       targetClients: [],
       trends: []
     },
-    // Respecter la structure exacte de FinancialsData
+    // Following the exact structure of FinancialsData
     financials: {
       initialInvestment: 0,
       quarterlyGoals: [],
       expenses: [],
       projects: []
     },
-    // Respecter la structure exacte de ActionPlanData
+    // Following the exact structure of ActionPlanData
     actionPlan: {
       milestones: [],
       tasks: []
@@ -178,6 +257,26 @@ function getDefaultBusinessPlanData(): Omit<BusinessPlanData, 'name'> {
     },
     sections: []
   };
+  
+  // Create default standardized data using the adapters
+  // This ensures we have a proper standardized data structure from the start
+  const uiActionPlan = ActionPlanAdapter.toUI(defaultData);
+  const uiBusinessModel = BusinessModelAdapter.toUI(defaultData);
+  const uiMarketAnalysis = MarketAnalysisAdapter.toUI(defaultData);
+  
+  // Add standardized data to the default business plan
+  // (This won't affect the returned object, it's just for reference)
+  const withStandardized = {
+    ...defaultData,
+    standardized: {
+      actionPlan: uiActionPlan,
+      businessModel: uiBusinessModel.canvas,
+      pricingModel: uiBusinessModel.pricing,
+      marketAnalysis: uiMarketAnalysis
+    }
+  };
+  
+  return defaultData;
 }
 
 /**
@@ -560,8 +659,9 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
 
   /**
    * Export a business plan to a specified format
+   * Enhanced to include standardized interfaces
    */
-  async exportBusinessPlan(id: string, format: string = 'json'): Promise<ServiceResult<{
+  async exportBusinessPlan(id: string, format: string = 'json', includeStandardized: boolean = true): Promise<ServiceResult<{
     content: string;
     filename: string;
     contentType: string;
@@ -592,17 +692,22 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
         });
       }
       
+      // Prepare the export object - may filter out standardized data if not requested
+      const exportObject = includeStandardized 
+        ? plan 
+        : { ...plan, standardized: undefined };
+      
       if (format === 'json') {
         return {
           success: true,
           data: {
-            content: JSON.stringify(plan, null, 2),
+            content: JSON.stringify(exportObject, null, 2),
             filename: `${plan.name.replace(/\s+/g, '-').toLowerCase()}-export.json`,
             contentType: 'application/json'
           }
         };
       } else if (format === 'pdf') {
-        // Implémentation à venir
+        // Implementation to come
         return {
           success: false,
           error: {
@@ -633,10 +738,11 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
 
   /**
    * Import a business plan from JSON data
+   * Enhanced to handle standardized interfaces
    */
   async importBusinessPlan(data: Record<string, unknown>): Promise<ServiceResult<BusinessPlan>> {
     try {
-      // Validation de base
+      // Basic validation
       if (!data || typeof data !== 'object') {
         return {
           success: false,
@@ -647,10 +753,10 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
         };
       }
       
-      // Convertir les données en BusinessPlanData
+      // Convert data to BusinessPlanData
       let planData: Partial<BusinessPlanData> = data as Partial<BusinessPlanData>;
       
-      // Vérifier les champs requis
+      // Check required fields
       if (!planData.name) {
         return {
           success: false,
@@ -661,19 +767,19 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
         };
       }
       
-      // Récupérer les valeurs par défaut
+      // Get default values
       const defaults = getDefaultBusinessPlanData();
       
-      // Toujours générer un nouvel ID pour éviter les doublons
+      // Always generate a new ID to avoid duplicates
       const importedPlan: BusinessPlanData = {
         id: generateUUID(),
         name: planData.name,
         userId: planData.userId || 'default-user',
         sections: Array.isArray(planData.sections) ? planData.sections.map(section => {
-          // S'assurer que chaque section est valide
+          // Ensure each section is valid
           return {
             id: section.id || generateUUID(),
-            businessPlanId: section.businessPlanId || '', // sera mis à jour plus tard
+            businessPlanId: section.businessPlanId || '', // will be updated later
             key: section.key || '',
             title: section.title || '',
             icon: section.icon || 'default-icon',
@@ -688,7 +794,7 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
         description: typeof planData.description === 'string' ? planData.description : '',
         createdAt: getCurrentISOTimestamp(),
         updatedAt: getCurrentISOTimestamp(),
-        // Utiliser les valeurs importées ou par défaut pour les champs obligatoires
+        // Use imported values or defaults for required fields
         pitch: planData.pitch ? { ...defaults.pitch, ...planData.pitch } : defaults.pitch,
         services: planData.services ? { ...defaults.services, ...planData.services } : defaults.services,
         businessModel: planData.businessModel ? { ...defaults.businessModel, ...planData.businessModel } : defaults.businessModel,
@@ -703,7 +809,42 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
         settings: planData.settings ? { ...defaults.settings, ...planData.settings } : defaults.settings
       };
       
-      // Créer le business plan importé
+      // Handle standardized data if present in the import
+      if (data.standardized && typeof data.standardized === 'object') {
+        const standardizedData = data.standardized as Record<string, unknown>;
+        
+        // Process action plan data if present
+        if (standardizedData.actionPlan) {
+          const actionPlanUpdates = ActionPlanAdapter.toService(standardizedData.actionPlan as any);
+          importedPlan.actionPlan = {
+            ...importedPlan.actionPlan,
+            ...actionPlanUpdates.actionPlan
+          };
+        }
+        
+        // Process business model data if present
+        if (standardizedData.businessModel && standardizedData.pricingModel) {
+          const businessModelUpdates = BusinessModelAdapter.toService({
+            canvas: standardizedData.businessModel as any,
+            pricing: standardizedData.pricingModel as any
+          });
+          importedPlan.businessModel = {
+            ...importedPlan.businessModel,
+            ...businessModelUpdates.businessModel
+          };
+        }
+        
+        // Process market analysis data if present
+        if (standardizedData.marketAnalysis) {
+          const marketAnalysisUpdates = MarketAnalysisAdapter.toService(standardizedData.marketAnalysis as any);
+          importedPlan.marketAnalysis = {
+            ...importedPlan.marketAnalysis,
+            ...marketAnalysisUpdates.marketAnalysis
+          };
+        }
+      }
+      
+      // Create the imported business plan
       const result = await this.storageService.createItem(importedPlan);
       
       if (!result.success) {
@@ -713,7 +854,7 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
         };
       }
       
-      // Convertir et retourner le résultat
+      // Convert and return the result
       return {
         success: true,
         data: convertToBusinessPlan(result.data)
@@ -732,10 +873,11 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
 
   /**
    * Duplicate a business plan
+   * Enhanced to include standardized interfaces in the duplication
    */
   async duplicateBusinessPlan(id: string, newName?: string): Promise<ServiceResult<BusinessPlan>> {
     try {
-      // Récupérer le business plan original
+      // Get the original business plan
       const result = await this.getItem(id);
       
       if (!result.success || !result.data) {
@@ -750,25 +892,25 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
       
       const originalPlan = result.data;
       
-      // Créer une copie avec un nouvel ID
-      // Récupérer les valeurs par défaut
+      // Create a copy with a new ID
+      // Get default values
       const defaults = getDefaultBusinessPlanData();
       const newId = generateUUID();
       
-      // Créer une copie avec un nouvel ID
+      // Create the duplicate with a new ID
       const duplicatedPlan: BusinessPlanData = {
         id: newId,
         name: newName || `Copie de ${originalPlan.name}`,
         userId: originalPlan.userId,
-        // Dupliquer correctement les sections avec le nouveau businessPlanId
+        // Duplicate sections with the new businessPlanId
         sections: Array.isArray(originalPlan.sections) ? originalPlan.sections.map(section => ({
-          id: generateUUID(), // Nouvelle section = nouvel ID
-          businessPlanId: newId, // Associer au nouveau business plan
+          id: generateUUID(), // New section = new ID
+          businessPlanId: newId, // Associate with the new business plan
           key: typeof section.key === 'string' ? section.key : '',
           title: typeof section.title === 'string' ? section.title : '',
-          icon: 'default-icon', // Valeur par défaut
-          color: '#333333', // Valeur par défaut
-          route: `/sections/${typeof section.key === 'string' ? section.key : 'unknown'}`, // Valeur par défaut
+          icon: 'default-icon', // Default value
+          color: '#333333', // Default value
+          route: `/sections/${typeof section.key === 'string' ? section.key : 'unknown'}`, // Default value
           completion: typeof section.completion === 'number' ? section.completion : 0,
           order: typeof section.order === 'number' ? section.order : 0,
           data: section.data || {},
@@ -782,16 +924,32 @@ export class BusinessPlanServiceImpl implements BusinessPlanService {
           lastUpdated: getCurrentISOTimestamp(),
           exportCount: 0
         },
-        // Utiliser les propriétés du plan original ou les valeurs par défaut
+        // Use the original plan properties or default values
         pitch: originalPlan.pitch ? { ...defaults.pitch, ...(originalPlan.pitch as PitchData) } : defaults.pitch,
         services: originalPlan.services ? { ...defaults.services, ...(originalPlan.services as ServicesData) } : defaults.services,
         businessModel: originalPlan.businessModel ? { ...defaults.businessModel, ...(originalPlan.businessModel as BusinessModelData) } : defaults.businessModel,
         marketAnalysis: originalPlan.marketAnalysis ? { ...defaults.marketAnalysis, ...(originalPlan.marketAnalysis as MarketAnalysisData) } : defaults.marketAnalysis,
         financials: originalPlan.financials ? { ...defaults.financials, ...(originalPlan.financials as FinancialsData) } : defaults.financials,
-        actionPlan: originalPlan.actionPlan ? { ...defaults.actionPlan, ...(originalPlan.actionPlan as ActionPlanData) } : defaults.actionPlan
+        actionPlan: originalPlan.actionPlan ? { ...defaults.actionPlan, ...(originalPlan.actionPlan as ActionPlanData) } : defaults.actionPlan,
+        settings: originalPlan.settings ? { ...defaults.settings, ...(originalPlan.settings as UserSettingsData) } : defaults.settings
       };
       
-      return this.createItem(convertToBusinessPlan(duplicatedPlan));
+      // Create the business plan object with standardized interfaces
+      const businessPlanObject = convertToBusinessPlan(duplicatedPlan);
+      
+      // Copy standardized data from the original plan if it exists
+      if (originalPlan.standardized) {
+        businessPlanObject.standardized = {
+          ...businessPlanObject.standardized,
+          actionPlan: originalPlan.standardized.actionPlan,
+          businessModel: originalPlan.standardized.businessModel,
+          pricingModel: originalPlan.standardized.pricingModel,
+          marketAnalysis: originalPlan.standardized.marketAnalysis
+        };
+      }
+      
+      // Create the duplicate plan
+      return this.createItem(businessPlanObject);
     } catch (e) {
       return {
         success: false,

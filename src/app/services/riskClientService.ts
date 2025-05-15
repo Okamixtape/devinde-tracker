@@ -2,19 +2,22 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import { RiskClient, ClientIncident, RiskLevel, IncidentType, RiskStats } from '../interfaces/client-risk';
+import { IRiskClientService } from './interfaces/service-interfaces';
 
-// Clés LocalStorage
+// LocalStorage keys
 const RISK_CLIENTS_KEY = 'devinde_risk_clients';
 const INCIDENTS_KEY = 'devinde_client_incidents';
 
 /**
- * Service de gestion des clients à risque
+ * Implementation of the Risk Client Service
+ * Provides methods to manage risk clients and their incidents
  */
-export const RiskClientService = {
+class RiskClientServiceImpl implements IRiskClientService {
   /**
-   * Récupère tous les clients à risque
+   * Retrieves all risk clients
+   * @returns Array of all risk clients
    */
-  getAllRiskClients: (): RiskClient[] => {
+  getAllRiskClients(): RiskClient[] {
     if (typeof window === 'undefined') return [];
     
     const clientsJSON = localStorage.getItem(RISK_CLIENTS_KEY);
@@ -23,42 +26,50 @@ export const RiskClientService = {
     try {
       return JSON.parse(clientsJSON);
     } catch (error) {
-      console.error('Erreur lors de la récupération des clients à risque:', error);
+      console.error('Error retrieving risk clients:', error);
       return [];
     }
-  },
+  }
   
   /**
-   * Récupère un client à risque par son ID
+   * Retrieves a risk client by their ID
+   * @param id The ID of the risk client to retrieve
+   * @returns The risk client or null if not found
    */
-  getRiskClientById: (id: string): RiskClient | null => {
-    const clients = RiskClientService.getAllRiskClients();
+  getRiskClientById(id: string): RiskClient | null {
+    const clients = this.getAllRiskClients();
     return clients.find(client => client.id === id) || null;
-  },
+  }
   
   /**
-   * Récupère un client à risque par l'ID du client
+   * Retrieves a risk client by the client ID
+   * @param clientId The client ID to search for
+   * @returns The risk client or null if not found
    */
-  getRiskClientByClientId: (clientId: string): RiskClient | null => {
-    const clients = RiskClientService.getAllRiskClients();
+  getRiskClientByClientId(clientId: string): RiskClient | null {
+    const clients = this.getAllRiskClients();
     return clients.find(client => client.clientId === clientId) || null;
-  },
+  }
   
   /**
-   * Vérifie si un client est à risque
+   * Checks if a client is risky
+   * @param clientId The client ID to check
+   * @returns True if the client is risky, false otherwise
    */
-  isClientRisky: (clientId: string): boolean => {
-    return RiskClientService.getRiskClientByClientId(clientId) !== null;
-  },
+  isClientRisky(clientId: string): boolean {
+    return this.getRiskClientByClientId(clientId) !== null;
+  }
   
   /**
-   * Ajoute ou met à jour un client à risque
+   * Saves a risk client (creates new or updates existing)
+   * @param client The risk client to save
+   * @returns The saved risk client
    */
-  saveRiskClient: (riskClient: RiskClient): RiskClient => {
-    const clients = RiskClientService.getAllRiskClients();
+  saveRiskClient(riskClient: RiskClient): RiskClient {
+    const clients = this.getAllRiskClients();
     const now = new Date().toISOString();
     
-    // Si c'est un nouveau client à risque
+    // If it's a new risk client
     if (!riskClient.id) {
       riskClient.id = uuidv4();
       riskClient.addedOn = now;
@@ -67,7 +78,7 @@ export const RiskClientService = {
         lastUpdated: now
       });
     } else {
-      // Mise à jour d'un client existant
+      // Update existing client
       const index = clients.findIndex(c => c.id === riskClient.id);
       if (index >= 0) {
         clients[index] = {
@@ -75,7 +86,7 @@ export const RiskClientService = {
           lastUpdated: now
         };
       } else {
-        // Client non trouvé, on l'ajoute
+        // Client not found, add it
         clients.push({
           ...riskClient,
           lastUpdated: now,
@@ -86,23 +97,26 @@ export const RiskClientService = {
     
     localStorage.setItem(RISK_CLIENTS_KEY, JSON.stringify(clients));
     return riskClient;
-  },
+  }
   
   /**
-   * Supprime un client de la liste des clients à risque
+   * Removes a risk client by their ID
+   * @param id The ID of the risk client to remove
+   * @returns True if removal was successful, false otherwise
    */
-  removeRiskClient: (id: string): boolean => {
-    const clients = RiskClientService.getAllRiskClients();
+  removeRiskClient(id: string): boolean {
+    const clients = this.getAllRiskClients();
     const filteredClients = clients.filter(client => client.id !== id);
     
     localStorage.setItem(RISK_CLIENTS_KEY, JSON.stringify(filteredClients));
     return filteredClients.length < clients.length;
-  },
+  }
   
   /**
-   * Récupère tous les incidents clients
+   * Retrieves all client incidents
+   * @returns Array of all client incidents
    */
-  getAllIncidents: (): ClientIncident[] => {
+  getAllIncidents(): ClientIncident[] {
     if (typeof window === 'undefined') return [];
     
     const incidentsJSON = localStorage.getItem(INCIDENTS_KEY);
@@ -111,77 +125,100 @@ export const RiskClientService = {
     try {
       return JSON.parse(incidentsJSON);
     } catch (error) {
-      console.error('Erreur lors de la récupération des incidents:', error);
+      console.error('Error retrieving incidents:', error);
       return [];
     }
-  },
+  }
   
   /**
-   * Récupère les incidents d'un client spécifique
+   * Retrieves incidents for a specific client
+   * @param clientId The client ID to retrieve incidents for
+   * @returns Array of client incidents
    */
-  getClientIncidents: (clientId: string): ClientIncident[] => {
-    const incidents = RiskClientService.getAllIncidents();
+  getClientIncidents(clientId: string): ClientIncident[] {
+    const incidents = this.getAllIncidents();
     return incidents.filter(incident => incident.clientId === clientId);
-  },
+  }
   
   /**
-   * Ajoute ou met à jour un incident
+   * Adds an incident to a risk client
+   * @param clientId The ID of the risk client
+   * @param incident The incident to add
+   * @returns The updated risk client or null if client not found
    */
-  saveIncident: (incident: ClientIncident): ClientIncident => {
-    const incidents = RiskClientService.getAllIncidents();
+  addIncident(clientId: string, incident: ClientIncident): RiskClient | null {
+    // Ensure incident has a client ID
+    incident.clientId = clientId;
     
-    // Si c'est un nouvel incident
+    // Save the incident
+    this.saveIncident(incident);
+    
+    // Return the updated client
+    return this.getRiskClientByClientId(clientId);
+  }
+  
+  /**
+   * Saves an incident (creates new or updates existing)
+   * @param incident The incident to save
+   * @returns The saved incident
+   */
+  saveIncident(incident: ClientIncident): ClientIncident {
+    const incidents = this.getAllIncidents();
+    
+    // If it's a new incident
     if (!incident.id) {
       incident.id = uuidv4();
       incidents.push(incident);
     } else {
-      // Mise à jour d'un incident existant
+      // Update existing incident
       const index = incidents.findIndex(i => i.id === incident.id);
       if (index >= 0) {
         incidents[index] = incident;
       } else {
-        // Incident non trouvé, on l'ajoute
+        // Incident not found, add it
         incidents.push(incident);
       }
     }
     
     localStorage.setItem(INCIDENTS_KEY, JSON.stringify(incidents));
     
-    // Mise à jour automatique du niveau de risque du client
-    RiskClientService.updateClientRiskLevel(incident.clientId);
+    // Automatically update the client's risk level
+    this.updateClientRiskLevel(incident.clientId);
     
     return incident;
-  },
+  }
   
   /**
-   * Supprime un incident
+   * Removes an incident
+   * @param id The ID of the incident to remove
+   * @returns True if removal was successful, false otherwise
    */
-  removeIncident: (id: string): boolean => {
-    const incidents = RiskClientService.getAllIncidents();
+  removeIncident(id: string): boolean {
+    const incidents = this.getAllIncidents();
     const incidentToRemove = incidents.find(i => i.id === id);
     const filteredIncidents = incidents.filter(incident => incident.id !== id);
     
     localStorage.setItem(INCIDENTS_KEY, JSON.stringify(filteredIncidents));
     
-    // Si on a trouvé et supprimé l'incident, mettre à jour le niveau de risque du client
+    // If we found and removed the incident, update the client's risk level
     if (incidentToRemove) {
-      RiskClientService.updateClientRiskLevel(incidentToRemove.clientId);
+      this.updateClientRiskLevel(incidentToRemove.clientId);
     }
     
     return filteredIncidents.length < incidents.length;
-  },
+  }
   
   /**
-   * Met à jour automatiquement le niveau de risque d'un client 
-   * en fonction de ses incidents
+   * Automatically updates a client's risk level based on their incidents
+   * @param clientId The client ID to update
    */
-  updateClientRiskLevel: (clientId: string): void => {
-    const riskClient = RiskClientService.getRiskClientByClientId(clientId);
+  updateClientRiskLevel(clientId: string): void {
+    const riskClient = this.getRiskClientByClientId(clientId);
     if (!riskClient) return;
     
-    const incidents = RiskClientService.getClientIncidents(clientId);
+    const incidents = this.getClientIncidents(clientId);
     
-    // Calcul du nouveau niveau de risque
+    // Calculate new risk level
     let newRiskLevel = RiskLevel.NONE;
     
     const nonPaymentCount = incidents.filter(i => 
@@ -210,17 +247,34 @@ export const RiskClientService = {
       newRiskLevel = RiskLevel.LOW;
     }
     
-    // Mise à jour du niveau de risque
+    // Update risk level
     riskClient.riskLevel = newRiskLevel;
-    RiskClientService.saveRiskClient(riskClient);
-  },
+    this.saveRiskClient(riskClient);
+  }
   
   /**
-   * Calcule les statistiques générales des clients à risque
+   * Updates the risk level of a client
+   * @param clientId The ID of the risk client
+   * @param riskLevel The new risk level
+   * @returns The updated risk client or null if client not found
    */
-  getRiskStats: (): RiskStats => {
-    const clients = RiskClientService.getAllRiskClients();
-    const incidents = RiskClientService.getAllIncidents();
+  updateRiskLevel(clientId: string, riskLevel: RiskLevel): RiskClient | null {
+    const riskClient = this.getRiskClientByClientId(clientId);
+    if (!riskClient) return null;
+    
+    riskClient.riskLevel = riskLevel;
+    this.saveRiskClient(riskClient);
+    
+    return riskClient;
+  }
+  
+  /**
+   * Gets risk statistics across all clients
+   * @returns Statistics about risk clients
+   */
+  getRiskStats(): RiskStats {
+    const clients = this.getAllRiskClients();
+    const incidents = this.getAllIncidents();
     
     const stats: RiskStats = {
       totalClients: clients.length,
@@ -248,18 +302,24 @@ export const RiskClientService = {
       unresolvedIncidents: incidents.filter(i => !i.resolved).length
     };
     
-    // Comptage par niveau de risque
+    // Count by risk level
     clients.forEach(client => {
       stats.byRiskLevel[client.riskLevel]++;
     });
     
-    // Comptage par type d'incident
+    // Count by incident type
     incidents.forEach(incident => {
       stats.byIncidentType[incident.type]++;
     });
     
     return stats;
   }
-};
+}
+
+// Create singleton instance
+export const RiskClientService = new RiskClientServiceImpl();
+
+// Export both the service instance and the implementation class
+export { RiskClientServiceImpl };
 
 export default RiskClientService;

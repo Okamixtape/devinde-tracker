@@ -1,7 +1,9 @@
+'use client';
+
 /**
  * SectionService - Implementation of section data operations
  */
-import { SectionService } from '../interfaces/serviceInterfaces';
+import { SectionService as LegacySectionService, ISectionService } from '../interfaces/service-interfaces';
 import { ServiceResult, Section } from '../interfaces/dataModels';
 import { generateUUID, getCurrentTimestamp } from '../utils/helpers';
 import { SECTIONS_CONFIG } from '../../config/sections-config';
@@ -12,15 +14,17 @@ import { BusinessPlanServiceImpl } from './businessPlanService';
  * Note: This is slightly different as sections are stored within business plans
  * and not as separate entities in localStorage
  */
-export class SectionServiceImpl implements SectionService {
+export class SectionServiceImpl implements ISectionService, LegacySectionService {
   private businessPlanService: BusinessPlanServiceImpl;
   
-  constructor() {
-    this.businessPlanService = new BusinessPlanServiceImpl();
+  constructor(businessPlanService?: BusinessPlanServiceImpl) {
+    this.businessPlanService = businessPlanService || new BusinessPlanServiceImpl();
   }
 
   /**
    * Get a section by ID
+   * @param id The ID of the section to retrieve
+   * @returns Promise with ServiceResult containing the section or an error
    */
   async getItem(id: string): Promise<ServiceResult<Section>> {
     try {
@@ -84,6 +88,7 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Get all sections (not typically used, as sections are fetched by business plan)
+   * @returns Promise with ServiceResult containing all sections or an error
    */
   async getItems(): Promise<ServiceResult<Section[]>> {
     try {
@@ -132,6 +137,8 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Get section configuration by key
+   * @param key The key of the section
+   * @returns The section configuration or null if not found
    */
   getSectionByKey(key: string): Section | null {
     const config = SECTIONS_CONFIG.find(section => section.key === key);
@@ -155,14 +162,18 @@ export class SectionServiceImpl implements SectionService {
   
   /**
    * Get icon for a section
+   * @param key The key of the section
+   * @returns The icon name for the section
    */
-  getIconForSection(sectionKey: string): string {
-    const config = SECTIONS_CONFIG.find(section => section.key === sectionKey);
+  getIconForSection(key: string): string {
+    const config = SECTIONS_CONFIG.find(section => section.key === key);
     return config?.icon || 'file';
   }
 
   /**
    * Get section display title
+   * @param key The key of the section
+   * @returns The display title for the section
    */
   getSectionTitle(key: string): string {
     const section = this.getSectionByKey(key);
@@ -171,17 +182,20 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Enrich existing sections with missing sections from SECTIONS_CONFIG
+   * @param businessPlanId The ID of the business plan
+   * @param existingSections The existing sections to enrich
+   * @returns An enriched list of sections
    */
   enrichSections(businessPlanId: string, existingSections: Section[]): Section[] {
-    // Récupérer tous les identifiants de sections existantes
+    // Get all existing section keys
     const existingKeys = existingSections.map(s => s.key);
     
-    // Filtrer les sections de configuration qui ne sont pas déjà présentes
+    // Filter configurations that are not already present
     const missingSections = SECTIONS_CONFIG.filter(config => !existingKeys.includes(config.key));
     
-    // Créer de nouvelles sections à partir des configurations manquantes
+    // Create new sections from missing configurations
     const newSections = missingSections.map(config => {
-      // Convertir les timestamps en strings pour correspondre à l'interface Section
+      // Convert timestamps to strings to match the Section interface
       const now = new Date(getCurrentTimestamp()).toISOString();
       
       return {
@@ -199,15 +213,16 @@ export class SectionServiceImpl implements SectionService {
       } as Section;
     });
     
-    // Combiner les sections existantes et nouvelles
+    // Combine existing and new sections
     return [...existingSections, ...newSections];
   }
 
   /**
    * Get description for a section key
+   * @param sectionKey The key of the section
+   * @returns The description for the section
    */
   getDescriptionForSection(sectionKey: string): string {
-    // La variable section n'est pas utilisée, mais pourrait l'être pour des métadonnées supplémentaires
     const descriptions: {[key: string]: string} = {
       'dashboard': 'Vue d\'ensemble de votre activité indépendante',
       'pitch': 'Présentez votre activité en quelques lignes',
@@ -224,6 +239,8 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Get all sections for a specific business plan
+   * @param businessPlanId The ID of the business plan
+   * @returns Promise with ServiceResult containing the sections or an error
    */
   async getSections(businessPlanId: string): Promise<ServiceResult<Section[]>> {
     try {
@@ -273,6 +290,8 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Create a new section within a business plan
+   * @param section The section to create
+   * @returns Promise with ServiceResult containing the created section or an error
    */
   async createItem(section: Partial<Section>): Promise<ServiceResult<Section>> {
     try {
@@ -346,6 +365,9 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Update a section
+   * @param id The ID of the section to update
+   * @param sectionUpdate The partial section object with updated values
+   * @returns Promise with ServiceResult containing the updated section or an error
    */
   async updateItem(id: string, sectionUpdate: Partial<Section>): Promise<ServiceResult<Section>> {
     try {
@@ -449,6 +471,9 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Update the completion status of a section
+   * @param id The ID of the section
+   * @param completion The new completion percentage (0-100)
+   * @returns Promise with ServiceResult containing the updated section or an error
    */
   async updateSectionCompletion(id: string, completion: number): Promise<ServiceResult<Section>> {
     try {
@@ -478,6 +503,8 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Delete a section
+   * @param id The ID of the section to delete
+   * @returns Promise with ServiceResult containing a boolean success indicator or an error
    */
   async deleteItem(id: string): Promise<ServiceResult<boolean>> {
     try {
@@ -559,6 +586,9 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Create a new standard section from the sections config
+   * @param businessPlanId The ID of the business plan
+   * @param sectionKey The key of the section to create
+   * @returns Promise with ServiceResult containing the created section or an error
    */
   async createStandardSection(businessPlanId: string, sectionKey: string): Promise<ServiceResult<Section>> {
     // Check if the section key exists in the config
@@ -589,6 +619,9 @@ export class SectionServiceImpl implements SectionService {
 
   /**
    * Reorder sections in a business plan
+   * @param businessPlanId The ID of the business plan
+   * @param sectionIds An array of section IDs in the desired order
+   * @returns Promise with ServiceResult containing the reordered sections or an error
    */
   async reorderSections(businessPlanId: string, sectionIds: string[]): Promise<ServiceResult<Section[]>> {
     try {
@@ -640,7 +673,7 @@ export class SectionServiceImpl implements SectionService {
       // Add any sections that weren't in the reorder list
       const unorderedSections = plan.sections.filter((s) => !sectionIds.includes(s.id as string));
       
-      // Ajouter l'ordre aux sections non ordonnées avant de les ajouter
+      // Add order to unordered sections before adding them
       const startOrder = reorderedSections.length;
       const processedUnorderedSections = unorderedSections.map((s, index) => ({
         ...s,
@@ -683,3 +716,11 @@ export class SectionServiceImpl implements SectionService {
     }
   }
 }
+
+// Create singleton instance
+export const SectionService = new SectionServiceImpl();
+
+// Export both the service instance and the implementation class
+export { SectionServiceImpl };
+
+export default SectionService;

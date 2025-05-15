@@ -10,7 +10,8 @@
     "find-deadcode": "ts-prune",
     "lint:imports": "eslint src --ext .ts,.tsx --fix",
     "prepare": "husky",
-    "pre-commit": "lint-staged"
+    "pre-commit": "lint-staged",
+    "test": "jest"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -34,6 +35,8 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -45,9 +48,12 @@
     "eslint-plugin-import": "^2.31.0",
     "glob": "^11.0.2",
     "husky": "^9.1.7",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
     "lint-staged": "^15.5.2",
     "prettier": "^3.5.3",
     "tailwindcss": "^4",
+    "ts-jest": "^29.3.3",
     "ts-prune": "^0.10.3",
     "typescript": "^5"
   }

@@ -10,6 +10,7 @@ import { ErrorProvider } from "./context/ErrorContext";
 import { ToastProvider } from "./components/error/ToastManager";
 import { I18nProvider } from "./context/I18nContext";
 import { MigrationProvider } from "./providers/MigrationProvider";
+import { AppStateProvider } from "./contexts/AppStateContext";
 // Import du composant de débogage
 import AuthDebugger from "./components/debug/AuthDebugger";
 
@@ -44,14 +45,16 @@ export default function RootLayout({
               <ToastProvider>
                 <I18nProvider>
                   <MigrationProvider>
-                    <AuthProvider>
-                      <Navbar />
-                      <main className="min-h-screen">
-                        {children}
-                      </main>
-                      {/* Composant de débogage pour identifier les problèmes d'authentification */}
-                      <AuthDebugger />
-                    </AuthProvider>
+                    <AppStateProvider>
+                      <AuthProvider>
+                        <Navbar />
+                        <main className="min-h-screen">
+                          {children}
+                        </main>
+                        {/* Composant de débogage pour identifier les problèmes d'authentification */}
+                        <AuthDebugger />
+                      </AuthProvider>
+                    </AppStateProvider>
                   </MigrationProvider>
                 </I18nProvider>
               </ToastProvider>

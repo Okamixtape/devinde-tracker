@@ -3,19 +3,22 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Document, DocumentType, DocumentStatus, generateDocumentNumber, calculateDocumentTotals } from '../interfaces/invoicing';
 import { Service } from '../plans/[id]/services/components/ServiceCard';
+import { IDocumentService } from './interfaces/service-interfaces';
 
-// Clés LocalStorage
+// LocalStorage keys
 const DOCUMENTS_KEY = 'devinde_documents';
 const DOCUMENT_COUNT_KEY = 'devinde_document_count';
 
 /**
- * Service de gestion des documents (factures et devis)
+ * Implementation of the Document Service
+ * Provides methods to manage documents (invoices and quotes)
  */
-export const DocumentService = {
+class DocumentServiceImpl implements IDocumentService {
   /**
-   * Récupérer tous les documents
+   * Retrieves all documents
+   * @returns Array of all documents
    */
-  getAll: (): Document[] => {
+  getAll(): Document[] {
     if (typeof window === 'undefined') return [];
     
     const documentsJSON = localStorage.getItem(DOCUMENTS_KEY);
@@ -24,92 +27,109 @@ export const DocumentService = {
     try {
       return JSON.parse(documentsJSON);
     } catch (error) {
-      console.error('Erreur lors de la récupération des documents:', error);
+      console.error('Error retrieving documents:', error);
       return [];
     }
-  },
+  }
   
   /**
-   * Récupérer un document par son ID
+   * Retrieves a document by its ID
+   * @param id The ID of the document to retrieve
+   * @returns The document or null if not found
    */
-  getById: (id: string): Document | null => {
-    const documents = DocumentService.getAll();
+  getById(id: string): Document | null {
+    const documents = this.getAll();
     return documents.find(doc => doc.id === id) || null;
-  },
+  }
   
   /**
-   * Récupérer tous les documents associés à un plan d'affaires
+   * Retrieves all documents associated with a business plan
+   * @param businessPlanId The ID of the business plan
+   * @returns Array of documents
    */
-  getByBusinessPlanId: (businessPlanId: string): Document[] => {
-    const documents = DocumentService.getAll();
+  getByBusinessPlanId(businessPlanId: string): Document[] {
+    const documents = this.getAll();
     return documents.filter(doc => doc.businessPlanId === businessPlanId);
-  },
+  }
   
   /**
-   * Récupérer tous les documents associés à un service
+   * Retrieves all documents associated with a service
+   * @param serviceId The ID of the service
+   * @returns Array of documents
    */
-  getByServiceId: (serviceId: string): Document[] => {
-    const documents = DocumentService.getAll();
+  getByServiceId(serviceId: string): Document[] {
+    const documents = this.getAll();
     return documents.filter(doc => doc.serviceId === serviceId);
-  },
+  }
   
   /**
-   * Sauvegarder un document
+   * Saves a document (creates new or updates existing)
+   * @param document The document to save
+   * @returns The saved document
    */
-  save: (document: Document): Document => {
-    const documents = DocumentService.getAll();
+  save(document: Document): Document {
+    const documents = this.getAll();
     const updatedDoc = {...document};
     
-    // Si c'est un nouveau document ou un document converti (sans ID)
+    // If it's a new document or a converted document (without ID)
     if (!updatedDoc.id) {
-      // Générer un nouvel ID
+      // Generate a new ID
       updatedDoc.id = uuidv4();
       
-      // Générer un numéro de document s'il n'en a pas déjà un
+      // Generate a document number if it doesn't already have one
       if (!updatedDoc.number || updatedDoc.number === '') {
-        // Récupérer le compteur actuel pour ce type de document
+        // Get the current counter for this type of document
         const countKey = updatedDoc.type === DocumentType.INVOICE ? 'invoice_count' : 'quote_count';
         const count = Number(localStorage.getItem(countKey) || '0') + 1;
         localStorage.setItem(countKey, count.toString());
         
-        // Générer le numéro
+        // Generate the number
         updatedDoc.number = generateDocumentNumber(updatedDoc.type, count);
       }
     }
     
     const existingIndex = documents.findIndex(doc => doc.id === updatedDoc.id);
     
-    // Calculer les totaux avant la sauvegarde
+    // Calculate totals before saving
     const docWithTotals = calculateDocumentTotals(updatedDoc);
     
     if (existingIndex >= 0) {
-      // Mise à jour d'un document existant
+      // Update an existing document
       documents[existingIndex] = docWithTotals;
     } else {
-      // Ajout d'un nouveau document
+      // Add a new document
       documents.push(docWithTotals);
     }
     
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(documents));
     return docWithTotals;
-  },
+  }
   
   /**
-   * Supprimer un document
+   * Deletes a document by its ID
+   * @param id The ID of the document to delete
+   * @returns True if deletion was successful, false otherwise
    */
-  delete: (id: string): boolean => {
-    const documents = DocumentService.getAll();
+  delete(id: string): boolean {
+    const documents = this.getAll();
     const initialLength = documents.length;
     const filteredDocuments = documents.filter(doc => doc.id !== id);
     
     localStorage.setItem(DOCUMENTS_KEY, JSON.stringify(filteredDocuments));
     return filteredDocuments.length < initialLength;
-  },
+  }
   
   /**
-   * Créer un nouveau document à partir d'un service
+   * Creates a new document from a service
+   * @param type The type of document (invoice or quote)
+   * @param service The service to create the document from
+   * @param businessPlanId The ID of the business plan
+   * @param clientInfo The client information
+   * @param companyInfo The company information
+   * @param additionalDetails Additional document details
+   * @returns The created document
    */
-  createFromService: (
+  createFromService(
     type: DocumentType, 
     service: Service, 
     businessPlanId: string,
@@ -121,8 +141,8 @@ export const DocumentService = {
       validUntil?: string,
       dueDate?: string
     } = {}
-  ): Document => {
-    // Générer un nouveau numéro de document
+  ): Document {
+    // Generate a new document number
     let count = 1;
     try {
       const storedCount = localStorage.getItem(DOCUMENT_COUNT_KEY);
@@ -131,12 +151,12 @@ export const DocumentService = {
       }
       localStorage.setItem(DOCUMENT_COUNT_KEY, count.toString());
     } catch (e) {
-      console.error('Erreur lors de la génération du numéro de document:', e);
+      console.error('Error generating document number:', e);
     }
     
     const number = generateDocumentNumber(type, count);
     
-    // Déterminer le prix en fonction du mode de facturation
+    // Determine the price based on the billing mode
     let unitPrice = 0;
     let description = service.name;
     let quantity = 1;
@@ -145,19 +165,19 @@ export const DocumentService = {
       case 'hourly':
         unitPrice = service.hourlyRate || 0;
         quantity = service.estimatedHours || 1;
-        description = `${service.name} - Prestation horaire`;
+        description = `${service.name} - Hourly rate`;
         break;
       case 'package':
         unitPrice = service.packagePrice || 0;
-        description = `${service.name} - Forfait`;
+        description = `${service.name} - Fixed price`;
         break;
       case 'subscription':
         unitPrice = service.subscriptionPrice || 0;
-        description = `${service.name} - Abonnement mensuel`;
+        description = `${service.name} - Monthly subscription`;
         break;
     }
     
-    // Créer le document
+    // Create the document
     const newDocument: Document = {
       id: uuidv4(),
       type,
@@ -174,19 +194,25 @@ export const DocumentService = {
           description,
           quantity,
           unitPrice,
-          taxRate: 0.2, // 20% TVA par défaut
+          taxRate: 0.2, // 20% VAT by default
           discount: 0
         }
       ],
       ...additionalDetails
     };
     
-    // Calculer les totaux
+    // Calculate totals
     const finalDocument = calculateDocumentTotals(newDocument);
     
-    // Sauvegarder et retourner le document
-    return DocumentService.save(finalDocument);
+    // Save and return the document
+    return this.save(finalDocument);
   }
-};
+}
+
+// Create singleton instance
+export const DocumentService = new DocumentServiceImpl();
+
+// Export both the service instance and the implementation class
+export { DocumentServiceImpl };
 
 export default DocumentService;
